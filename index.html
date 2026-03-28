@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -11,21 +12,21 @@
 html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'Rajdhani',sans-serif}
 
 .water-bg{position:fixed;inset:0;z-index:0;
-  background:
-    radial-gradient(ellipse 100% 60% at 50% 100%,#2a1500 0%,transparent 70%),
-    radial-gradient(ellipse 70% 70% at 15% 15%,#1f1000 0%,transparent 60%),
-    linear-gradient(160deg,#0a0600 0%,#140c02 40%,#0c0700 100%)}
+background:
+radial-gradient(ellipse 100% 60% at 50% 100%,#2a1500 0%,transparent 70%),
+radial-gradient(ellipse 70% 70% at 15% 15%,#1f1000 0%,transparent 60%),
+linear-gradient(160deg,#0a0600 0%,#140c02 40%,#0c0700 100%)}
 .water-ripple{position:fixed;inset:0;pointer-events:none;z-index:1;
-  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(245,158,11,0.012) 2px,rgba(245,158,11,0.012) 4px);
-  animation:rippleShift 10s linear infinite}
+background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(245,158,11,0.012) 2px,rgba(245,158,11,0.012) 4px);
+animation:rippleShift 10s linear infinite}
 @keyframes rippleShift{0%{background-position:0 0}100%{background-position:0 80px}}
 
 .particles{position:fixed;inset:0;z-index:1;pointer-events:none}
-.p{position:absolute;width:2px;height:2px;border-radius:50%;background:var(--amber);opacity:0;animation:fp var(--d,6s) var(--dl,0s) infinite ease-in}
+.p{position:absolute;width:2px;height:2px;border-radius:50%;background:var(–amber);opacity:0;animation:fp var(–d,6s) var(–dl,0s) infinite ease-in}
 @keyframes fp{0%{opacity:0;transform:translateY(0)}10%{opacity:.45}90%{opacity:.1}100%{opacity:0;transform:translateY(-115vh)}}
 
 .scanlines{position:fixed;inset:0;pointer-events:none;z-index:100;
-  background:repeating-linear-gradient(180deg,transparent 0px,transparent 3px,rgba(0,0,0,.018) 3px,rgba(0,0,0,.018) 4px)}
+background:repeating-linear-gradient(180deg,transparent 0px,transparent 3px,rgba(0,0,0,.018) 3px,rgba(0,0,0,.018) 4px)}
 
 /* PAGE */
 .page{position:relative;z-index:2;width:100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0}
@@ -33,13 +34,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 /* HEADER BAR */
 .header{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:7px 28px 6px;border-bottom:1px solid rgba(245,158,11,0.2);background:linear-gradient(180deg,rgba(12,7,0,0.97) 0%,rgba(12,7,0,0.72) 100%);backdrop-filter:blur(14px)}
 .h-left{display:flex;align-items:center;gap:12px}
-.h-badge{font-size:9px;letter-spacing:3px;color:var(--amber-light);opacity:.55;text-transform:uppercase}
-.h-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,3.2vw,48px);letter-spacing:6px;line-height:1;
-  background:linear-gradient(130deg,#fff8dc 0%,#ffd966 40%,#ffb700 75%,#ff8c00 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  filter:drop-shadow(0 0 18px rgba(255,183,0,.55));animation:tpulse 5s ease-in-out infinite}
+.h-badge{font-size:9px;letter-spacing:3px;color:var(–amber-light);opacity:.55;text-transform:uppercase}
+.h-title{font-family:‘Bebas Neue’,sans-serif;font-size:clamp(28px,3.2vw,48px);letter-spacing:6px;line-height:1;
+background:linear-gradient(130deg,#fff8dc 0%,#ffd966 40%,#ffb700 75%,#ff8c00 100%);
+-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+filter:drop-shadow(0 0 18px rgba(255,183,0,.55));animation:tpulse 5s ease-in-out infinite}
 @keyframes tpulse{0%,100%{filter:drop-shadow(0 0 12px rgba(255,183,0,.4))}50%{filter:drop-shadow(0 0 28px rgba(255,183,0,.8))}}
-.h-line{width:2px;height:32px;background:linear-gradient(180deg,transparent,var(--amber),transparent);flex-shrink:0;animation:lpulse 3s ease-in-out infinite}
+.h-line{width:2px;height:32px;background:linear-gradient(180deg,transparent,var(–amber),transparent);flex-shrink:0;animation:lpulse 3s ease-in-out infinite}
 @keyframes lpulse{0%,100%{opacity:.3}50%{opacity:1}}
 .h-right{display:flex;align-items:center;gap:14px}
 .h-meta{text-align:right}
@@ -54,30 +55,30 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 /* TITLE BLOCK */
 .title-block{text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
 .eyebrow{font-size:10px;letter-spacing:5px;color:rgba(245,158,11,.45);text-transform:uppercase}
-.main-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(64px,9vw,120px);letter-spacing:10px;line-height:.95;
-  background:linear-gradient(130deg,#fff8dc 0%,#ffd966 35%,#ffb700 65%,#ff8c00 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  filter:drop-shadow(0 0 40px rgba(255,183,0,.35));animation:tpulse 5s ease-in-out infinite}
+.main-title{font-family:‘Bebas Neue’,sans-serif;font-size:clamp(64px,9vw,120px);letter-spacing:10px;line-height:.95;
+background:linear-gradient(130deg,#fff8dc 0%,#ffd966 35%,#ffb700 65%,#ff8c00 100%);
+-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+filter:drop-shadow(0 0 40px rgba(255,183,0,.35));animation:tpulse 5s ease-in-out infinite}
 .subtitle{font-size:11px;letter-spacing:4px;color:rgba(245,158,11,.35);text-transform:uppercase;margin-top:4px}
-.title-rule{width:120px;height:1px;background:linear-gradient(90deg,transparent,var(--amber),transparent);margin-top:6px;animation:lpulse 3s ease-in-out infinite}
+.title-rule{width:120px;height:1px;background:linear-gradient(90deg,transparent,var(–amber),transparent);margin-top:6px;animation:lpulse 3s ease-in-out infinite}
 
 /* LEVEL BUTTONS */
-.levels{display:flex;flex-direction:column;gap:10px;align-items:stretch;width:100%;max-width:340px}
+.levels{display:flex;flex-direction:column;gap:10px;align-items:stretch;width:100%;max-width:480px}
 
 .level-btn{
-  position:relative;
-  display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:16px;flex-wrap:wrap;
-  width:100%;padding:12px 20px;
-  background:rgba(245,158,11,.04);
-  border:1px solid rgba(245,158,11,.2);
-  border-radius:8px;
-  cursor:pointer;
-  text-decoration:none;
-  transition:all .25s ease;
-  overflow:hidden;
-  animation:fadeUp .8s ease forwards;
-  -webkit-tap-highlight-color:transparent;
-  touch-action:manipulation;
+position:relative;
+display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;
+width:100%;padding:10px 14px;
+background:rgba(245,158,11,.04);
+border:1px solid rgba(245,158,11,.2);
+border-radius:8px;
+cursor:pointer;
+text-decoration:none;
+transition:all .25s ease;
+overflow:hidden;
+animation:fadeUp .8s ease forwards;
+-webkit-tap-highlight-color:transparent;
+touch-action:manipulation;
 }
 .level-btn:nth-child(1){animation-delay:.05s;opacity:0}
 .level-btn:nth-child(2){animation-delay:.1s;opacity:0}
@@ -86,34 +87,33 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 .level-btn:nth-child(5){animation-delay:.25s;opacity:0}
 
 .level-btn::before{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,rgba(245,158,11,.08) 0%,transparent 60%);
-  opacity:0;transition:opacity .25s ease;
+content:’’;position:absolute;inset:0;
+background:linear-gradient(135deg,rgba(245,158,11,.08) 0%,transparent 60%);
+opacity:0;transition:opacity .25s ease;
 }
 .level-btn:hover::before{opacity:1}
 .level-btn:hover{
-  background:rgba(245,158,11,.1);
-  border-color:var(--amber);
-  transform:translateY(-4px);
-  box-shadow:0 8px 32px rgba(245,158,11,.2),0 0 0 1px rgba(245,158,11,.15);
+background:rgba(245,158,11,.1);
+border-color:var(–amber);
+transform:translateY(-4px);
+box-shadow:0 8px 32px rgba(245,158,11,.2),0 0 0 1px rgba(245,158,11,.15);
 }
 .level-btn.disabled{cursor:not-allowed;opacity:.4}
 .level-btn.disabled:hover{transform:none;box-shadow:none;background:rgba(245,158,11,.04);border-color:rgba(245,158,11,.2)}
 .level-btn.disabled:hover::before{opacity:0}
 
-.btn-label{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:4px;color:rgba(255,217,102,.6);transition:color .25s;flex:1}
+.btn-label{font-family:‘Bebas Neue’,sans-serif;font-size:22px;letter-spacing:3px;color:rgba(255,217,102,.6);transition:color .25s;white-space:nowrap;}
 .level-btn:hover .btn-label{color:rgba(255,217,102,.95)}
 .level-btn.disabled .btn-label{color:rgba(255,217,102,.25)}
-.btn-desc{font-family:'Rajdhani',sans-serif;font-size:9px;font-weight:600;letter-spacing:1.5px;
-  color:rgba(245,158,11,.35);text-transform:uppercase;transition:color .25s;flex-basis:100%}
+.btn-desc{font-family:‘Rajdhani’,sans-serif;font-size:10px;font-weight:600;letter-spacing:1px;color:rgba(245,158,11,.35);text-transform:uppercase;transition:color .25s;white-space:nowrap;}
 .level-btn:hover .btn-desc{color:rgba(245,158,11,.65)}
 
 /* corner accents on hover */
 .btn-corner{position:absolute;width:10px;height:10px;opacity:0;transition:opacity .25s}
-.btn-corner.tl{top:6px;left:6px;border-top:1.5px solid var(--amber);border-left:1.5px solid var(--amber)}
-.btn-corner.tr{top:6px;right:6px;border-top:1.5px solid var(--amber);border-right:1.5px solid var(--amber)}
-.btn-corner.bl{bottom:6px;left:6px;border-bottom:1.5px solid var(--amber);border-left:1.5px solid var(--amber)}
-.btn-corner.br{bottom:6px;right:6px;border-bottom:1.5px solid var(--amber);border-right:1.5px solid var(--amber)}
+.btn-corner.tl{top:6px;left:6px;border-top:1.5px solid var(–amber);border-left:1.5px solid var(–amber)}
+.btn-corner.tr{top:6px;right:6px;border-top:1.5px solid var(–amber);border-right:1.5px solid var(–amber)}
+.btn-corner.bl{bottom:6px;left:6px;border-bottom:1.5px solid var(–amber);border-left:1.5px solid var(–amber)}
+.btn-corner.br{bottom:6px;right:6px;border-bottom:1.5px solid var(–amber);border-right:1.5px solid var(–amber)}
 .level-btn:hover .btn-corner{opacity:1}
 
 /* STATUS BAR */
@@ -121,9 +121,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 .sdot{width:5px;height:5px;border-radius:50%;background:#f59e0b;box-shadow:0 0 5px #f59e0b;animation:sblink 2.5s ease-in-out infinite;flex-shrink:0}
 @keyframes sblink{0%,100%{opacity:1}50%{opacity:.2}}
 .wfall{margin-left:auto;display:flex;gap:3px;align-items:flex-end;height:12px}
-.wb{width:3px;background:var(--amber);border-radius:1px;opacity:.4;animation:wa var(--d,1s) ease-in-out infinite alternate}
+.wb{width:3px;background:var(–amber);border-radius:1px;opacity:.4;animation:wa var(–d,1s) ease-in-out infinite alternate}
 @keyframes wa{from{height:3px;opacity:.15}to{height:10px;opacity:.6}}
 </style>
+
 </head>
 <body>
 
@@ -133,6 +134,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 <div class="scanlines"></div>
 
 <!-- HEADER -->
+
 <header class="header">
   <div class="h-left">
     <div><div class="h-badge">Building Reports</div></div>
@@ -160,58 +162,58 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 </header>
 
 <!-- MAIN -->
+
 <div class="page">
   <div class="main">
 
-    <div class="title-block">
-      <span class="eyebrow">Building Floor Plans</span>
-      <div class="main-title">MHAC<br>REPORTS</div>
-      <span class="subtitle">Select a level to view the floor map</span>
-      <div class="title-rule"></div>
-    </div>
+```
+<div class="title-block">
+  <span class="eyebrow">Building Floor Plans</span>
+  <div class="main-title">MHAC<br>REPORTS</div>
+  <span class="subtitle">Select a level to view the floor map</span>
+  <div class="title-rule"></div>
+</div>
 
-    <div class="levels">
+<div class="levels">
 
-      <a class="level-btn" href="Level1.html">
-        <div class="btn-corner tl"></div><div class="btn-corner tr"></div>
-        <div class="btn-corner bl"></div><div class="btn-corner br"></div>
-        <div class="btn-label">Level 1</div>
-        <div class="btn-desc">Forensics · ECT · Admin</div>
-      </a>
+  <a class="level-btn" href="Level1.html">
+    <div class="btn-corner tl"></div><div class="btn-corner tr"></div>
+    <div class="btn-corner bl"></div><div class="btn-corner br"></div>
+    <div style="display:flex;align-items:center;gap:10px;flex:1"><div class="btn-label">Level 1</div><div style="width:1px;height:16px;background:rgba(245,158,11,.15);flex-shrink:0"></div><div class="btn-desc">Forensics · ECT · Admin</div></div>
+  </a>
 
-      <a class="level-btn" href="Level2.html">
-        <div class="btn-corner tl"></div><div class="btn-corner tr"></div>
-        <div class="btn-corner bl"></div><div class="btn-corner br"></div>
-        <div class="btn-label">Level 2</div>
-        <div class="btn-desc">Acute · Short Stay · Therapy Mall · Admin</div>
-      </a>
+  <a class="level-btn" href="Level2.html">
+    <div class="btn-corner tl"></div><div class="btn-corner tr"></div>
+    <div class="btn-corner bl"></div><div class="btn-corner br"></div>
+    <div style="display:flex;align-items:center;gap:10px;flex:1"><div class="btn-label">Level 2</div><div style="width:1px;height:16px;background:rgba(245,158,11,.15);flex-shrink:0"></div><div class="btn-desc">Acute · Short Stay · Therapy Mall · Admin</div></div>
+  </a>
 
-      <a class="level-btn" href="Level3.html">
-        <div class="btn-corner tl"></div><div class="btn-corner tr"></div>
-        <div class="btn-corner bl"></div><div class="btn-corner br"></div>
-        <div class="btn-label">Level 3</div>
-        <div class="btn-desc">Geriatrics · Main Electrical Room · Admin</div>
-      </a>
+  <a class="level-btn" href="Level3.html">
+    <div class="btn-corner tl"></div><div class="btn-corner tr"></div>
+    <div class="btn-corner bl"></div><div class="btn-corner br"></div>
+    <div style="display:flex;align-items:center;gap:10px;flex:1"><div class="btn-label">Level 3</div><div style="width:1px;height:16px;background:rgba(245,158,11,.15);flex-shrink:0"></div><div class="btn-desc">Geriatrics · Main Electrical Room · Admin</div></div>
+  </a>
 
-      <a class="level-btn" href="Level4.html">
-        <div class="btn-corner tl"></div><div class="btn-corner tr"></div>
-        <div class="btn-corner bl"></div><div class="btn-corner br"></div>
-        <div class="btn-label">Level 4</div>
-        <div class="btn-desc">Eating Disorders · Main Kitchen · Maintenance Shop · Admin</div>
-      </a>
+  <a class="level-btn" href="Level4.html">
+    <div class="btn-corner tl"></div><div class="btn-corner tr"></div>
+    <div class="btn-corner bl"></div><div class="btn-corner br"></div>
+    <div style="display:flex;align-items:center;gap:10px;flex:1"><div class="btn-label">Level 4</div><div style="width:1px;height:16px;background:rgba(245,158,11,.15);flex-shrink:0"></div><div class="btn-desc">Eating Disorders · Kitchen · Admin · Maintenance</div></div>
+  </a>
 
-      <a class="level-btn" href="Level5.html">
-        <div class="btn-corner tl"></div><div class="btn-corner tr"></div>
-        <div class="btn-corner bl"></div><div class="btn-corner br"></div>
-        <div class="btn-label">Level 5</div>
-        <div class="btn-desc">Hostel</div>
-      </a>
+  <a class="level-btn" href="Level5.html">
+    <div class="btn-corner tl"></div><div class="btn-corner tr"></div>
+    <div class="btn-corner bl"></div><div class="btn-corner br"></div>
+    <div style="display:flex;align-items:center;gap:10px;flex:1"><div class="btn-label">Level 5</div><div style="width:1px;height:16px;background:rgba(245,158,11,.15);flex-shrink:0"></div><div class="btn-desc">Hostel</div></div>
+  </a>
 
-    </div>
+</div>
+```
+
   </div>
 </div>
 
 <!-- STATUS BAR -->
+
 <div class="statusbar">
   <div class="sdot"></div>
   <span>System Online</span>
@@ -242,5 +244,6 @@ document.querySelectorAll('.level-btn.disabled').forEach(function(btn){
   btn.addEventListener('touchend', function(e){ e.preventDefault(); });
 });
 </script>
+
 </body>
 </html>
