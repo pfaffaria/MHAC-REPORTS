@@ -754,11 +754,19 @@ function compressAndSaveMap(file){
   reader.onload=function(e){
     var img=new Image();
     img.onload=function(){
-      var canvas=document.createElement('canvas'),maxW=1400,sc2=Math.min(1,maxW/img.width);
-      canvas.width=Math.round(img.width*sc2);canvas.height=Math.round(img.height*sc2);
-      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-      var maps=load(MAPS_KEY);maps[mapLevel]=canvas.toDataURL('image/jpeg',0.75);
-      try{saveShared(MAPS_KEY,maps);showToast('Map uploaded \u2713');renderMap();}catch(err){showToast('Image too large \u2014 try smaller');}
+      var steps=[{w:1400,q:0.78},{w:1000,q:0.65},{w:700,q:0.50},{w:500,q:0.38},{w:350,q:0.30}];
+      var maps=load(MAPS_KEY);
+      function tryStep(i){
+        if(i>=steps.length){showToast('Image too large — try a different file');return;}
+        var s=steps[i],sc2=Math.min(1,s.w/img.width);
+        var canvas=document.createElement('canvas');
+        canvas.width=Math.round(img.width*sc2);canvas.height=Math.round(img.height*sc2);
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        maps[mapLevel]=canvas.toDataURL('image/jpeg',s.q);
+        try{saveShared(MAPS_KEY,maps);showToast('Map uploaded ✓');renderMap();}
+        catch(err){tryStep(i+1);}
+      }
+      tryStep(0);
     };img.src=e.target.result;
   };reader.readAsDataURL(file);
 }
