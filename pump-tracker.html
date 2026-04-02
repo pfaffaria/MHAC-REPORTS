@@ -9,156 +9,94 @@
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{--amber:#f59e0b;--amber-light:#fcd34d;--amber-pale:#fef3c7;--bg:#0f0a03;--card:#0d0800}
 html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani',sans-serif;color:#fef3c7}
-
-.water-bg{position:fixed;inset:0;z-index:0;
-  background:radial-gradient(ellipse 100% 60% at 50% 100%,#2a1500 0%,transparent 70%),
-  radial-gradient(ellipse 70% 70% at 15% 15%,#1f1000 0%,transparent 60%),
-  linear-gradient(160deg,#0a0600 0%,#140c02 40%,#0c0700 100%)}
-.scanlines{position:fixed;inset:0;pointer-events:none;z-index:100;
-  background:repeating-linear-gradient(180deg,transparent 0px,transparent 3px,rgba(0,0,0,.018) 3px,rgba(0,0,0,.018) 4px)}
-
-/* TOPBAR */
-.topbar{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;
-  padding:7px 24px 6px;border-bottom:1px solid rgba(245,158,11,0.2);
-  background:linear-gradient(180deg,rgba(12,7,0,0.97) 0%,rgba(12,7,0,0.72) 100%);backdrop-filter:blur(14px)}
+.water-bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 100% 60% at 50% 100%,#2a1500 0%,transparent 70%),radial-gradient(ellipse 70% 70% at 15% 15%,#1f1000 0%,transparent 60%),linear-gradient(160deg,#0a0600 0%,#140c02 40%,#0c0700 100%)}
+.scanlines{position:fixed;inset:0;pointer-events:none;z-index:100;background:repeating-linear-gradient(180deg,transparent 0px,transparent 3px,rgba(0,0,0,.018) 3px,rgba(0,0,0,.018) 4px)}
+.topbar{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:7px 24px 6px;border-bottom:1px solid rgba(245,158,11,0.2);background:linear-gradient(180deg,rgba(12,7,0,0.97) 0%,rgba(12,7,0,0.72) 100%);backdrop-filter:blur(14px)}
 .tb-left{display:flex;align-items:center;gap:12px}
 .tb-badge{font-size:9px;letter-spacing:3px;color:var(--amber-light);opacity:.55;text-transform:uppercase}
-.tb-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(20px,2.5vw,34px);letter-spacing:6px;line-height:1;
-  background:linear-gradient(130deg,#fff8dc 0%,#ffd966 40%,#ffb700 75%,#ff8c00 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  filter:drop-shadow(0 0 18px rgba(255,183,0,.55));animation:tpulse 5s ease-in-out infinite}
+.tb-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(20px,2.5vw,34px);letter-spacing:6px;line-height:1;background:linear-gradient(130deg,#fff8dc 0%,#ffd966 40%,#ffb700 75%,#ff8c00 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 18px rgba(255,183,0,.55));animation:tpulse 5s ease-in-out infinite}
 @keyframes tpulse{0%,100%{filter:drop-shadow(0 0 12px rgba(255,183,0,.4))}50%{filter:drop-shadow(0 0 28px rgba(255,183,0,.8))}}
 .tb-line{width:2px;height:28px;background:linear-gradient(180deg,transparent,var(--amber),transparent);flex-shrink:0;animation:lpulse 3s ease-in-out infinite}
 @keyframes lpulse{0%,100%{opacity:.3}50%{opacity:1}}
 .tb-right{display:flex;align-items:center;gap:8px}
-.tb-btn{display:flex;align-items:center;gap:5px;padding:4px 12px;border:1px solid rgba(245,158,11,.2);border-radius:4px;
-  background:rgba(245,158,11,.05);color:var(--amber-pale);font-family:'Rajdhani',sans-serif;font-size:11px;
-  font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;text-decoration:none;transition:all .2s;border:none}
+.tb-btn{display:flex;align-items:center;gap:5px;padding:4px 12px;border:1px solid rgba(245,158,11,.2);border-radius:4px;background:rgba(245,158,11,.05);color:var(--amber-pale);font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;text-decoration:none;transition:all .2s}
 .tb-btn:hover{background:rgba(245,158,11,.15);color:#fff}
 .tb-btn.primary{border:1px solid rgba(245,158,11,.35);background:rgba(245,158,11,.1)}
-.tb-btn.primary:hover{background:rgba(245,158,11,.22);border-color:var(--amber);color:#fff;box-shadow:0 0 12px rgba(245,158,11,.2)}
-
-/* STATUSBAR */
-.statusbar{position:fixed;bottom:0;left:0;right:0;z-index:200;display:flex;align-items:center;gap:16px;
-  padding:3px 24px;background:rgba(8,4,0,.88);border-top:1px solid rgba(245,158,11,.06);
-  font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.3);text-transform:uppercase}
+.tb-btn.primary:hover{background:rgba(245,158,11,.22);border-color:var(--amber);color:#fff}
+.statusbar{position:fixed;bottom:0;left:0;right:0;z-index:200;display:flex;align-items:center;gap:16px;padding:3px 24px;background:rgba(8,4,0,.88);border-top:1px solid rgba(245,158,11,.06);font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.3);text-transform:uppercase}
 .sdot{width:5px;height:5px;border-radius:50%;background:#f59e0b;box-shadow:0 0 5px #f59e0b;animation:sblink 2.5s ease-in-out infinite}
 @keyframes sblink{0%,100%{opacity:1}50%{opacity:.2}}
 .wfall{margin-left:auto;display:flex;gap:3px;align-items:flex-end;height:12px}
 .wb{width:3px;background:var(--amber);border-radius:1px;opacity:.4;animation:wa var(--d,1s) ease-in-out infinite alternate}
 @keyframes wa{from{height:3px;opacity:.15}to{height:10px;opacity:.6}}
-
-/* PAGE */
 .page{position:relative;z-index:2;min-height:100vh;padding:72px 16px 48px;max-width:1200px;margin:0 auto}
-
-/* TABS */
 .tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;padding-top:8px}
-.tab{padding:6px 16px;border:1px solid rgba(245,158,11,.2);border-radius:4px;background:transparent;
-  color:rgba(245,158,11,.5);font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;
-  letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.tab{padding:6px 16px;border:1px solid rgba(245,158,11,.2);border-radius:4px;background:transparent;color:rgba(245,158,11,.5);font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
 .tab:hover{border-color:rgba(245,158,11,.4);color:rgba(245,158,11,.8)}
 .tab.active{background:rgba(245,158,11,.12);border-color:var(--amber);color:var(--amber-light)}
-
-/* VIEW PANELS */
 .view{display:none}.view.active{display:block}
-
-/* ENTRY FORM */
 .entry-header{display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap}
-.entry-header h2{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:4px;
-  background:linear-gradient(130deg,#fff8dc,#ffb700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.date-input{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:5px;
-  color:#fef3c7;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;padding:6px 12px;outline:none}
+.entry-header h2{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:4px;background:linear-gradient(130deg,#fff8dc,#ffb700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.date-input{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:5px;color:#fef3c7;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;padding:6px 12px;outline:none}
 .date-input:focus{border-color:rgba(245,158,11,.6)}
-.tech-input{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:5px;
-  color:#fef3c7;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;padding:6px 12px;outline:none;width:160px}
+.tech-input{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:5px;color:#fef3c7;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;padding:6px 12px;outline:none;width:160px}
 .tech-input::placeholder{color:rgba(245,158,11,.3)}
-
-/* PUMP GROUP */
 .pump-group{margin-bottom:24px}
-.group-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;color:var(--amber);
-  margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(245,158,11,.15);text-transform:uppercase}
-
+.group-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;color:var(--amber);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(245,158,11,.15);text-transform:uppercase}
 .pump-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
-
 .pump-card{background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.15);border-radius:8px;padding:12px 14px}
-.pump-name{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:var(--amber-light);
-  margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.pump-name{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:var(--amber-light);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
 .pump-name span{font-size:9px;letter-spacing:1px;color:rgba(245,158,11,.35);font-family:'Rajdhani',sans-serif;font-weight:600}
-
 .fields{display:grid;grid-template-columns:1fr 1fr;gap:5px}
 .field{display:flex;flex-direction:column;gap:2px}
 .field.full{grid-column:span 2}
 .field label{font-size:8px;letter-spacing:2px;color:rgba(245,158,11,.4);text-transform:uppercase;font-weight:700}
-.field input,.field select{
-  background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.18);border-radius:4px;
-  color:#fef3c7;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;
-  padding:4px 8px;outline:none;width:100%;transition:border-color .2s}
+.field input,.field select{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.18);border-radius:4px;color:#fef3c7;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;padding:4px 8px;outline:none;width:100%;transition:border-color .2s}
 .field input:focus,.field select:focus{border-color:rgba(245,158,11,.5);background:rgba(245,158,11,.1)}
 .field input::placeholder{color:rgba(245,158,11,.2)}
 .field select option{background:#0f0a03;color:#fef3c7}
-
-/* alarm flag */
 .field input.alarm{border-color:rgba(255,80,80,.5);background:rgba(255,80,80,.08)}
-
-/* TREND VIEW */
 .trend-controls{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
-.pump-select{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:5px;
-  color:#fef3c7;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:600;padding:6px 12px;outline:none;min-width:200px}
-
-.trend-card{background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.15);border-radius:8px;
-  padding:16px;margin-bottom:16px;overflow-x:auto}
+.pump-select{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:5px;color:#fef3c7;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:600;padding:6px 12px;outline:none;min-width:200px}
+.trend-card{background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.15);border-radius:8px;padding:16px;margin-bottom:16px;overflow-x:auto}
 .trend-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;color:var(--amber);margin-bottom:14px}
-
-/* trend table */
 .trend-table{width:100%;border-collapse:collapse;font-size:12px;min-width:500px}
-.trend-table th{font-family:'Rajdhani',sans-serif;font-size:9px;letter-spacing:2px;text-transform:uppercase;
-  color:rgba(245,158,11,.5);font-weight:700;padding:6px 10px;text-align:left;border-bottom:1px solid rgba(245,158,11,.1);white-space:nowrap}
+.trend-table th{font-family:'Rajdhani',sans-serif;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(245,158,11,.5);font-weight:700;padding:6px 10px;text-align:left;border-bottom:1px solid rgba(245,158,11,.1);white-space:nowrap}
 .trend-table td{padding:6px 10px;border-bottom:1px solid rgba(245,158,11,.06);color:#fef3c7;font-weight:600;white-space:nowrap}
 .trend-table tr:last-child td{border-bottom:none}
 .trend-table tr:hover td{background:rgba(245,158,11,.04)}
 .trend-table td.alarm-yes{color:#ff6b6b}
 .trend-table td.standby{color:rgba(245,158,11,.5)}
-
-/* mini spark line */
-.spark{display:inline-flex;align-items:flex-end;gap:2px;height:20px;vertical-align:middle;margin-left:6px}
-.spark-bar{width:4px;background:var(--amber);border-radius:1px;opacity:.7;min-height:2px}
-
-/* no data */
-.no-data{text-align:center;padding:40px;color:rgba(245,158,11,.3);font-size:11px;letter-spacing:2px;text-transform:uppercase}
-
-/* HISTORY VIEW */
 .history-list{display:flex;flex-direction:column;gap:8px}
-.history-item{background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.15);border-radius:8px;
-  padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all .2s}
+.history-item{background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.15);border-radius:8px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all .2s}
 .history-item:hover{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.3)}
 .history-date{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;color:var(--amber-light)}
 .history-meta{font-size:10px;letter-spacing:1.5px;color:rgba(245,158,11,.4);text-transform:uppercase}
-.history-del{background:none;border:1px solid rgba(255,80,80,.2);color:rgba(255,80,80,.5);border-radius:4px;
-  padding:4px 10px;font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;
-  text-transform:uppercase;cursor:pointer;transition:all .2s}
+.history-del{background:none;border:1px solid rgba(255,80,80,.2);color:rgba(255,80,80,.5);border-radius:4px;padding:4px 10px;font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s}
 .history-del:hover{border-color:rgba(255,80,80,.6);color:#ff6b6b;background:rgba(255,80,80,.08)}
-
-/* submit row */
 .submit-row{display:flex;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid rgba(245,158,11,.1)}
-.btn-submit{padding:10px 28px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);
-  border-radius:5px;color:var(--amber-light);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;
-  letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
-.btn-submit:hover{background:rgba(245,158,11,.22);border-color:var(--amber);color:#fff;box-shadow:0 0 16px rgba(245,158,11,.2)}
-.btn-clear{padding:10px 18px;background:transparent;border:1px solid rgba(245,158,11,.15);
-  border-radius:5px;color:rgba(245,158,11,.4);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;
-  letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.btn-submit{padding:10px 28px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);border-radius:5px;color:var(--amber-light);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.btn-submit:hover{background:rgba(245,158,11,.22);border-color:var(--amber);color:#fff}
+.btn-clear{padding:10px 18px;background:transparent;border:1px solid rgba(245,158,11,.15);border-radius:5px;color:rgba(245,158,11,.4);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
 .btn-clear:hover{border-color:rgba(245,158,11,.3);color:rgba(245,158,11,.7)}
-
-.toast{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:rgba(10,5,0,.97);
-  border:1px solid var(--amber);border-radius:6px;padding:10px 24px;font-family:'Rajdhani',sans-serif;
-  font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--amber-light);
-  z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
+.no-data{text-align:center;padding:40px;color:rgba(245,158,11,.3);font-size:11px;letter-spacing:2px;text-transform:uppercase}
+.toast{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:rgba(10,5,0,.97);border:1px solid var(--amber);border-radius:6px;padding:10px 24px;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--amber-light);z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
 .toast.show{opacity:1}
 </style>
 </head>
 <body>
 <div class="water-bg"></div>
 <div class="scanlines"></div>
+
+<div id="cloud-overlay" style="position:fixed;inset:0;z-index:99999;background:rgba(10,5,0,.97);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:6px;background:linear-gradient(130deg,#fff8dc,#ffb700);-webkit-background-clip:text;-webkit-text-fill-color:transparent">MHAC</div>
+  <div style="font-size:9px;letter-spacing:3px;color:rgba(245,158,11,.5);text-transform:uppercase">Syncing data...</div>
+  <div style="display:flex;gap:8px;margin-top:4px">
+    <div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;animation:sblink 0.8s ease-in-out infinite"></div>
+    <div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;animation:sblink 0.8s 0.2s ease-in-out infinite"></div>
+    <div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;animation:sblink 0.8s 0.4s ease-in-out infinite"></div>
+  </div>
+</div>
 
 <nav class="topbar">
   <div class="tb-left">
@@ -173,68 +111,25 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 </nav>
 
 <div class="page">
-
   <div class="tabs">
     <button class="tab active" onclick="showView('entry',this)">New Entry</button>
     <button class="tab" onclick="showView('trends',this)">Trend Log</button>
     <button class="tab" onclick="showView('history',this)">History</button>
   </div>
 
-  <!-- ===== ENTRY VIEW ===== -->
   <div class="view active" id="view-entry">
     <div class="entry-header">
       <h2>Monthly Pump Checks</h2>
       <input type="date" class="date-input" id="entry-date"/>
       <input type="text" class="tech-input" id="entry-tech" placeholder="Technician name"/>
-      <button class="btn-submit" onclick="document.getElementById('scan-upload').click()" style="display:flex;align-items:center;gap:6px;padding:8px 18px">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-        Scan Sheet
-      </button>
-      <input type="file" id="scan-upload" accept="image/*,application/pdf" style="display:none" onchange="scanSheet(event)"/>
-      <button class="btn-clear" onclick="localStorage.removeItem('mhac-api-key');showToast('API key cleared')" style="font-size:10px;padding:6px 10px">Reset Key</button>
-    </div>
-
-    <div id="scan-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
-      <div style="background:#100b02;border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:32px;max-width:400px;width:90%;text-align:center">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:4px;background:linear-gradient(130deg,#fff8dc,#ffb700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px">Reading Sheet</div>
-        <div style="font-size:11px;letter-spacing:2px;color:rgba(245,158,11,.5);text-transform:uppercase;margin-bottom:20px">Analysing handwriting — please wait</div>
-        <div id="scan-status" style="font-size:10px;letter-spacing:1px;color:rgba(245,158,11,.4);text-transform:uppercase;margin-bottom:16px"></div>
-        <div style="display:flex;justify-content:center;gap:6px">
-          <div style="width:8px;height:8px;border-radius:50%;background:var(--amber);animation:sblink 0.8s ease-in-out infinite"></div>
-          <div style="width:8px;height:8px;border-radius:50%;background:var(--amber);animation:sblink 0.8s 0.2s ease-in-out infinite"></div>
-          <div style="width:8px;height:8px;border-radius:50%;background:var(--amber);animation:sblink 0.8s 0.4s ease-in-out infinite"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- API KEY MODAL -->
-    <div id="apikey-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:600;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
-      <div style="background:#100b02;border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:32px;max-width:420px;width:90%">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;background:linear-gradient(130deg,#fff8dc,#ffb700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px">Anthropic API Key</div>
-        <div style="font-size:11px;letter-spacing:1px;color:rgba(245,158,11,.45);text-transform:uppercase;margin-bottom:16px;line-height:1.6">
-          Required to scan sheets. Your key is stored locally on this device only and never sent anywhere except Anthropic's API.<br><br>
-          Get a free key at <span style="color:var(--amber)">console.anthropic.com</span>
-        </div>
-        <input type="password" id="apikey-input" placeholder="sk-ant-..." style="width:100%;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:5px;color:#fef3c7;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;padding:8px 12px;outline:none;margin-bottom:6px"/>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
-          <input type="checkbox" id="apikey-save" checked style="accent-color:var(--amber)"/>
-          <label for="apikey-save" style="font-size:10px;letter-spacing:1px;color:rgba(245,158,11,.5);text-transform:uppercase;cursor:pointer">Remember on this device</label>
-        </div>
-        <div style="display:flex;gap:10px">
-          <button onclick="submitApiKey()" style="flex:1;padding:10px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);border-radius:5px;color:var(--amber-light);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer">Save & Scan</button>
-          <button onclick="document.getElementById('apikey-modal').style.display='none'" style="padding:10px 18px;background:transparent;border:1px solid rgba(245,158,11,.15);border-radius:5px;color:rgba(245,158,11,.4);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer">Cancel</button>
-        </div>
-      </div>
     </div>
     <div id="pump-form"></div>
-
     <div class="submit-row">
       <button class="btn-submit" onclick="saveEntry()">Save Entry</button>
       <button class="btn-clear" onclick="clearForm()">Clear</button>
     </div>
   </div>
 
-  <!-- ===== TRENDS VIEW ===== -->
   <div class="view" id="view-trends">
     <div class="trend-controls">
       <select class="pump-select" id="trend-pump-select" onchange="renderTrend()">
@@ -244,11 +139,9 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
     <div id="trend-output"></div>
   </div>
 
-  <!-- ===== HISTORY VIEW ===== -->
   <div class="view" id="view-history">
     <div class="history-list" id="history-list"></div>
   </div>
-
 </div>
 
 <div class="statusbar">
@@ -256,101 +149,47 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
   <span>Pump Inspection Tracker</span>
   <span id="entry-count-label">·</span>
   <div class="wfall">
-    <div class="wb" style="--d:.7s"></div>
-    <div class="wb" style="--d:1.1s"></div>
-    <div class="wb" style="--d:.9s"></div>
-    <div class="wb" style="--d:1.3s"></div>
+    <div class="wb" style="--d:.7s"></div><div class="wb" style="--d:1.1s"></div>
+    <div class="wb" style="--d:.9s"></div><div class="wb" style="--d:1.3s"></div>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script>
-// ─── PUMP DEFINITIONS ───────────────────────────────────────────────
+// ═══ SUPABASE SYNC ═══════════════════════════════════════════════════
+const SB_URL='https://nqlpevxqedqxfjnlxxws.supabase.co';
+const SB_PUB='sb_publishable_Ug-6aCZ-InZVnrCTqcLv2w_BheY4Kj5';
+const SB_H={'apikey':SB_PUB,'Authorization':'Bearer '+SB_PUB,'Content-Type':'application/json'};
+async function sbGet(k){try{const r=await fetch(SB_URL+'/rest/v1/app_data?key=eq.'+encodeURIComponent(k)+'&select=value',{headers:SB_H});if(!r.ok)throw 0;const d=await r.json();return d.length?d[0].value:null;}catch(e){return null;}}
+async function sbSet(k,v){try{await fetch(SB_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SB_H,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({key:k,value:v,updated_at:new Date().toISOString()})});}catch(e){}}
+// ════════════════════════════════════════════════════════════════════
+
 const PUMP_GROUPS = [
-  {
-    group: 'Primary Chilled Water Pumps',
-    pumps: ['CHW-PH-01A','CHW-PH-01B'],
-    fields: ['standby','alarm','hrs','freq','pOut','pIn','sealFlow','motorTemp']
-  },
-  {
-    group: 'AHU Chilled Water Pumps',
-    pumps: ['CHW-PH-02A','CHW-PH-02B'],
-    fields: ['standby','alarm','hrs','freq','pOut','pIn','sealFlow','motorTemp']
-  },
-  {
-    group: 'Heat Recovery Chiller Pump',
-    pumps: ['CHW-PH-03'],
-    fields: ['standby','alarm','hrs','freq','pOut','pIn','sealFlow','motorTemp']
-  },
-  {
-    group: 'Process Cooling Chilled Water Pumps',
-    pumps: ['CHW-PH-04A','CHW-PH-04B'],
-    fields: ['standby','alarm','hrs','freq','pOut','pIn','sealFlow','motorTemp']
-  },
-  {
-    group: 'Heat Exchanger Pumps',
-    pumps: ['DHW-PH-01A','DHW-PH-01B'],
-    fields: ['standby','alarm','hrs','freq','pOut','pIn','motorTemp']
-  },
-  {
-    group: 'Recirculation Pumps Level 3/4/5',
-    pumps: ['DHWR-PH-02A','DHWR-PH-02B'],
-    fields: ['standby','alarm','hrs','freq','pOut','pIn','motorTemp']
-  },
-  {
-    group: 'Recirculation Pumps Level 1/2',
-    pumps: ['DHWR-PH-01A','DHWR-PH-01B'],
-    fields: ['standby','alarm','hrs','freq','pOut','pIn','motorTemp']
-  },
-  {
-    group: 'Hot Water Pre Heat Pumps',
-    pumps: ['PHT-PH-01A','PHT-PH-01B'],
-    fields: ['standby','alarm','hrs','freq','pOut','pIn','motorTemp']
-  },
-  {
-    group: 'AHU Hot Glycol Pumps',
-    pumps: ['HGL-PH-01A','HGL-PH-01B'],
-    fields: ['standby','alarm','hrs','freq','pOut','pIn','motorTemp']
-  },
-  {
-    group: 'Heat Recovery Chiller Pump (Hot)',
-    pumps: ['HTG-PH-02'],
-    fields: ['standby','alarm','hrs','freq','pOut','pIn','sealFlow','motorTemp']
-  },
-  {
-    group: 'Snow Melt',
-    pumps: ['SM-PH-01'],
-    fields: ['standby','alarm','hrs','freq','pOut','pIn','sealFlow','motorTemp']
-  },
-  {
-    group: 'Primary Hot Water Heating Pumps',
-    pumps: ['HTG-PH-01A','HTG-PH-01B','HTG-PH-01C'],
-    fields: ['standby','alarm','hrs','freq','pOut','pIn','motorTemp']
-  }
+  {group:'Primary Chilled Water Pumps',pumps:['CHW-PH-01A','CHW-PH-01B'],fields:['standby','alarm','hrs','freq','pOut','pIn','sealFlow','motorTemp']},
+  {group:'AHU Chilled Water Pumps',pumps:['CHW-PH-02A','CHW-PH-02B'],fields:['standby','alarm','hrs','freq','pOut','pIn','sealFlow','motorTemp']},
+  {group:'Heat Recovery Chiller Pump',pumps:['CHW-PH-03'],fields:['standby','alarm','hrs','freq','pOut','pIn','sealFlow','motorTemp']},
+  {group:'Process Cooling Chilled Water Pumps',pumps:['CHW-PH-04A','CHW-PH-04B'],fields:['standby','alarm','hrs','freq','pOut','pIn','sealFlow','motorTemp']},
+  {group:'Heat Exchanger Pumps',pumps:['DHW-PH-01A','DHW-PH-01B'],fields:['standby','alarm','hrs','freq','pOut','pIn','motorTemp']},
+  {group:'Recirculation Pumps Level 3/4/5',pumps:['DHWR-PH-02A','DHWR-PH-02B'],fields:['standby','alarm','hrs','freq','pOut','pIn','motorTemp']},
+  {group:'Recirculation Pumps Level 1/2',pumps:['DHWR-PH-01A','DHWR-PH-01B'],fields:['standby','alarm','hrs','freq','pOut','pIn','motorTemp']},
+  {group:'Hot Water Pre Heat Pumps',pumps:['PHT-PH-01A','PHT-PH-01B'],fields:['standby','alarm','hrs','freq','pOut','pIn','motorTemp']},
+  {group:'AHU Hot Glycol Pumps',pumps:['HGL-PH-01A','HGL-PH-01B'],fields:['standby','alarm','hrs','freq','pOut','pIn','motorTemp']},
+  {group:'Heat Recovery Chiller Pump (Hot)',pumps:['HTG-PH-02'],fields:['standby','alarm','hrs','freq','pOut','pIn','sealFlow','motorTemp']},
+  {group:'Snow Melt',pumps:['SM-PH-01'],fields:['standby','alarm','hrs','freq','pOut','pIn','sealFlow','motorTemp']},
+  {group:'Primary Hot Water Heating Pumps',pumps:['HTG-PH-01A','HTG-PH-01B','HTG-PH-01C'],fields:['standby','alarm','hrs','freq','pOut','pIn','motorTemp']}
 ];
 
-const FIELD_LABELS = {
-  standby: 'Stand By', alarm: 'Alarm', hrs: 'Hrs',
-  freq: 'Freq (Hz)', pOut: 'P Out', pIn: 'P In',
-  sealFlow: 'Seal Flow', motorTemp: 'Motor Temp'
-};
-
-const FIELD_TYPES = {
-  standby: 'select-yesno', alarm: 'select-yesno',
-  hrs: 'number', freq: 'number', pOut: 'number',
-  pIn: 'number', sealFlow: 'text', motorTemp: 'number'
-};
-
-// All pump IDs flat
+const FIELD_LABELS = {standby:'Stand By',alarm:'Alarm',hrs:'Hrs',freq:'Freq (Hz)',pOut:'P Out',pIn:'P In',sealFlow:'Seal Flow',motorTemp:'Motor Temp'};
+const FIELD_TYPES = {standby:'select-yesno',alarm:'select-yesno',hrs:'number',freq:'number',pOut:'number',pIn:'number',sealFlow:'text',motorTemp:'number'};
 const ALL_PUMPS = PUMP_GROUPS.flatMap(g => g.pumps);
-
-// ─── STORAGE ─────────────────────────────────────────────────────────
 const STORE_KEY = 'mhac-pump-entries';
-function loadEntries(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY))||[]; }catch(e){return[];} }
-function saveEntries(arr){ localStorage.setItem(STORE_KEY, JSON.stringify(arr)); }
 
-// ─── BUILD FORM ───────────────────────────────────────────────────────
+function loadEntries(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY))||[]; }catch(e){return[];} }
+function saveEntries(arr){
+  localStorage.setItem(STORE_KEY, JSON.stringify(arr));
+  sbSet(STORE_KEY, arr); // sync to cloud
+}
+
 function buildForm(){
   const form = document.getElementById('pump-form');
   form.innerHTML = '';
@@ -367,15 +206,9 @@ function buildForm(){
       g.fields.forEach(f => {
         const isFull = (f === 'sealFlow') ? ' full' : '';
         if(FIELD_TYPES[f] === 'select-yesno'){
-          fieldsHtml += `<div class="field${isFull}"><label>${FIELD_LABELS[f]}</label>
-            <select id="${pumpId}_${f}">
-              <option value="">—</option>
-              <option value="✓">✓ Yes</option>
-              <option value="No">No</option>
-            </select></div>`;
+          fieldsHtml += `<div class="field${isFull}"><label>${FIELD_LABELS[f]}</label><select id="${pumpId}_${f}"><option value="">—</option><option value="✓">✓ Yes</option><option value="No">No</option></select></div>`;
         } else {
-          fieldsHtml += `<div class="field${isFull}"><label>${FIELD_LABELS[f]}</label>
-            <input type="${FIELD_TYPES[f]==='number'?'number':'text'}" id="${pumpId}_${f}" placeholder="—" step="0.1"/></div>`;
+          fieldsHtml += `<div class="field${isFull}"><label>${FIELD_LABELS[f]}</label><input type="${FIELD_TYPES[f]==='number'?'number':'text'}" id="${pumpId}_${f}" placeholder="—" step="0.1"/></div>`;
         }
       });
       fieldsHtml += '</div>';
@@ -385,26 +218,18 @@ function buildForm(){
   });
 }
 
-// ─── SAVE ENTRY ───────────────────────────────────────────────────────
 function saveEntry(){
   const date = document.getElementById('entry-date').value;
   const tech = document.getElementById('entry-tech').value.trim();
   if(!date){ showToast('Please select a date'); return; }
-
   const data = { id: Date.now(), date, tech, pumps: {} };
-
   PUMP_GROUPS.forEach(g => {
     g.pumps.forEach(pumpId => {
       data.pumps[pumpId] = {};
-      g.fields.forEach(f => {
-        const el = document.getElementById(`${pumpId}_${f}`);
-        data.pumps[pumpId][f] = el ? el.value : '';
-      });
+      g.fields.forEach(f => { const el = document.getElementById(`${pumpId}_${f}`); data.pumps[pumpId][f] = el ? el.value : ''; });
     });
   });
-
   const entries = loadEntries();
-  // Remove existing entry for same date if any
   const idx = entries.findIndex(e => e.date === date);
   if(idx >= 0){ entries.splice(idx,1); }
   entries.push(data);
@@ -414,32 +239,23 @@ function saveEntry(){
   showToast('Entry saved ✓');
 }
 
-// ─── CLEAR FORM ───────────────────────────────────────────────────────
 function clearForm(){
   document.getElementById('entry-tech').value = '';
   ALL_PUMPS.forEach(pumpId => {
     PUMP_GROUPS.forEach(g => {
       if(!g.pumps.includes(pumpId)) return;
-      g.fields.forEach(f => {
-        const el = document.getElementById(`${pumpId}_${f}`);
-        if(el) el.value = '';
-      });
+      g.fields.forEach(f => { const el = document.getElementById(`${pumpId}_${f}`); if(el) el.value = ''; });
     });
   });
 }
 
-// ─── TREND VIEW ───────────────────────────────────────────────────────
 function populatePumpSelect(){
   const sel = document.getElementById('trend-pump-select');
   sel.innerHTML = '<option value="">— Select a pump —</option>';
   PUMP_GROUPS.forEach(g => {
     const optGroup = document.createElement('optgroup');
     optGroup.label = g.group;
-    g.pumps.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p; opt.textContent = p;
-      optGroup.appendChild(opt);
-    });
+    g.pumps.forEach(p => { const opt = document.createElement('option'); opt.value = p; opt.textContent = p; optGroup.appendChild(opt); });
     sel.appendChild(optGroup);
   });
 }
@@ -448,33 +264,14 @@ function renderTrend(){
   const pumpId = document.getElementById('trend-pump-select').value;
   const out = document.getElementById('trend-output');
   if(!pumpId){ out.innerHTML = '<div class="no-data">Select a pump to view its trend log</div>'; return; }
-
   const entries = loadEntries();
   const pumpEntries = entries.filter(e => e.pumps && e.pumps[pumpId]);
-
-  if(!pumpEntries.length){
-    out.innerHTML = '<div class="no-data">No entries recorded for this pump yet</div>';
-    return;
-  }
-
-  // Find fields for this pump
+  if(!pumpEntries.length){ out.innerHTML = '<div class="no-data">No entries recorded for this pump yet</div>'; return; }
   const group = PUMP_GROUPS.find(g => g.pumps.includes(pumpId));
   const fields = group ? group.fields : [];
-
-  // Build table
-  let html = `<div class="trend-card">
-    <div class="trend-title">${pumpId} — Trend Log</div>
-    <table class="trend-table">
-      <thead><tr>
-        <th>Date</th><th>Tech</th>`;
+  let html = `<div class="trend-card"><div class="trend-title">${pumpId} — Trend Log</div><table class="trend-table"><thead><tr><th>Date</th><th>Tech</th>`;
   fields.forEach(f => { html += `<th>${FIELD_LABELS[f]}</th>`; });
   html += '</tr></thead><tbody>';
-
-  // Collect numeric values for sparklines
-  const numericFields = fields.filter(f => FIELD_TYPES[f] === 'number');
-  const sparkData = {};
-  numericFields.forEach(f => { sparkData[f] = pumpEntries.map(e => parseFloat(e.pumps[pumpId][f])||0); });
-
   pumpEntries.slice().reverse().forEach(e => {
     const d = e.pumps[pumpId];
     html += `<tr><td>${formatDate(e.date)}</td><td>${e.tech||'—'}</td>`;
@@ -487,64 +284,21 @@ function renderTrend(){
     });
     html += '</tr>';
   });
-
   html += '</tbody></table></div>';
-
-  // Numeric trend cards
-  numericFields.forEach(f => {
-    const vals = sparkData[f].filter(v => v>0);
-    if(!vals.length) return;
-    const min = Math.min(...vals), max = Math.max(...vals);
-    const last = vals[vals.length-1];
-    const avg = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
-    const trend = vals.length>1 ? (vals[vals.length-1]-vals[vals.length-2]).toFixed(1) : '—';
-    const trendIcon = parseFloat(trend)>0?'↑':parseFloat(trend)<0?'↓':'→';
-    const trendColor = (f==='motorTemp'||f==='alarm') ? (parseFloat(trend)>0?'#ff6b6b':'#4ade80') : '';
-
-    html += `<div class="trend-card" style="display:inline-block;min-width:180px;margin-right:10px;margin-bottom:10px;vertical-align:top">
-      <div style="font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.5);text-transform:uppercase;margin-bottom:4px">${FIELD_LABELS[f]}</div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:2px;color:#fef3c7">${last}</div>
-      <div style="font-size:10px;color:rgba(245,158,11,.5);margin-top:4px">
-        Avg: ${avg} · Min: ${min} · Max: ${max}
-      </div>
-      <div style="font-size:13px;font-weight:700;color:${trendColor||'rgba(245,158,11,.6)'};margin-top:2px">
-        ${trendIcon} ${trend !== '—' ? (parseFloat(trend)>0?'+':'')+trend : '—'} vs last
-      </div>
-      <div style="display:flex;align-items:flex-end;gap:2px;height:24px;margin-top:8px">
-        ${vals.slice(-12).map(v=>{
-          const h = max>0?Math.max(3,Math.round((v/max)*24)):3;
-          return `<div style="width:6px;height:${h}px;background:var(--amber);border-radius:1px;opacity:.6"></div>`;
-        }).join('')}
-      </div>
-    </div>`;
-  });
-
   out.innerHTML = html;
 }
 
-// ─── HISTORY VIEW ─────────────────────────────────────────────────────
 function renderHistory(){
   const entries = loadEntries();
   const list = document.getElementById('history-list');
-  if(!entries.length){
-    list.innerHTML = '<div class="no-data">No entries saved yet</div>';
-    return;
-  }
+  if(!entries.length){ list.innerHTML = '<div class="no-data">No entries saved yet</div>'; return; }
   list.innerHTML = '';
   entries.slice().reverse().forEach(e => {
     const item = document.createElement('div');
     item.className = 'history-item';
     const pumpsWithData = Object.keys(e.pumps||{}).filter(p => Object.values(e.pumps[p]).some(v=>v&&v!==''));
     const alarms = Object.entries(e.pumps||{}).filter(([,v])=>v.alarm&&v.alarm!=='No'&&v.alarm!=='').length;
-    item.innerHTML = `
-      <div>
-        <div class="history-date">${formatDate(e.date)}</div>
-        <div class="history-meta">${e.tech||'Unknown tech'} · ${pumpsWithData.length} pumps recorded${alarms?` · <span style="color:#ff6b6b">${alarms} alarm(s)</span>`:''}</div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button class="tb-btn" onclick="loadEntry('${e.id}');event.stopPropagation()">Load</button>
-        <button class="history-del" onclick="deleteEntry('${e.id}');event.stopPropagation()">Delete</button>
-      </div>`;
+    item.innerHTML = `<div><div class="history-date">${formatDate(e.date)}</div><div class="history-meta">${e.tech||'Unknown tech'} · ${pumpsWithData.length} pumps recorded${alarms?` · <span style="color:#ff6b6b">${alarms} alarm(s)</span>`:''}</div></div><div style="display:flex;gap:8px;align-items:center"><button class="tb-btn" onclick="loadEntry('${e.id}');event.stopPropagation()">Load</button><button class="history-del" onclick="deleteEntry('${e.id}');event.stopPropagation()">Delete</button></div>`;
     item.addEventListener('click', ()=>loadEntry(e.id));
     list.appendChild(item);
   });
@@ -559,10 +313,7 @@ function loadEntry(id){
   PUMP_GROUPS.forEach(g => {
     g.pumps.forEach(pumpId => {
       if(!entry.pumps[pumpId]) return;
-      g.fields.forEach(f => {
-        const el = document.getElementById(`${pumpId}_${f}`);
-        if(el) el.value = entry.pumps[pumpId][f]||'';
-      });
+      g.fields.forEach(f => { const el = document.getElementById(`${pumpId}_${f}`); if(el) el.value = entry.pumps[pumpId][f]||''; });
     });
   });
   showView('entry', document.querySelector('.tab'));
@@ -579,7 +330,6 @@ function deleteEntry(id){
   showToast('Entry deleted');
 }
 
-// ─── EXPORT CSV ───────────────────────────────────────────────────────
 function exportCSV(){
   const entries = loadEntries();
   if(!entries.length){ showToast('No entries to export'); return; }
@@ -589,9 +339,7 @@ function exportCSV(){
     ALL_PUMPS.forEach(pumpId => {
       if(!e.pumps[pumpId]) return;
       const d = e.pumps[pumpId];
-      const row = [e.date, e.tech||'', pumpId,
-        d.standby||'', d.alarm||'', d.hrs||'', d.freq||'',
-        d.pOut||'', d.pIn||'', d.sealFlow||'', d.motorTemp||''];
+      const row = [e.date, e.tech||'', pumpId, d.standby||'', d.alarm||'', d.hrs||'', d.freq||'', d.pOut||'', d.pIn||'', d.sealFlow||'', d.motorTemp||''];
       csv += row.map(v=>`"${v}"`).join(',')+'\n';
     });
   });
@@ -603,7 +351,6 @@ function exportCSV(){
   showToast('CSV exported ✓');
 }
 
-// ─── HELPERS ──────────────────────────────────────────────────────────
 function showView(name, btn){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -622,8 +369,7 @@ function formatDate(d){
 
 function showToast(msg){
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
+  t.textContent = msg; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2500);
 }
 
@@ -632,162 +378,16 @@ function updateStatusLabel(){
   document.getElementById('entry-count-label').textContent = `· ${count} entr${count===1?'y':'ies'} saved`;
 }
 
-
-// ─── SCAN SHEET ───────────────────────────────────────────────────────
-// Pending scan file waiting for API key
-let _pendingScanFile = null;
-
-function submitApiKey(){
-  const key = document.getElementById('apikey-input').value.trim();
-  if(!key || key.length < 10){ showToast('Please enter your API key'); return; }
-  if(document.getElementById('apikey-save').checked){
-    localStorage.setItem('mhac-api-key', key);
-  }
-  document.getElementById('apikey-modal').style.display = 'none';
-  if(_pendingScanFile) doScan(_pendingScanFile);
-}
-
-async function scanSheet(event){
-  const file = event.target.files[0];
-  if(!file) return;
-  _pendingScanFile = file;
-
-  // Check for stored API key
-  const storedKey = localStorage.getItem('mhac-api-key');
-  if(!storedKey){
-    document.getElementById('apikey-input').value = '';
-    document.getElementById('apikey-modal').style.display = 'flex';
-    return;
-  }
-  doScan(file);
-}
-
-async function doScan(file){
-
-  // Show overlay
-  const overlay = document.getElementById('scan-overlay');
-  overlay.style.display = 'flex';
-  document.getElementById('scan-status').textContent = 'Converting image...';
-
-  try {
-    // Convert file to base64
-    const base64 = await new Promise((res, rej) => {
-      const reader = new FileReader();
-      reader.onload = () => res(reader.result.split(',')[1]);
-      reader.onerror = rej;
-      reader.readAsDataURL(file);
-    });
-
-    document.getElementById('scan-status').textContent = 'Sending to AI...';
-
-    // Build the pump list for the prompt
-    const pumpList = PUMP_GROUPS.map(g =>
-      g.group + ': ' + g.pumps.join(', ') + ' [fields: ' + g.fields.map(f=>FIELD_LABELS[f]).join(', ') + ']'
-    ).join('\n');
-
-    const prompt = `You are reading a handwritten Monthly Pump Checks inspection sheet for MHAC hospital.
-
-The sheet contains readings for these pumps and fields:
-${pumpList}
-
-Please extract ALL visible handwritten values from this inspection sheet.
-For Stand By: return "✓" if checked/ticked, "No" if marked No or blank.
-For Alarm: return "✓" if there is an alarm indicated, "No" if marked No or blank.
-For numeric fields (Hrs, Freq, P Out, P In, Motor Temp): return the number as written.
-For Seal Flow: return "NA" if marked N/A, "✓" if ticked, or the value if written.
-Also extract the technician name and date if visible.
-
-Return ONLY a JSON object in this exact format (no markdown, no explanation):
-{
-  "date": "YYYY-MM-DD or empty string",
-  "tech": "technician name or empty string",
-  "pumps": {
-    "PUMP-ID": {
-      "standby": "",
-      "alarm": "",
-      "hrs": "",
-      "freq": "",
-      "pOut": "",
-      "pIn": "",
-      "sealFlow": "",
-      "motorTemp": ""
-    }
-  }
-}
-
-Only include fields that actually exist for each pump. If a value is not visible or illegible, use empty string.`;
-
-    const WORKER_URL = 'https://mhac-proxy.alexandria-pfaff.workers.dev';
-    const response = await fetch(WORKER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: file.type === 'application/pdf' ? 'image/jpeg' : file.type, data: base64 }},
-            { type: 'text', text: prompt }
-          ]
-        }]
-      })
-    });
-
-    document.getElementById('scan-status').textContent = 'Parsing results...';
-
-    const data = await response.json();
-    const text = data.content?.[0]?.text || '';
-
-    // Parse JSON from response
-    let parsed;
-    try {
-      const clean = text.replace(/```json|```/g,'').trim();
-      parsed = JSON.parse(clean);
-    } catch(e) {
-      throw new Error('Could not parse AI response. Try a clearer photo.');
-    }
-
-    // Fill in date and tech
-    if(parsed.date) document.getElementById('entry-date').value = parsed.date;
-    if(parsed.tech) document.getElementById('entry-tech').value = parsed.tech;
-
-    // Fill pump fields
-    let filled = 0;
-    if(parsed.pumps){
-      PUMP_GROUPS.forEach(g => {
-        g.pumps.forEach(pumpId => {
-          const pumpData = parsed.pumps[pumpId];
-          if(!pumpData) return;
-          g.fields.forEach(f => {
-            const el = document.getElementById(pumpId + '_' + f);
-            if(el && pumpData[f] !== undefined && pumpData[f] !== '') {
-              el.value = pumpData[f];
-              filled++;
-            }
-          });
-        });
-      });
-    }
-
-    overlay.style.display = 'none';
-    event.target.value = '';
-    _pendingScanFile = null;
-    showToast('Scanned ' + filled + ' values ✓ — please review');
-
-  } catch(err) {
-    overlay.style.display = 'none';
-    event.target.value = '';
-    _pendingScanFile = null;
-    showToast('Error: ' + (err.message || 'Scan failed'));
-    console.error(err);
-  }
-}
-
-// ─── INIT ─────────────────────────────────────────────────────────────
 buildForm();
 document.getElementById('entry-date').value = new Date().toISOString().split('T')[0];
-updateStatusLabel();
+
+// ── CLOUD INIT ──────────────────────────────────────────────────────
+(async function(){
+  const cloud = await sbGet(STORE_KEY);
+  if(cloud !== null) localStorage.setItem(STORE_KEY, JSON.stringify(cloud));
+  document.getElementById('cloud-overlay').style.display = 'none';
+  updateStatusLabel();
+})();
 </script>
 </body>
 </html>

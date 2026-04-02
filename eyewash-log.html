@@ -35,7 +35,6 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 .lvl-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
 .lvl-tab{padding:5px 14px;border:1px solid rgba(245,158,11,.2);border-radius:4px;background:transparent;color:rgba(245,158,11,.4);font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
 .lvl-tab.active{background:rgba(245,158,11,.12);border-color:var(--amber);color:var(--amber-light)}
-/* ENTRY */
 .entry-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
 .entry-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;background:linear-gradient(130deg,#fff8dc,#ffb700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .meta-row{display:flex;gap:8px;flex-wrap:wrap}
@@ -43,7 +42,6 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 .meta-in:focus{border-color:rgba(245,158,11,.5)}
 .range-note{font-size:9px;letter-spacing:1.5px;color:rgba(245,158,11,.3);text-transform:uppercase;margin-bottom:12px;padding:5px 10px;background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.1);border-radius:4px;display:inline-block}
 .range-note span{color:rgba(34,197,94,.6)}
-/* GRID */
 .ew-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:16px}
 .ew-card{background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.12);border-radius:8px;padding:12px}
 .ew-room{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:var(--amber-light)}
@@ -61,13 +59,11 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 .flush-lbl{font-size:8px;letter-spacing:1.5px;color:rgba(245,158,11,.4);text-transform:uppercase;font-weight:700}
 .flush-sel{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:4px;color:#fef3c7;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:600;padding:4px 8px;outline:none;flex:1}
 .flush-sel option{background:#0f0a03}
-/* ACTIONS */
 .act-row{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
 .btn-save{padding:8px 20px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);border-radius:5px;color:var(--amber-light);font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
 .btn-save:hover{background:rgba(245,158,11,.22);border-color:var(--amber);color:#fff}
 .btn-sec{padding:8px 14px;background:transparent;border:1px solid rgba(245,158,11,.15);border-radius:5px;color:rgba(245,158,11,.4);font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
 .btn-sec:hover{border-color:rgba(245,158,11,.3);color:rgba(245,158,11,.7)}
-/* TREND */
 .trend-card{background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.12);border-radius:8px;padding:14px;margin-bottom:8px}
 .t-room{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;color:var(--amber-light)}
 .t-loc{font-size:9px;letter-spacing:1px;color:rgba(245,158,11,.3);text-transform:uppercase;margin-bottom:10px}
@@ -76,10 +72,7 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 .t-fail{color:#f87171;font-weight:700;font-size:11px;letter-spacing:1px}
 .t-avg{font-size:9px;letter-spacing:1px;color:rgba(245,158,11,.35);text-transform:uppercase;margin-top:3px}
 .bar{border-radius:2px 2px 0 0;min-height:3px}
-.bar-ok{background:rgba(34,197,94,.6)}
-.bar-cold{background:rgba(59,130,246,.6)}
-.bar-hot{background:rgba(239,68,68,.6)}
-.bar-empty{background:rgba(245,158,11,.1)}
+.bar-ok{background:rgba(34,197,94,.6)}.bar-cold{background:rgba(59,130,246,.6)}.bar-hot{background:rgba(239,68,68,.6)}.bar-empty{background:rgba(245,158,11,.1)}
 .no-data{text-align:center;padding:32px;color:rgba(245,158,11,.3);font-size:11px;letter-spacing:2px;text-transform:uppercase;line-height:2}
 .toast{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:rgba(10,5,0,.97);border:1px solid var(--amber);border-radius:6px;padding:10px 24px;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--amber-light);z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
@@ -93,6 +86,17 @@ function clearSession(){sessionStorage.removeItem('mhac-session');}
 <body>
 <div class="water-bg"></div>
 <div class="scanlines"></div>
+
+<div id="cloud-overlay" style="position:fixed;inset:0;z-index:99999;background:rgba(10,5,0,.97);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:6px;background:linear-gradient(130deg,#fff8dc,#ffb700);-webkit-background-clip:text;-webkit-text-fill-color:transparent">MHAC</div>
+  <div style="font-size:9px;letter-spacing:3px;color:rgba(245,158,11,.5);text-transform:uppercase">Syncing data...</div>
+  <div style="display:flex;gap:8px;margin-top:4px">
+    <div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;animation:sblink 0.8s ease-in-out infinite"></div>
+    <div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;animation:sblink 0.8s 0.2s ease-in-out infinite"></div>
+    <div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;animation:sblink 0.8s 0.4s ease-in-out infinite"></div>
+  </div>
+</div>
+
 <nav class="topbar">
   <div class="tb-left">
     <div class="tb-badge">Safety</div>
@@ -111,8 +115,6 @@ function clearSession(){sessionStorage.removeItem('mhac-session');}
     <button class="tab active" onclick="showView('entry',this)">Monthly Entry</button>
     <button class="tab" onclick="showView('trends',this)">Trend Log</button>
   </div>
-
-  <!-- ENTRY -->
   <div class="view active" id="view-entry">
     <div class="lvl-tabs" id="entry-lvl-tabs"></div>
     <div class="entry-hdr">
@@ -129,8 +131,6 @@ function clearSession(){sessionStorage.removeItem('mhac-session');}
       <button class="btn-sec" onclick="clearTemps()">Clear</button>
     </div>
   </div>
-
-  <!-- TRENDS -->
   <div class="view" id="view-trends">
     <div class="lvl-tabs" id="trend-lvl-tabs"></div>
     <div id="trend-out"></div>
@@ -146,68 +146,49 @@ function clearSession(){sessionStorage.removeItem('mhac-session');}
 <div class="toast" id="toast"></div>
 
 <script>
-var ST_KEY  = 'mhac-ew-st2';
+// ═══ SUPABASE SYNC ═══════════════════════════════════════════════════
+const SB_URL='https://nqlpevxqedqxfjnlxxws.supabase.co';
+const SB_PUB='sb_publishable_Ug-6aCZ-InZVnrCTqcLv2w_BheY4Kj5';
+const SB_H={'apikey':SB_PUB,'Authorization':'Bearer '+SB_PUB,'Content-Type':'application/json'};
+async function sbGet(k){try{const r=await fetch(SB_URL+'/rest/v1/app_data?key=eq.'+encodeURIComponent(k)+'&select=value',{headers:SB_H});if(!r.ok)throw 0;const d=await r.json();return d.length?d[0].value:null;}catch(e){return null;}}
+async function sbSet(k,v){try{await fetch(SB_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SB_H,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({key:k,value:v,updated_at:new Date().toISOString()})});}catch(e){}}
+// ════════════════════════════════════════════════════════════════════
+
 var LOG_KEY = 'mhac-ew-log2';
 
 var STATIONS = {
   '1': [
-    {room:'1A.100A', loc:'Housekeeping'},
-    {room:'1A.100B', loc:'Medication Room'},
-    {room:'1A.185',  loc:'Soiled Utility'},
-    {room:'1A.191',  loc:'Servery'},
-    {room:'1A.224',  loc:'Housekeeping'},
-    {room:'1A.226',  loc:'Soiled Utility'},
-    {room:'1A.231',  loc:'Medication Room'},
-    {room:'1A.301-E',loc:'Pharmacy EAST'},
-    {room:'1A.301-S',loc:'Pharmacy SOUTH'},
-    {room:'1A.305',  loc:'Housekeeping'},
-    {room:'1A.350',  loc:'Storage'},
-    {room:'1A.351',  loc:'Soiled Utility'},
-    {room:'1A.353',  loc:'Laundry Room'}
+    {room:'1A.100A', loc:'Housekeeping'},{room:'1A.100B', loc:'Medication Room'},{room:'1A.185', loc:'Soiled Utility'},
+    {room:'1A.191', loc:'Servery'},{room:'1A.224', loc:'Housekeeping'},{room:'1A.226', loc:'Soiled Utility'},
+    {room:'1A.231', loc:'Medication Room'},{room:'1A.301-E', loc:'Pharmacy EAST'},{room:'1A.301-S', loc:'Pharmacy SOUTH'},
+    {room:'1A.305', loc:'Housekeeping'},{room:'1A.350', loc:'Storage'},{room:'1A.351', loc:'Soiled Utility'},{room:'1A.353', loc:'Laundry Room'}
   ],
   '2': [
-    {room:'2A.100A', loc:'Medication Room'},
-    {room:'2A.100B', loc:'Soiled Utility'},
-    {room:'2A.100H', loc:'Housekeeping'},
-    {room:'2A.161',  loc:'Servery'},
-    {room:'2A.212',  loc:'Housekeeping'},
-    {room:'2A.323',  loc:'Housekeeping'},
-    {room:'2A.340A', loc:'Medication Room'},
-    {room:'2A.351',  loc:'Facilities Warehouse'},
-    {room:'2A.353',  loc:'BioMedical Warehouse'}
+    {room:'2A.100A', loc:'Medication Room'},{room:'2A.100B', loc:'Soiled Utility'},{room:'2A.100H', loc:'Housekeeping'},
+    {room:'2A.161', loc:'Servery'},{room:'2A.212', loc:'Housekeeping'},{room:'2A.323', loc:'Housekeeping'},
+    {room:'2A.340A', loc:'Medication Room'},{room:'2A.351', loc:'Facilities Warehouse'},{room:'2A.353', loc:'BioMedical Warehouse'}
   ],
   '3': [
-    {room:'3A.100A', loc:'Medication Room'},
-    {room:'3A.100B', loc:'Soiled Utility'},
-    {room:'3A.100H', loc:'Housekeeping'},
-    {room:'3A.146',  loc:'Storage/Equipment'},
-    {room:'3A.161',  loc:'Servery'},
-    {room:'3A.323',  loc:'Housekeeping'}
+    {room:'3A.100A', loc:'Medication Room'},{room:'3A.100B', loc:'Soiled Utility'},{room:'3A.100H', loc:'Housekeeping'},
+    {room:'3A.146', loc:'Storage/Equipment'},{room:'3A.161', loc:'Servery'},{room:'3A.323', loc:'Housekeeping'}
   ],
   '4': [
-    {room:'4A.100A',  loc:'Medication Room'},
-    {room:'4A.100B',  loc:'Soiled Utility'},
-    {room:'4A.100H',  loc:'Housekeeping'},
-    {room:'4A.161',   loc:'Servery'},
-    {room:'4A.322-NE',loc:'North East'},
-    {room:'4A.322-NS',loc:'North Shower'},
-    {room:'4A.322-NW',loc:'North West'},
-    {room:'4A.322A',  loc:'Chemical/Housekeeping'},
-    {room:'4A.350',   loc:'Maintenance Shop'}
+    {room:'4A.100A', loc:'Medication Room'},{room:'4A.100B', loc:'Soiled Utility'},{room:'4A.100H', loc:'Housekeeping'},
+    {room:'4A.161', loc:'Servery'},{room:'4A.322-NE', loc:'North East'},{room:'4A.322-NS', loc:'North Shower'},
+    {room:'4A.322-NW', loc:'North West'},{room:'4A.322A', loc:'Chemical/Housekeeping'},{room:'4A.350', loc:'Maintenance Shop'}
   ],
-  '5': [
-    {room:'5A.587', loc:'Housekeeping'},
-    {room:'5A.588', loc:'Housekeeping'}
-  ]
+  '5': [{room:'5A.587', loc:'Housekeeping'},{room:'5A.588', loc:'Housekeeping'}]
 };
 
 var entryLevel = '1';
 var trendLevel = '1';
 
 function loadLog(){ try{ return JSON.parse(localStorage.getItem(LOG_KEY))||[]; }catch(e){return[];} }
-function saveLog(d){ localStorage.setItem(LOG_KEY, JSON.stringify(d)); }
+function saveLog(d){
+  localStorage.setItem(LOG_KEY, JSON.stringify(d));
+  sbSet(LOG_KEY, d); // sync to cloud
+}
 
-// ── LEVEL TABS ──────────────────────────────────────────────────────
 function mkTabs(containerId, activeLevel, onSelect) {
   var c = document.getElementById(containerId);
   c.innerHTML = '';
@@ -226,7 +207,6 @@ function mkTabs(containerId, activeLevel, onSelect) {
   }
 }
 
-// ── ENTRY GRID ──────────────────────────────────────────────────────
 function renderGrid() {
   var stations = STATIONS[entryLevel] || [];
   document.getElementById('entry-lvl-lbl').textContent = entryLevel;
@@ -247,9 +227,7 @@ function renderGrid() {
       '<div class="flush-row">' +
         '<span class="flush-lbl">Flushed</span>' +
         '<select class="flush-sel" id="fl_' + s.room + '">' +
-          '<option value="">&#8212;</option>' +
-          '<option value="Yes">Yes</option>' +
-          '<option value="No">No</option>' +
+          '<option value="">&#8212;</option><option value="Yes">Yes</option><option value="No">No</option>' +
         '</select>' +
       '</div>';
     grid.appendChild(card);
@@ -261,24 +239,15 @@ function onTemp(el, room) {
   el.classList.remove('cold','hot','ok');
   var pf = document.getElementById('pf_' + room);
   if (isNaN(v) || el.value === '') { pf.innerHTML = ''; return; }
-  if (v < 16) {
-    el.classList.add('cold');
-    pf.innerHTML = '<span class="pf-fail">&#x2717;</span><span class="pf-fail">FAIL</span>';
-  } else if (v > 38) {
-    el.classList.add('hot');
-    pf.innerHTML = '<span class="pf-fail">&#x2717;</span><span class="pf-fail">FAIL</span>';
-  } else {
-    el.classList.add('ok');
-    pf.innerHTML = '<span class="pf-pass">&#x2713;</span><span class="pf-pass">PASS</span>';
-  }
+  if (v < 16) { el.classList.add('cold'); pf.innerHTML = '<span class="pf-fail">&#x2717;</span><span class="pf-fail">FAIL</span>'; }
+  else if (v > 38) { el.classList.add('hot'); pf.innerHTML = '<span class="pf-fail">&#x2717;</span><span class="pf-fail">FAIL</span>'; }
+  else { el.classList.add('ok'); pf.innerHTML = '<span class="pf-pass">&#x2713;</span><span class="pf-pass">PASS</span>'; }
 }
 
 function clearTemps() {
   var stations = STATIONS[entryLevel] || [];
   stations.forEach(function(s) {
-    var t = document.getElementById('t_' + s.room);
-    var f = document.getElementById('fl_' + s.room);
-    var p = document.getElementById('pf_' + s.room);
+    var t = document.getElementById('t_' + s.room), f = document.getElementById('fl_' + s.room), p = document.getElementById('pf_' + s.room);
     if (t) { t.value = ''; t.classList.remove('cold','hot','ok'); }
     if (f) f.value = '';
     if (p) p.innerHTML = '';
@@ -292,17 +261,15 @@ function saveEntry() {
   var stations = STATIONS[entryLevel] || [];
   var readings = {};
   stations.forEach(function(s) {
-    var t = document.getElementById('t_' + s.room);
-    var f = document.getElementById('fl_' + s.room);
+    var t = document.getElementById('t_' + s.room), f = document.getElementById('fl_' + s.room);
     readings[s.room] = { temp: t ? t.value : '', flush: f ? f.value : '' };
   });
   var missing = stations.filter(function(s){ return !readings[s.room].temp; });
   if (missing.length) {
     var names = missing.map(function(s){ return s.room; }).join(', ');
-    if (!confirm(missing.length + ' station' + (missing.length > 1 ? 's' : '') + ' have no temperature:\n\n' + names + '\n\nSave anyway?')) return;
+    if (!confirm(missing.length + ' station(s) have no temperature:\n\n' + names + '\n\nSave anyway?')) return;
   }
   var log = loadLog();
-  // Replace existing entry for same date+level
   log = log.filter(function(e){ return !(e.date === date && e.level === entryLevel); });
   log.push({ date: date, level: entryLevel, tech: tech, readings: readings });
   log.sort(function(a,b){ return a.date.localeCompare(b.date); });
@@ -310,77 +277,39 @@ function saveEntry() {
   showToast('Saved \u2713');
 }
 
-// ── TREND ───────────────────────────────────────────────────────────
 function renderTrend() {
   var out = document.getElementById('trend-out');
   var stations = STATIONS[trendLevel] || [];
   var log = loadLog().filter(function(e){ return e.level === trendLevel; });
   out.innerHTML = '';
-
-  if (!stations.length) {
-    out.innerHTML = '<div class="no-data">No stations on Level ' + trendLevel + '</div>';
-    return;
-  }
-
+  if (!stations.length) { out.innerHTML = '<div class="no-data">No stations on Level ' + trendLevel + '</div>'; return; }
   stations.forEach(function(s) {
     var entries = log.filter(function(e){ return e.readings && e.readings[s.room] && e.readings[s.room].temp !== ''; });
     var vals = entries.map(function(e){ return parseFloat(e.readings[s.room].temp); }).filter(function(v){ return !isNaN(v); });
-
     var last = vals.length ? vals[vals.length - 1] : null;
     var avg = vals.length ? (vals.reduce(function(a,b){return a+b;},0) / vals.length).toFixed(1) : null;
     var minV = vals.length ? Math.min.apply(null, vals) : 0;
     var maxV = vals.length ? Math.max.apply(null, vals) : 40;
-
-    // Status
     var statusHtml = '';
-    if (last !== null) {
-      if (last < 16 || last > 38) statusHtml = '<div class="t-fail">&#x2717; FAIL</div>';
-      else statusHtml = '<div class="t-pass">&#x2713; PASS</div>';
-    }
-
-    // Bar chart - last 10 entries
+    if (last !== null) { statusHtml = (last < 16 || last > 38) ? '<div class="t-fail">&#x2717; FAIL</div>' : '<div class="t-pass">&#x2713; PASS</div>'; }
     var last10 = entries.slice(-10);
-    var barsHtml = '';
-    var labelsHtml = '';
-    var barW = 14;
+    var barsHtml = '', labelsHtml = '', barW = 14;
     last10.forEach(function(e) {
-      var v = parseFloat(e.readings[s.room].temp);
-      var cls = 'bar-empty';
-      var h = 4;
-      if (!isNaN(v)) {
-        cls = v < 16 ? 'bar-cold' : v > 38 ? 'bar-hot' : 'bar-ok';
-        var range = (maxV - minV) || 1;
-        h = Math.max(4, Math.round(((v - minV) / range) * 40) + 4);
-      }
+      var v = parseFloat(e.readings[s.room].temp), cls = 'bar-empty', h = 4;
+      if (!isNaN(v)) { cls = v < 16 ? 'bar-cold' : v > 38 ? 'bar-hot' : 'bar-ok'; var range = (maxV - minV) || 1; h = Math.max(4, Math.round(((v - minV) / range) * 40) + 4); }
       barsHtml += '<div class="bar ' + cls + '" style="width:' + barW + 'px;height:' + h + 'px;flex-shrink:0"></div>';
       labelsHtml += '<div style="width:' + barW + 'px;font-size:7px;color:rgba(245,158,11,.3);text-align:center;flex-shrink:0">' + fmtShort(e.date) + '</div>';
     });
-
     var card = document.createElement('div');
     card.className = 'trend-card';
-    card.innerHTML =
-      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">' +
-        '<div style="flex:1;min-width:0">' +
-          '<div class="t-room">Room ' + s.room + '</div>' +
-          '<div class="t-loc">' + s.loc + '</div>' +
-          (vals.length ?
-            '<div style="display:flex;align-items:flex-end;gap:2px;height:48px">' + barsHtml + '</div>' +
-            '<div style="display:flex;gap:2px;margin-top:3px">' + labelsHtml + '</div>'
-            :
-            '<div style="font-size:9px;letter-spacing:1px;color:rgba(245,158,11,.2);text-transform:uppercase">No readings yet</div>'
-          ) +
-        '</div>' +
-        '<div style="text-align:right;flex-shrink:0">' +
-          '<div class="t-latest">' + (last !== null ? last + '&deg;C' : '&mdash;') + '</div>' +
-          statusHtml +
-          (avg ? '<div class="t-avg">Avg ' + avg + '&deg;C</div>' : '') +
-        '</div>' +
-      '</div>';
+    card.innerHTML = '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">' +
+      '<div style="flex:1;min-width:0"><div class="t-room">Room ' + s.room + '</div><div class="t-loc">' + s.loc + '</div>' +
+      (vals.length ? '<div style="display:flex;align-items:flex-end;gap:2px;height:48px">' + barsHtml + '</div><div style="display:flex;gap:2px;margin-top:3px">' + labelsHtml + '</div>' : '<div style="font-size:9px;letter-spacing:1px;color:rgba(245,158,11,.2);text-transform:uppercase">No readings yet</div>') +
+      '</div><div style="text-align:right;flex-shrink:0"><div class="t-latest">' + (last !== null ? last + '&deg;C' : '&mdash;') + '</div>' + statusHtml + (avg ? '<div class="t-avg">Avg ' + avg + '&deg;C</div>' : '') + '</div></div>';
     out.appendChild(card);
   });
 }
 
-// ── EXPORT ──────────────────────────────────────────────────────────
 function exportCSV() {
   var log = loadLog();
   if (!log.length) { showToast('No data to export'); return; }
@@ -388,8 +317,7 @@ function exportCSV() {
   log.forEach(function(e) {
     var stations = STATIONS[e.level] || [];
     Object.keys(e.readings || {}).forEach(function(room) {
-      var r = e.readings[room];
-      var st = stations.find(function(s){ return s.room === room; }) || {};
+      var r = e.readings[room], st = stations.find(function(s){ return s.room === room; }) || {};
       csv += '"' + e.date + '","' + e.level + '","' + (e.tech||'') + '","' + room + '","' + (st.loc||'') + '","' + (r.temp||'') + '","' + (r.flush||'') + '"\n';
     });
   });
@@ -400,7 +328,6 @@ function exportCSV() {
   showToast('Exported \u2713');
 }
 
-// ── HELPERS ─────────────────────────────────────────────────────────
 function showView(name, btn) {
   document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
   document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
@@ -421,16 +348,22 @@ function showToast(msg) {
   setTimeout(function(){ t.classList.remove('show'); }, 2500);
 }
 
-// Read level from URL
 var urlLvl = new URLSearchParams(window.location.search).get('level');
 if(urlLvl) entryLevel = urlLvl;
 var ewBb = document.getElementById('ew-back-btn');
 if(ewBb && urlLvl) ewBb.href = 'level-reports.html?level=' + urlLvl;
-// ── INIT ────────────────────────────────────────────────────────────
+
 mkTabs('entry-lvl-tabs', entryLevel, function(l){ entryLevel = l; renderGrid(); });
 mkTabs('trend-lvl-tabs', trendLevel, function(l){ trendLevel = l; renderTrend(); });
 document.getElementById('entry-date').value = new Date().toISOString().split('T')[0];
-renderGrid();
+
+// ── CLOUD INIT ──────────────────────────────────────────────────────
+(async function(){
+  const cloud = await sbGet(LOG_KEY);
+  if(cloud !== null) localStorage.setItem(LOG_KEY, JSON.stringify(cloud));
+  document.getElementById('cloud-overlay').style.display = 'none';
+  renderGrid();
+})();
 </script>
 </body>
 </html>
