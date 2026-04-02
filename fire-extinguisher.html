@@ -333,7 +333,8 @@ function sbSet(k,v){fetch(SB_URL+'/rest/v1/app_data',{method:'POST',headers:Obje
 // Locations + maps → Supabase (shared, permanent)
 // Monthly checks + history → localStorage only (resets monthly, local scratchpad)
 var LOCS_KEY='mhac-fe-locs';   // {level: [{id, barcode, location, mapX, mapY}]}
-var MAPS_KEY='mhac-fe-maps';   // {level: base64}
+var MAPS_KEY='mhac-fe-maps';   // Supabase only (no localStorage — too large)
+var _mapsCache={};  // in-memory map cache
 var CHKS_KEY='mhac-fe-chks';   // localStorage only
 var HIST_KEY='mhac-fe-hist';   // localStorage only
 
@@ -502,7 +503,7 @@ function toggleChk(id){
   else{
     var n=new Date();chks[curLevel][id]=n.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
     var loc=findById(curLevel,id);
-    if(loc&&loc.mapX===undefined&&load(MAPS_KEY)[curLevel])setTimeout(function(){openPlacement(id);},300);
+    if(loc&&loc.mapX===undefined&&_mapsCache[curLevel])setTimeout(function(){openPlacement(id);},300);
   }
   save(CHKS_KEY,chks);render();
 }
@@ -553,7 +554,7 @@ function onScan(code){
       save(CHKS_KEY,chks);render();
       showFeedback('\u2713 '+existing.id+' checked','checked');
       if(navigator.vibrate)navigator.vibrate(100);
-      if(existing.mapX===undefined&&load(MAPS_KEY)[curLevel])setTimeout(function(){openPlacement(existing.id);},800);
+      if(existing.mapX===undefined&&_mapsCache[curLevel])setTimeout(function(){openPlacement(existing.id);},800);
     }
     return;
   }
@@ -637,7 +638,7 @@ function saveMonth(){
 
 // ═══ MAP ══════════════════════════════════════════════════════════════
 function renderMap(highlightId){
-  var maps=load(MAPS_KEY);var locs=load(LOCS_KEY)[mapLevel]||[];var chks=load(CHKS_KEY)[mapLevel]||{};
+  var maps=_mapsCache;var locs=load(LOCS_KEY)[mapLevel]||[];var chks=load(CHKS_KEY)[mapLevel]||{};
   document.getElementById('map-title').textContent=lvlLabel(mapLevel)+' \u2014 Floor Plan';
   var content=document.getElementById('map-content');
   if(!maps[mapLevel]){
@@ -723,7 +724,7 @@ function pinInfoToggleChk(){
   save(CHKS_KEY,chks);var locs=load(LOCS_KEY)[mapLevel]||[];buildMapPins(locs,load(CHKS_KEY)[mapLevel]||{},null);mapPinClick(_pipId);if(curLevel===mapLevel)render();
 }
 function pinInfoGoChecklist(){if(!_pipId)return;closePinInfo();curLevel=mapLevel;mkLevelTabs('cl-level-tabs',curLevel,function(l){curLevel=l;render();});render();showView('checklist');}
-function pinAction(id){if(!load(MAPS_KEY)[curLevel]){showToast('Upload a map for '+lvlLabel(curLevel)+' first');showView('map');return;}openPlacement(id);}
+function pinAction(id){if(!_mapsCache[curLevel]){showToast('Upload a map for '+lvlLabel(curLevel)+' first');showView('map');return;}openPlacement(id);}
 
 // ═══ MAP PAN/ZOOM ════════════════════════════════════════════════════
 function setupMapZoom(){
@@ -755,7 +756,7 @@ function compressAndSaveMap(file){
     var img=new Image();
     img.onload=function(){
       var steps=[{w:1400,q:0.78},{w:1000,q:0.65},{w:700,q:0.50},{w:500,q:0.38},{w:350,q:0.30}];
-      var maps=load(MAPS_KEY);
+      var maps=_mapsCache;
       function tryStep(i){
         if(i>=steps.length){showToast('Image too large — try a different file');return;}
         var s=steps[i],sc2=Math.min(1,s.w/img.width);
@@ -771,11 +772,11 @@ function compressAndSaveMap(file){
   };reader.readAsDataURL(file);
 }
 function uploadMap(event){var file=event.target.files[0];if(!file)return;compressAndSaveMap(file);event.target.value='';}
-function clearMap(){customConfirm('Remove floor plan for '+lvlLabel(mapLevel)+'?').then(function(ok){if(!ok)return;var maps=load(MAPS_KEY);delete maps[mapLevel];saveShared(MAPS_KEY,maps);renderMap();showToast('Map removed');});}
+function clearMap(){customConfirm('Remove floor plan for '+lvlLabel(mapLevel)+'?').then(function(ok){if(!ok)return;var maps=_mapsCache;delete maps[mapLevel];_mapsCache=maps;sbSet(MAPS_KEY,maps);renderMap();showToast('Map removed');});}
 
 // ═══ PLACEMENT MODAL ══════════════════════════════════════════════════
 function openPlacement(extId){
-  var maps=load(MAPS_KEY);if(!maps[curLevel]){showToast('Upload a floor plan first');showView('map');return;}
+  var maps=_mapsCache;if(!maps[curLevel]){showToast('Upload a floor plan first');showView('map');return;}
   pendingPlacement={extId:extId,level:curLevel};placementPendingX=null;placementPendingY=null;
   document.getElementById('pm-title').textContent='Set Location \u2014 '+extId;
   document.getElementById('pm-sub').textContent=lvlLabel(curLevel)+' \xb7 Tap map to place pin';
@@ -838,7 +839,7 @@ document.getElementById('map-replace-input').addEventListener('change',function(
 (function(){
   Promise.all([sbGet(LOCS_KEY),sbGet(MAPS_KEY)]).then(function(results){
     if(results[0]!==null)localStorage.setItem(LOCS_KEY,JSON.stringify(results[0]));
-    if(results[1]!==null)localStorage.setItem(MAPS_KEY,JSON.stringify(results[1]));
+    if(results[1]!==null)_mapsCache=results[1];  // maps stay in memory only
     document.getElementById('cloud-overlay').style.display='none';
     mkLevelTabs('cl-level-tabs',curLevel,function(l){curLevel=l;if(scanning)stopScanner();render();});
     mkLevelTabs('map-level-tabs',mapLevel,function(l){mapLevel=l;renderMap();});
