@@ -144,6 +144,12 @@ function isAdmin(){ var s=getSession(); return s&&s.role==='admin'; }
 .login-btn:hover{background:rgba(245,158,11,.22);border-color:#f59e0b;color:#fff}
 .login-err{font-size:10px;letter-spacing:1px;color:#f87171;text-align:center;margin-top:8px;font-family:'Rajdhani',sans-serif;min-height:16px;text-transform:uppercase}
 </style>
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MHAC">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="theme-color" content="#f59e0b">
 </head>
 <body>
 <div id="login-overlay">

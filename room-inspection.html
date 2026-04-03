@@ -631,7 +631,14 @@ function renderZones(){
   var container=document.getElementById('zone-container');container.innerHTML='';
   var levelRooms=rooms[curLevel]||{};var zones=Object.keys(levelRooms);
   if(filterZone)zones=zones.filter(function(z){return z===filterZone;});
-  if(!zones.length){container.innerHTML='<div style="text-align:center;padding:40px;color:rgba(245,158,11,.3);font-size:11px;letter-spacing:2px;text-transform:uppercase">No rooms on this level</div>';return;}
+  if(!zones.length){
+    container.innerHTML='<div style="text-align:center;padding:40px;color:rgba(245,158,11,.3);font-size:11px;letter-spacing:2px;text-transform:uppercase">No rooms on this level</div>';
+    if(isAdmin){
+      var azb=document.createElement('button');azb.className='tb-btn admin-only';azb.style.marginTop='10px';azb.textContent='+ Add Zone';azb.onclick=addZone;container.appendChild(azb);
+      var bab=document.createElement('button');bab.className='tb-btn admin-only';bab.style.cssText='margin-top:10px;margin-left:8px';bab.textContent='+ Bulk Add Rooms';bab.onclick=function(){openBulkAdd();};container.appendChild(bab);
+    }
+    return;
+  }
   zones.forEach(function(zone){
     var section=document.createElement('div');section.className='zone-section';
     var hdr=document.createElement('div');hdr.className='zone-hdr';hdr.innerHTML='<div class="zone-name">'+zone+'</div>';section.appendChild(hdr);
