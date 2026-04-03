@@ -330,5 +330,20 @@ function toggleLeg(){legOn=!legOn;document.getElementById('legend').style.displa
 (function(){const c=document.getElementById('pts');for(let i=0;i<30;i++){const p=document.createElement('div');p.className='p';p.style.cssText=`left:${Math.random()*100}%;bottom:${Math.random()*12}%;--d:${5+Math.random()*9}s;--dl:${Math.random()*12}s`;c.appendChild(p);}})();
 applyT(false);
 </script>
+<script>
+(function(){
+  var vp=document.querySelector("meta[name=viewport]");
+  document.addEventListener("focusin",function(e){
+    if(e.target.isContentEditable||e.target.tagName==="INPUT"){
+      vp.content="width=device-width,initial-scale=1,maximum-scale=1";
+    }
+  });
+  document.addEventListener("focusout",function(e){
+    if(e.target.isContentEditable||e.target.tagName==="INPUT"){
+      vp.content="width=device-width,initial-scale=1";
+    }
+  });
+})();
+</script>
 </body>
 </html>

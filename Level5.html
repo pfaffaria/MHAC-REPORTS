@@ -363,5 +363,20 @@ let legOn=true;
 function toggleLeg(){legOn=!legOn;document.getElementById('legend').style.display=legOn?'block':'none';document.getElementById('btn-leg').classList.toggle('on',legOn);}
 applyT(false);
 </script>
+<script>
+(function(){
+  var vp=document.querySelector("meta[name=viewport]");
+  document.addEventListener("focusin",function(e){
+    if(e.target.isContentEditable||e.target.tagName==="INPUT"){
+      vp.content="width=device-width,initial-scale=1,maximum-scale=1";
+    }
+  });
+  document.addEventListener("focusout",function(e){
+    if(e.target.isContentEditable||e.target.tagName==="INPUT"){
+      vp.content="width=device-width,initial-scale=1";
+    }
+  });
+})();
+</script>
 </body>
 </html>
