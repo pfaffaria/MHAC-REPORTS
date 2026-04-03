@@ -200,6 +200,7 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
     <div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;animation:sblink 0.8s 0.4s ease-in-out infinite"></div>
   </div>
 </div>
+<script>setTimeout(function(){var o=document.getElementById("cloud-overlay");if(o&&o.style.display!=="none")o.style.display="none";},4000);</script>
 
 <div id="login-screen">
   <div class="login-box">
@@ -902,7 +903,7 @@ function renderHistory(){
   var hist=loadHistory(),entries=hist[curRoom]||[];
   var archive=loadArchive();var archivedEntries=[];
   // Collect archived entries for this room
-  archive.forEach(function(a){if(a.rooms&&a.rooms[curRoom]){var d=a.rooms[curRoom];['electrical','plumbing','building'].forEach(function(cat){var catData=(d[cat])||{};var notes=catData.notes||{};Object.entries(notes).forEach(function(kv){if(kv[1]&&kv[1].trim()){var cn='';(loadChecks()[cat]||[]).forEach(function(c){if(c.id===kv[0])cn=c.name;});archivedEntries.push({cycleLabel:a.cycleLabel,cat:cat,check:cn,note:kv[1].trim()});}});}});}});
+  archive.forEach(function(a){if(a.rooms&&a.rooms[curRoom]){var d=a.rooms[curRoom];['electrical','plumbing','building'].forEach(function(cat){var catData=(d[cat])||{};var notes=catData.notes||{};Object.entries(notes).forEach(function(kv){if(kv[1]&&kv[1].trim()){var cn='';(loadChecks()[cat]||[]).forEach(function(c){if(c.id===kv[0])cn=c.name;});archivedEntries.push({cycleLabel:a.cycleLabel,cat:cat,check:cn,note:kv[1].trim()});}}); });}});
   var container=document.getElementById('history-content');container.innerHTML='';
   // Archived section
   if(archivedEntries.length){
