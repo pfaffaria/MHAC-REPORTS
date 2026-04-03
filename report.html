@@ -224,6 +224,15 @@ async function sbGet(k){
     .catch(function(){clearTimeout(timer);return null;});
 }
 function sbSet(k,v){fetch(SB_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SB_H,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({key:k,value:v,updated_at:new Date().toISOString()})}).catch(function(){});}
+function swapPhoto(event){
+  var file=event.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var img=document.getElementById('main-img'),ph=document.getElementById('placeholder');
+    img.src=e.target.result;img.style.display='block';ph.style.display='none';
+    document.getElementById('lightbox-img').src=e.target.result;
+  };reader.readAsDataURL(file);
+}
 function openLightbox(){var img=document.getElementById('main-img');if(!img.src||img.style.display==='none')return;document.getElementById('lightbox').classList.add('active');}
 function closeLightbox(){document.getElementById('lightbox').classList.remove('active')}
 

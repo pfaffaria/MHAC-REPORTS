@@ -176,6 +176,10 @@ document.getElementById('status-text').textContent = 'Level ' + level + ' — ' 
 var bb = document.getElementById('back-btn');
 if(bb) bb.href = 'Level' + level + '.html';
 
+function loadReports() {
+  try { return JSON.parse(localStorage.getItem(storageKey)) || []; }
+  catch(e) { return []; }
+}
 function saveReports(reports) {
   localStorage.setItem(storageKey, JSON.stringify(reports));
   sbSet(storageKey, reports); // sync to cloud
