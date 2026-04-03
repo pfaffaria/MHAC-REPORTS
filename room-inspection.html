@@ -796,34 +796,102 @@ function saveRoomData(){
     var issues=[];
     ['electrical','plumbing','building'].forEach(function(cat){var catData=(data[curRoom]&&data[curRoom][cat])||{};var notes=catData.notes||{};Object.entries(notes).forEach(function(kv){if(kv[1]&&kv[1].trim()){var cn='';(loadChecks()[cat]||[]).forEach(function(c){if(c.id===kv[0])cn=c.name;});issues.push({cat:cat,check:cn,note:kv[1].trim()});}});});
     var photos=(data[curRoom]&&data[curRoom].photos)||[];
+    var photoRefs=photos.map(function(p){return{url:p.url||'',src:p.url||p.src||''};});
     hist[curRoom]=hist[curRoom].filter(function(e){return e.date!==today;});
-    if(issues.length||photos.length){hist[curRoom].push({date:today,issues:issues,photos:photos});hist[curRoom].sort(function(a,b){return b.date.localeCompare(a.date);});}
+    if(issues.length||photoRefs.length){hist[curRoom].push({date:today,issues:issues,photos:photoRefs});hist[curRoom].sort(function(a,b){return b.date.localeCompare(a.date);});}
     saveHistory(hist);
   }
   showToast('Saved \u2713');renderZones();updateCycleBanner();updateStatus();
   if(curView==='map')renderMap();
 }
 
-// ═══ PHOTOS ══════════════════════════════════════════════════════════
+// ═══ PHOTOS (Supabase Storage) ═══════════════════════════════════════
+var BUCKET='room-photos';
+var SB_STORAGE=SB_URL+'/storage/v1/object';
+var SB_STORAGE_PUB=SB_URL+'/storage/v1/object/public';
+
+function uploadPhotoToStorage(file, roomNum, callback){
+  var ext=file.name.split('.').pop()||'jpg';
+  var filename=roomNum.replace(/[^a-zA-Z0-9]/g,'-')+'-'+Date.now()+'.'+ext;
+  var path=BUCKET+'/'+filename;
+  fetch(SB_STORAGE+'/'+path,{
+    method:'POST',
+    headers:{'apikey':SB_PUB,'Authorization':'Bearer '+SB_PUB,'Content-Type':file.type,'x-upsert':'true'},
+    body:file
+  }).then(function(r){
+    if(r.ok){callback(null,SB_STORAGE_PUB+'/'+path+'?t='+Date.now());}
+    else{r.text().then(function(t){callback('Upload failed: '+t,null);});}
+  }).catch(function(e){callback(e.message,null);});
+}
+
+function deletePhotoFromStorage(url){
+  // Extract path from URL
+  var match=url.match(/\/object\/public\/(.+?)(\?|$)/);
+  if(!match)return;
+  var path=match[1];
+  fetch(SB_STORAGE+'/'+path,{
+    method:'DELETE',
+    headers:{'apikey':SB_PUB,'Authorization':'Bearer '+SB_PUB}
+  }).catch(function(){});
+}
+
 function addPhotos(event){
-  var files=Array.from(event.target.files);if(!files.length||!curRoom)return;
-  var data=loadData();if(!data[curRoom])data[curRoom]={};if(!data[curRoom].photos)data[curRoom].photos=[];
+  var files=Array.from(event.target.files);
+  if(!files.length||!curRoom)return;
+  showToast('Uploading...');
   var pending=files.length;
-  files.forEach(function(file){var reader=new FileReader();reader.onload=function(e){data[curRoom].photos.push({src:e.target.result,date:new Date().toISOString().split('T')[0]});pending--;if(!pending){saveData(data);renderPhotos();showToast('Photo added \u2713');}};reader.readAsDataURL(file);});
+  files.forEach(function(file){
+    uploadPhotoToStorage(file,curRoom,function(err,url){
+      pending--;
+      if(!err){
+        var data=loadData();
+        if(!data[curRoom])data[curRoom]={};
+        if(!data[curRoom].photos)data[curRoom].photos=[];
+        data[curRoom].photos.push({url:url,date:new Date().toISOString().split('T')[0]});
+        saveData(data);
+      } else {
+        showToast('Upload error');
+      }
+      if(!pending){renderPhotos();showToast('Photo added \u2713');}
+    });
+  });
   event.target.value='';
 }
+
 function renderPhotos(){
   if(!curRoom)return;
   var data=loadData(),photos=(data[curRoom]&&data[curRoom].photos)||[];
   var grid=document.getElementById('photos-grid');grid.innerHTML='';
   photos.forEach(function(p,i){
-    var img=document.createElement('img');img.className='photo-thumb';img.src=p.src;img.onclick=function(){openLightbox(p.src);};
-    if(isAdmin){var wrap=document.createElement('div');wrap.style.cssText='position:relative;display:inline-block';var del=document.createElement('button');del.style.cssText='position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);border:none;color:#f87171;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0';del.innerHTML='&#x2715;';del.onclick=function(e){e.stopPropagation();deletePhoto(i);};wrap.appendChild(img);wrap.appendChild(del);grid.appendChild(wrap);}else grid.appendChild(img);
+    // Support both old base64 (p.src) and new storage URL (p.url)
+    var src=p.url||p.src;
+    var img=document.createElement('img');img.className='photo-thumb';img.src=src;
+    img.onclick=function(){openLightbox(src);};
+    if(isAdmin){
+      var wrap=document.createElement('div');wrap.style.cssText='position:relative;display:inline-block';
+      var del=document.createElement('button');
+      del.style.cssText='position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);border:none;color:#f87171;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0';
+      del.innerHTML='&#x2715;';
+      del.onclick=function(e){e.stopPropagation();deletePhoto(i);};
+      wrap.appendChild(img);wrap.appendChild(del);grid.appendChild(wrap);
+    } else {
+      grid.appendChild(img);
+    }
   });
-  var addBtn=document.createElement('button');addBtn.className='photo-add-btn';addBtn.innerHTML='+';addBtn.onclick=function(){document.getElementById('photo-file').click();};
+  var addBtn=document.createElement('button');addBtn.className='photo-add-btn';addBtn.innerHTML='+';
+  addBtn.onclick=function(){document.getElementById('photo-file').click();};
   grid.appendChild(addBtn);grid.appendChild(document.getElementById('photo-file'));
 }
-function deletePhoto(idx){var data=loadData();if(data[curRoom]&&data[curRoom].photos){data[curRoom].photos.splice(idx,1);saveData(data);renderPhotos();}}
+
+function deletePhoto(idx){
+  var data=loadData();
+  if(data[curRoom]&&data[curRoom].photos){
+    var p=data[curRoom].photos[idx];
+    if(p&&p.url)deletePhotoFromStorage(p.url);
+    data[curRoom].photos.splice(idx,1);
+    saveData(data);renderPhotos();
+  }
+}
 function openLightbox(src){document.getElementById('lightbox-img').src=src;document.getElementById('lightbox').classList.add('active');}
 function closeLightbox(){document.getElementById('lightbox').classList.remove('active');}
 document.getElementById('lightbox').addEventListener('click',function(e){if(e.target===this)closeLightbox();});
@@ -918,19 +986,14 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
       }
     }catch(e){document.getElementById('login-screen').style.display='flex';}
   }
-  // Hard fallback — always show UI within 6s
-  setTimeout(finish, 6000);
-  // Fetch core data keys sequentially (more reliable on mobile than parallel)
-  var idx=0;
-  function fetchNext(){
-    if(idx>=KEYS.length){finish();return;}
-    var k=KEYS[idx++];
-    sbGet(k).then(function(v){
+  // Hard fallback — show UI after 4s no matter what
+  setTimeout(finish, 4000);
+  // Fetch all keys in parallel
+  Promise.all(KEYS.map(function(k){
+    return sbGet(k).then(function(v){
       if(v!==null)localStorage.setItem(k,JSON.stringify(v));
-      fetchNext();
-    }).catch(function(){fetchNext();});
-  }
-  fetchNext();
+    }).catch(function(){});
+  })).then(finish).catch(finish);
 })();
 </script>
 </body>
