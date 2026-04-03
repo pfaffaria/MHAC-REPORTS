@@ -576,16 +576,17 @@ function updateCycleBanner(){
 
 function roomIsInspected(roomNum,data){
   var d=data[roomNum];if(!d)return false;
+  var checks=loadChecks();
   var cats=['electrical','plumbing','building'];
   for(var i=0;i<cats.length;i++){
     var cat=d[cats[i]]||{};
     var checked=cat.checked||{};
-    if(Object.values(checked).some(function(v){return v;}))return true;
-    var notes=cat.notes||{};
-    if(Object.values(notes).some(function(n){return n&&n.trim();}))return true;
+    var catChecks=checks[cats[i]]||[];
+    for(var j=0;j<catChecks.length;j++){
+      if(!checked[catChecks[j].id])return false;
+    }
   }
-  if(d.photos&&d.photos.length)return true;
-  return false;
+  return true;
 }
 
 function roomHasIssues(roomNum,data){
@@ -826,7 +827,21 @@ function renderTempSparkline(tempKey){
   return'<div class="temp-trend"><div class="temp-trend-title">Trend</div><div class="spark-row">'+bars+'</div></div>';
 }
 
-function onCheck(cat,id,val){var data=loadData();if(!data[curRoom])data[curRoom]={};if(!data[curRoom][cat])data[curRoom][cat]={checked:{},notes:{},extras:{}};data[curRoom][cat].checked[id]=val;saveData(data);}
+function onCheck(cat,id,val){
+  var data=loadData();
+  if(!data[curRoom])data[curRoom]={};
+  if(!data[curRoom][cat])data[curRoom][cat]={checked:{},notes:{},extras:{}};
+  data[curRoom][cat].checked[id]=val;
+  saveData(data);
+  var chip=document.getElementById('chip-'+curRoom);
+  if(chip){
+    var hasIssues=roomHasIssues(curRoom,data),inspected=roomIsInspected(curRoom,data);
+    chip.className='room-chip active'+(hasIssues?' has-issues':inspected?' inspected':'');
+    var dot=chip.querySelector('.issue-dot,.done-dot');if(dot)dot.remove();
+    if(hasIssues){var nd=document.createElement('span');nd.className='issue-dot';chip.appendChild(nd);}
+    else if(inspected){var nd=document.createElement('span');nd.className='done-dot';chip.appendChild(nd);}
+  }
+}
 function onNote(cat,id,val){
   var data=loadData();if(!data[curRoom])data[curRoom]={};if(!data[curRoom][cat])data[curRoom][cat]={checked:{},notes:{},extras:{}};data[curRoom][cat].notes[id]=val;
   var chip=document.getElementById('chip-'+curRoom);
