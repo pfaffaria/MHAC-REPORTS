@@ -314,6 +314,50 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 </div>
 
 <!-- MODALS -->
+<div class="modal-bg" id="bulk-add-modal">
+  <div class="modal">
+    <div class="modal-title">Bulk Add Rooms</div>
+    <div class="modal-field"><label>Zone</label>
+      <input id="bulk-zone" placeholder="e.g. South East" autocomplete="off"/>
+    </div>
+    <div class="modal-field"><label>Level</label>
+      <select id="bulk-level-sel">
+        <option value="1">Level 1 (prefix 1A-)</option>
+        <option value="2">Level 2 (prefix 2A-)</option>
+        <option value="3">Level 3 (prefix 3A-)</option>
+        <option value="4">Level 4 (prefix 4A-)</option>
+        <option value="5">Level 5 (prefix 5A-)</option>
+        <option value="PH">Penthouse (prefix PH-)</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px">
+      <div class="modal-field" style="flex:1"><label>Start Number</label>
+        <input id="bulk-start" type="number" placeholder="101" min="1"/>
+      </div>
+      <div class="modal-field" style="flex:1"><label>End Number</label>
+        <input id="bulk-end" type="number" placeholder="140" min="1"/>
+      </div>
+    </div>
+    <div class="modal-field"><label>Room Label (optional, same for all)</label>
+      <input id="bulk-label" placeholder="e.g. Client Room" autocomplete="off"/>
+    </div>
+    <div style="display:flex;gap:16px;margin-top:6px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(245,158,11,.6);cursor:pointer">
+        <input type="checkbox" id="bulk-toilet" checked style="accent-color:var(--amber)"/> Toilet
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(245,158,11,.6);cursor:pointer">
+        <input type="checkbox" id="bulk-shower" checked style="accent-color:var(--amber)"/> Shower
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(245,158,11,.6);cursor:pointer">
+        <input type="checkbox" id="bulk-sink" checked style="accent-color:var(--amber)"/> Sink
+      </label>
+    </div>
+    <div class="modal-btns" style="margin-top:14px">
+      <button class="modal-btn primary" onclick="saveBulkRooms()">Add Rooms</button>
+      <button class="modal-btn secondary" onclick="closeModal('bulk-add-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
 <div class="modal-bg" id="add-room-modal">
   <div class="modal">
     <div class="modal-title">Add Room</div>
@@ -602,7 +646,11 @@ function renderZones(){
     if(isAdmin){var ab=document.createElement('button');ab.className='add-room-btn admin-only';ab.textContent='+ Add Room';ab.onclick=function(){openAddRoom(curLevel,zone);};grid.appendChild(ab);}
     section.appendChild(grid);container.appendChild(section);
   });
-  if(isAdmin){var azb=document.createElement('button');azb.className='tb-btn admin-only';azb.style.marginTop='10px';azb.textContent='+ Add Zone';azb.onclick=addZone;container.appendChild(azb);}
+  if(isAdmin){
+    var azb=document.createElement('button');azb.className='tb-btn admin-only';azb.style.marginTop='10px';azb.textContent='+ Add Zone';azb.onclick=addZone;container.appendChild(azb);
+    var bab=document.createElement('button');bab.className='tb-btn admin-only';bab.style.cssText='margin-top:10px;margin-left:8px';bab.textContent='+ Bulk Add Rooms';
+    bab.onclick=function(){openBulkAdd();};container.appendChild(bab);
+  }
 }
 
 // ═══ MAP VIEW ════════════════════════════════════════════════════════
@@ -935,6 +983,64 @@ function deleteCheck(cat,id){if(!isAdmin)return;if(!confirm('Remove this check i
 function openAddRoom(level,zone){if(!isAdmin)return;pendingAddLevel=level;pendingAddZone=zone;document.getElementById('new-room-num').value='';document.getElementById('new-room-label').value='';document.getElementById('add-room-modal').classList.add('active');setTimeout(function(){document.getElementById('new-room-num').focus();},50);}
 function saveNewRoom(){var num=document.getElementById('new-room-num').value.trim(),label=document.getElementById('new-room-label').value.trim(),toilet=parseInt(document.getElementById('new-room-toilet').value),shower=parseInt(document.getElementById('new-room-shower').value),sink=parseInt(document.getElementById('new-room-sink').value);if(!num){showToast('Enter a room number');return;}var rooms=loadRooms();if(!rooms[pendingAddLevel])rooms[pendingAddLevel]={};if(!rooms[pendingAddLevel][pendingAddZone])rooms[pendingAddLevel][pendingAddZone]=[];rooms[pendingAddLevel][pendingAddZone].push({num:num,label:label,toilet:toilet,shower:shower,sink:sink});saveRooms(rooms);closeModal('add-room-modal');renderZones();showToast('Room added \u2713');}
 function addZone(){if(!isAdmin)return;var name=prompt('Zone name:',filterZone||'');if(!name||!name.trim())return;var rooms=loadRooms();if(!rooms[curLevel])rooms[curLevel]={};rooms[curLevel][name.trim()]=[];saveRooms(rooms);renderZones();}
+
+// ═══ BULK ADD ════════════════════════════════════════════════════════
+function openBulkAdd(){
+  if(!isAdmin)return;
+  // Pre-select current level
+  var sel=document.getElementById('bulk-level-sel');
+  for(var i=0;i<sel.options.length;i++){
+    if(sel.options[i].value===curLevel){sel.selectedIndex=i;break;}
+  }
+  document.getElementById('bulk-zone').value=filterZone||'';
+  document.getElementById('bulk-start').value='';
+  document.getElementById('bulk-end').value='';
+  document.getElementById('bulk-label').value='';
+  document.getElementById('bulk-toilet').checked=true;
+  document.getElementById('bulk-shower').checked=true;
+  document.getElementById('bulk-sink').checked=true;
+  document.getElementById('bulk-add-modal').classList.add('active');
+  setTimeout(function(){document.getElementById('bulk-zone').focus();},50);
+}
+
+function saveBulkRooms(){
+  var zone=document.getElementById('bulk-zone').value.trim();
+  var level=document.getElementById('bulk-level-sel').value;
+  var start=parseInt(document.getElementById('bulk-start').value);
+  var end=parseInt(document.getElementById('bulk-end').value);
+  var label=document.getElementById('bulk-label').value.trim();
+  var toilet=document.getElementById('bulk-toilet').checked?1:0;
+  var shower=document.getElementById('bulk-shower').checked?1:0;
+  var sink=document.getElementById('bulk-sink').checked?1:0;
+
+  if(!zone){showToast('Enter a zone name');return;}
+  if(isNaN(start)||isNaN(end)||start>end){showToast('Enter a valid number range');return;}
+  if(end-start>200){showToast('Max 200 rooms at once');return;}
+
+  var prefix=level==='PH'?'PH-':level+'A-';
+  var rooms=loadRooms();
+  if(!rooms[level])rooms[level]={};
+  if(!rooms[level][zone])rooms[level][zone]=[];
+
+  var existing=rooms[level][zone].map(function(r){return r.num;});
+  var added=0;
+  for(var n=start;n<=end;n++){
+    var num=prefix+n;
+    if(existing.includes(num))continue;
+    rooms[level][zone].push({num:num,label:label,toilet:toilet,shower:shower,sink:sink});
+    added++;
+  }
+
+  saveRooms(rooms);
+  closeModal('bulk-add-modal');
+  // Switch to the level we just added to
+  curLevel=level;
+  document.querySelectorAll('.lvl-btn').forEach(function(b){
+    b.classList.toggle('active',b.textContent===(level==='PH'?'Penthouse':'Level '+level));
+  });
+  renderZones();renderLevelTabs();updateCycleBanner();
+  showToast(added+' rooms added to '+zone+' ✓');
+}
 
 // ═══ PRINT ═══════════════════════════════════════════════════════════
 function printYearSummary(){
