@@ -236,60 +236,59 @@ async function sbSet(k,v){
 
 // ═══ STATIONS DATA ═══════════════════════════════════════════════════
 // Add your eyewash station data here — this is never auto-deleted
-// ═══ STATIONS DATA ═══════════════════════════════════════════════════
 var STATIONS = {
+  'PH': [
+    {room:'PH-WGP',  loc:'West Glycol Pumps'},
+    {room:'PH-WHS5', loc:'West HVAC Shaft 5'}
+  ],
   '1': [
-    {room:'1A.100A', loc:'Centre Housekeeping'},
-    {room:'1A.100B', loc:'Medication Room'},
-    {room:'1A.185', loc:'Centre Soiled Utility'},
-    {room:'1A.191', loc:'Servery'},
-    {room:'1A.224', loc:'West Housekeeping'},
-    {room:'1A.226', loc:'West Soiled Utility'},
-    {room:'1A.231', loc:'West Medication Room'},
-    {room:'1A.301', loc:'Pharmacy East'},
-    {room:'1A.301', loc:'Pharmacy South'},
-    {room:'1A.305', loc:'Entrance Housekeeping'},
-    {room:'1A.350', loc:'North East Storage'},
-    {room:'1A.351', loc:'North East Soiled Utility'},
-    {room:'1A.353', loc:'North East Laundry Room'}
+    {room:'1A.231',   loc:'West Medication Room'},
+    {room:'1A.100A',  loc:'Centre Housekeeping'},
+    {room:'1A.185',   loc:'Centre Soiled Utility'},
+    {room:'1A.100B',  loc:'Medication Room'},
+    {room:'1A.301-E', loc:'Pharmacy East'},
+    {room:'1A.301-S', loc:'Pharmacy South'},
+    {room:'1A.353',   loc:'North East Laundry Room'},
+    {room:'1A.305',   loc:'Entrance Housekeeping'},
+    {room:'1A.226',   loc:'West Soiled Utility'},
+    {room:'1A.224',   loc:'West Housekeeping'},
+    {room:'1A.191',   loc:'Servery'},
+    {room:'1A.350',   loc:'North East Storage'},
+    {room:'1A.351',   loc:'North East Soiled Utility'}
   ],
   '2': [
-    {room:'2A.100A', loc:'South Medication Room'},
-    {room:'2A.100B', loc:'Centre Soiled Utility'},
-    {room:'2A.100H', loc:'Centre Housekeeping'},
-    {room:'2A.161', loc:'Servery'},
-    {room:'2A.212', loc:'West Housekeeping'},
-    {room:'2A.323', loc:'North West Housekeeping'},
-    {room:'2A.340A', loc:'North Medication Room'},
-    {room:'2A.351', loc:'North East Facilities Warehouse'},
-    {room:'2A.353', loc:'North East BioMedical Warehouse'}
+    {room:'2A.353',   loc:'North East BioMedical Warehouse'},
+    {room:'2A.340A',  loc:'North Medication Room'},
+    {room:'2A.100A',  loc:'South Medication Room'},
+    {room:'2A.351',   loc:'North East Facilities Warehouse'},
+    {room:'2A.323',   loc:'North West Housekeeping'},
+    {room:'2A.212',   loc:'West Housekeeping'},
+    {room:'2A.161',   loc:'Servery'},
+    {room:'2A.100H',  loc:'Centre Housekeeping'},
+    {room:'2A.100B',  loc:'Centre Soiled Utility'}
   ],
   '3': [
-    {room:'3A.100A', loc:'Medication Room'},
-    {room:'3A.100B', loc:'Centre Soiled Utility'},
-    {room:'3A.100H', loc:'Centre Housekeeping'},
-    {room:'3A.146', loc:'South Storage/Equipment'},
-    {room:'3A.161', loc:'Servery'},
-    {room:'3A.323', loc:'North Housekeeping'}
+    {room:'3A.146',   loc:'South Storage/Equipment'},
+    {room:'3A.100A',  loc:'Medication Room'},
+    {room:'3A.323',   loc:'North Housekeeping'},
+    {room:'3A.161',   loc:'Servery'},
+    {room:'3A.100H',  loc:'Centre Housekeeping'},
+    {room:'3A.100B',  loc:'Centre Soiled Utility'}
   ],
   '4': [
-    {room:'4A.100A', loc:'South Medication Room'},
-    {room:'4A.100B', loc:'Centre Soiled Utility'},
-    {room:'4A.100H', loc:'Centre Housekeeping'},
-    {room:'4A.161', loc:'Servery'},
-    {room:'4A.322', loc:'North Kitchen East'},
-    {room:'4A.322', loc:'North Kitchen West'},
-    {room:'4A.322', loc:'North Kitchen Shower'},
-    {room:'4A.322A', loc:'North Kitchen Chemical/Housekeeping'},
-    {room:'4A.350', loc:'North Maintenance Shop'}
+    {room:'4A.100A',  loc:'South Medication Room'},
+    {room:'4A.350',   loc:'North Maintenance Shop'},
+    {room:'4A.322A',  loc:'North Kitchen Chemical/Housekeeping'},
+    {room:'4A.322-E', loc:'North Kitchen East'},
+    {room:'4A.322-W', loc:'North Kitchen West'},
+    {room:'4A.322-S', loc:'North Kitchen Shower'},
+    {room:'4A.161',   loc:'Servery'},
+    {room:'4A.100H',  loc:'Centre Housekeeping'},
+    {room:'4A.100B',  loc:'Centre Soiled Utility'}
   ],
   '5': [
-    {room:'5A.587', loc:'North Housekeeping'},
-    {room:'5A.588', loc:'South Housekeeping'}
-  ],
-  'PH': [
-    {room:'PH', loc:'West Glycol Pumps'},
-    {room:'PH', loc:'West HVAC Shaft 5'}
+    {room:'5A.588',   loc:'South Housekeeping'},
+    {room:'5A.587',   loc:'North Housekeeping'}
   ]
 };
 
@@ -343,19 +342,18 @@ function updateExpireNotice(log){
 function mkTabs(containerId, activeLevel, onSelect) {
   var c = document.getElementById(containerId);
   c.innerHTML = '';
-  for (var i = 1; i <= 5; i++) {
-    (function(lv){
-      var b = document.createElement('button');
-      b.className = 'lvl-tab' + (lv === activeLevel ? ' active' : '');
-      b.textContent = 'Level ' + lv;
-      b.onclick = function() {
-        c.querySelectorAll('.lvl-tab').forEach(function(t){ t.classList.remove('active'); });
-        b.classList.add('active');
-        onSelect(lv);
-      };
-      c.appendChild(b);
-    })(String(i));
-  }
+  var levels = ['1','2','3','4','5','PH'];
+  levels.forEach(function(lv){
+    var b = document.createElement('button');
+    b.className = 'lvl-tab' + (lv === activeLevel ? ' active' : '');
+    b.textContent = lv === 'PH' ? 'Penthouse' : 'Level ' + lv;
+    b.onclick = function() {
+      c.querySelectorAll('.lvl-tab').forEach(function(t){ t.classList.remove('active'); });
+      b.classList.add('active');
+      onSelect(lv);
+    };
+    c.appendChild(b);
+  });
 }
 
 // ═══ RENDER GRID ══════════════════════════════════════════════════════
