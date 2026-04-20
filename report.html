@@ -295,6 +295,10 @@ function savePage(){
     var t1=document.getElementById('t1');var hl=document.getElementById('hl');
     if(t1&&!t1.value)t1.value=reportName;
     if(hl&&!hl.value)hl.value=(zone?zone+' — ':'')+' Level '+level;
+    // Pre-fill footer with header details
+    var fl=document.getElementById('fl');var fr=document.getElementById('fr');
+    if(fl&&!fl.value)fl.value=(zone?zone+' — ':'')+' Level '+level;
+    if(fr&&!fr.value)fr.value=reportName;
   }
   function doSave(){
     var inputs={};
