@@ -829,16 +829,34 @@ function closePlacement(){
 
 // ═══ HISTORY ══════════════════════════════════════════════════════════
 function renderHistory(){
-  var records=loadArr(HIST_KEY).filter(function(r){return r.level===histLevel;});
+  var allRecords=loadArr(HIST_KEY);
+  var records=allRecords.filter(function(r){return r.level===histLevel;});
   var list=document.getElementById('history-list');
   if(!records.length){list.innerHTML='<div class="no-data">No history saved yet<br>Complete a round and tap &ldquo;Save Month&rdquo;</div>';return;}
-  list.innerHTML=records.map(function(r){
+  list.innerHTML='';
+  records.forEach(function(r,localIdx){
+    // Find the real index in the full array for deletion
+    var globalIdx=allRecords.indexOf(r);
     var done=r.items.filter(function(i){return i.checked;}).length;
-    return '<div class="history-item">'+
+    var div=document.createElement('div');
+    div.className='history-item';
+    div.style.position='relative';
+    div.innerHTML=
+      '<button onclick="deleteHistory('+globalIdx+')" style="position:absolute;top:10px;right:10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:rgba(239,68,68,.6);border-radius:4px;padding:2px 8px;font-family:Rajdhani,sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;">Delete</button>'+
       '<div class="history-date">'+fmtDate(r.date)+'</div>'+
-      '<div class="history-meta">'+lvlLabel(r.level)+' \xb7 '+done+'/'+r.items.length+' checked</div>'+
-      '<div class="history-checks">'+r.items.map(function(i){return'<span class="hc '+(i.checked?'done':'missed')+'">'+i.id+(i.time?' '+i.time:'')+'</span>';}).join('')+'</div></div>';
-  }).join('');
+      '<div class="history-meta">'+lvlLabel(r.level)+' · '+done+'/'+r.items.length+' checked</div>'+
+      '<div class="history-checks">'+r.items.map(function(i){return'<span class="hc '+(i.checked?'done':'missed')+'">'+i.id+(i.time?' '+i.time:'')+'</span>';}).join('')+'</div>';
+    list.appendChild(div);
+  });
+}
+
+function deleteHistory(idx){
+  if(!confirm('Delete this saved month?'))return;
+  var records=loadArr(HIST_KEY);
+  records.splice(idx,1);
+  save(HIST_KEY,records);
+  renderHistory();
+  showToast('Deleted ✓');
 }
 
 // ═══ VIEW / HELPERS ═══════════════════════════════════════════════════
