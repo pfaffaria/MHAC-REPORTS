@@ -778,6 +778,11 @@ function compressAndSaveMap(file){
       // Save to Supabase only (no localStorage — avoids size limit)
       _mapsCache[mapLevel]=b64;
       sbSet(MAPS_KEY,_mapsCache);
+      // Refresh placement modal image if it's open for this level
+      var pm=document.getElementById('placement-modal');
+      if(pm&&pm.classList.contains('active')&&pendingPlacement&&pendingPlacement.level===mapLevel){
+        document.getElementById('placement-img').src=b64;
+      }
       showToast('Map uploaded ✓');
       renderMap();
     };img.src=e.target.result;
@@ -788,12 +793,14 @@ function clearMap(){customConfirm('Remove floor plan for '+lvlLabel(mapLevel)+'?
 
 // ═══ PLACEMENT MODAL ══════════════════════════════════════════════════
 function openPlacement(extId){
-  var maps=_mapsCache;if(!maps[curLevel]){showToast('Upload a floor plan first');showView('map');return;}
+  // Always read fresh from _mapsCache — picks up newly uploaded maps
+  var mapImg=_mapsCache[curLevel];
+  if(!mapImg){showToast('Upload a floor plan first');showView('map');return;}
   pendingPlacement={extId:extId,level:curLevel};placementPendingX=null;placementPendingY=null;
   document.getElementById('pm-title').textContent='Set Location \u2014 '+extId;
   document.getElementById('pm-sub').textContent=lvlLabel(curLevel)+' \xb7 Tap map to place pin';
   document.getElementById('pm-confirm').style.display='none';
-  document.getElementById('placement-img').src=maps[curLevel];
+  document.getElementById('placement-img').src=mapImg;
   renderPlacementSVG(null,null);
   var loc=findById(curLevel,extId);
   if(loc&&loc.mapX!==undefined){placementPendingX=loc.mapX;placementPendingY=loc.mapY;renderPlacementSVG(loc.mapX,loc.mapY);document.getElementById('pm-confirm').style.display='flex';}
