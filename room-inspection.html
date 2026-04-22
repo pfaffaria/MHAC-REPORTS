@@ -88,6 +88,11 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 @keyframes yahpulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.6}50%{transform:translate(-50%,-50%) scale(1.8);opacity:0}}
 .yah-btn.active{background:rgba(59,130,246,.2);border-color:#3b82f6;color:#93c5fd}
 .pin-circle{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:8px;font-weight:700;color:#fff;letter-spacing:.5px;text-align:center;line-height:1.1;padding:2px;box-shadow:0 2px 8px rgba(0,0,0,.5);position:relative;overflow:hidden;transition:all .2s}
+.pin-circle.pin-grey{background:rgba(80,80,80,.85);border-color:rgba(180,180,180,.6)}
+.pin-circle.pin-selected{background:rgba(180,90,0,.9);border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,158,11,.35),0 0 18px rgba(245,158,11,.7);animation:pinGlow 1.2s ease-in-out infinite;width:32px;height:32px;font-size:9px}
+@keyframes pinGlow{0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,.3),0 0 14px rgba(245,158,11,.6)}50%{box-shadow:0 0 0 7px rgba(245,158,11,.15),0 0 26px rgba(245,158,11,.9)}}
+.pin-pulse{position:absolute;width:50px;height:50px;border-radius:50%;background:rgba(245,158,11,.25);transform:translate(-50%,-50%);top:50%;left:50%;animation:pinPulseRing 1.2s ease-out infinite;pointer-events:none}
+@keyframes pinPulseRing{0%{transform:translate(-50%,-50%) scale(.5);opacity:.8}100%{transform:translate(-50%,-50%) scale(2.2);opacity:0}}
 .pin-circle.pending{background:rgba(100,80,0,.85);border-color:rgba(245,158,11,.6)}
 .pin-circle.done{background:rgba(10,60,20,.9);border-color:rgba(34,197,94,.7)}
 .pin-circle.issues{background:rgba(80,10,10,.9);border-color:rgba(239,68,68,.6)}
@@ -246,30 +251,19 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
     <span class="cycle-prog" id="cycle-prog"></span>
     <span class="reset-warn" id="reset-warn" style="display:none">&#9888; Approaching Reset</span>
   </div>
-  <!-- VIEW TOGGLE -->
-  <div class="view-toggle">
-    <button class="vt-btn active" id="vt-rooms" onclick="setView('rooms')">&#9776; Rooms</button>
-    <button class="vt-btn" id="vt-map" onclick="setView('map')">&#128205; Floor Map</button>
-  </div>
-
-  <!-- ROOM GRID VIEW -->
+  <!-- ROOM GRID -->
   <div id="rooms-view">
     <div id="zone-container"></div>
   </div>
 
-  <!-- MAP VIEW -->
-  <div id="map-view" style="display:none">
+  <!-- MAP -->
+  <div id="map-view" style="margin-top:14px">
     <div class="map-controls">
       <button class="tb-btn admin-only" id="upload-map-btn" onclick="document.getElementById('map-file-input').click()" style="display:none">&#8593; Upload Map</button>
       <input type="file" id="map-file-input" accept="image/*" style="display:none" onchange="handleMapUpload(event)"/>
       <button class="tb-btn admin-only pin-mode-btn" id="pin-mode-btn" onclick="togglePinMode()" style="display:none">+ Add Pin</button>
       <span style="font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.35);text-transform:uppercase" id="pin-hint"></span>
-      <button class="tb-btn yah-btn" id="yah-btn" onclick="toggleYAH()" style="display:none;border-color:rgba(59,130,246,.3);color:rgba(147,197,253,.7)">&#128205; You Are Here</button>
-      <span style="font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.3);text-transform:uppercase;margin-left:auto">
-        <span style="color:rgba(34,197,94,.6)">&#10003; Inspected</span> &nbsp;
-        <span style="color:rgba(239,68,68,.5)">&#9679; Has Issues</span> &nbsp;
-        <span style="color:rgba(245,158,11,.4)">&#9679; Pending</span>
-      </span>
+
     </div>
     <div id="map-container"></div>
   </div>
@@ -519,11 +513,12 @@ function loadArchive(){return ls_get(ARCHIVE_KEY)||[];}
 function saveArchive(d){ls_set(ARCHIVE_KEY,d);sbSet(ARCHIVE_KEY,d);}
 function loadPins(){return ls_get(PINS_KEY)||{};}
 function savePins(d){ls_set(PINS_KEY,d);sbSet(PINS_KEY,d);}
-function loadMap(level){return ls_get('mhac-ri-map-'+level)||null;}
-function saveMap(level,b64){ls_set('mhac-ri-map-'+level,b64);sbSet('mhac-ri-map-'+level,b64);}
+function loadMap(level){return _mapCache[level]||null;}
+function saveMap(level,b64){_mapCache[level]=b64;sbSet('mhac-ri-map-'+level,b64);}
 
 // ═══ STATE ═══════════════════════════════════════════════════════════
 var curLevel='1',curRoom=null,addCheckCategory=null,pendingAddZone=null,pendingAddLevel=null;
+var _mapCache={};  // in-memory map cache — avoids localStorage size issues
 var yahMode=false,yahPos=null;  // You Are Here pin
 var pinMode=false,pendingPinPos=null,curView='rooms';
 var urlParams=new URLSearchParams(window.location.search);
@@ -646,17 +641,10 @@ function initApp(){
   if(filterLevel)curLevel=filterLevel;
   if(filterZone){document.getElementById('lvl-tabs').style.display='none';var bb=document.getElementById('back-map-btn');if(bb){bb.href='reports.html?level='+curLevel+'&zone='+encodeURIComponent(filterZone);bb.textContent='<- Reports';}}
   checkAndResetRooms();
-  renderLevelTabs();renderZones();updateCycleBanner();updateStatus();
+  renderLevelTabs();renderZones();renderMap();updateCycleBanner();updateStatus();
 }
 
-function setView(v){
-  curView=v;
-  document.getElementById('rooms-view').style.display=v==='rooms'?'block':'none';
-  document.getElementById('map-view').style.display=v==='map'?'block':'none';
-  document.getElementById('vt-rooms').classList.toggle('active',v==='rooms');
-  document.getElementById('vt-map').classList.toggle('active',v==='map');
-  if(v==='map')renderMap();
-}
+function setView(v){curView=v;renderMap(curRoom);}
 
 // ═══ LEVEL TABS ══════════════════════════════════════════════════════
 function renderLevelTabs(){
@@ -669,12 +657,13 @@ function renderLevelTabs(){
     b.onclick=function(){
       document.querySelectorAll('.lvl-btn').forEach(function(t){t.classList.remove('active');});
       b.classList.add('active');curLevel=l;closeRoom();
-      // Fetch map for this level if not cached
-      var mk='mhac-ri-map-'+l;
-      if(!localStorage.getItem(mk)){
-        sbGet(mk).then(function(v){if(v!==null)localStorage.setItem(mk,JSON.stringify(v));}).catch(function(){});
+      // Fetch map for this level into memory cache if not already there
+      if(!_mapCache[l]){
+        sbGet('mhac-ri-map-'+l).then(function(v){
+          if(v!==null){_mapCache[l]=v;renderMap();}
+        }).catch(function(){});
       }
-      renderZones();updateCycleBanner();updateStatus();if(curView==='map')renderMap();
+      renderZones();renderMap();updateCycleBanner();updateStatus();
     };
     c.appendChild(b);
   });
@@ -729,7 +718,7 @@ function renderZones(){
 }
 
 // ═══ MAP VIEW ════════════════════════════════════════════════════════
-function renderMap(){
+function renderMap(highlightRoom){
   var container=document.getElementById('map-container');
   if(!container)return;
   container.innerHTML='';
@@ -754,24 +743,16 @@ function renderMap(){
   } else {
     var img=document.createElement('img');img.className='map-img';img.src=mapB64;img.id='map-img';img.draggable=false;wrap.appendChild(img);
     // Render pins
-    levelPins.forEach(function(pin){renderPin(wrap,pin,data);});
-    // Render YAH pin if set for this level
-    var yahKey='mhac-ri-yah-'+curLevel;
-    try{yahPos=JSON.parse(localStorage.getItem(yahKey))||null;}catch(e){yahPos=null;}
-    if(yahPos)renderYAHPin(wrap,yahPos);
+    levelPins.forEach(function(pin){renderPin(wrap,pin,data,highlightRoom);});
+
 
     // Click handler — YAH mode or pin mode
     wrap.addEventListener('click',function(e){
-      if(e.target.closest('.map-pin')||e.target.closest('.yah-pin'))return;
+      if(e.target.closest('.map-pin'))return;
       var rect=wrap.getBoundingClientRect();
       var x=(e.clientX-rect.left)/rect.width;
       var y=(e.clientY-rect.top)/rect.height;
-      if(yahMode){
-        yahPos={x:x,y:y};
-        localStorage.setItem('mhac-ri-yah-'+curLevel,JSON.stringify(yahPos));
-        renderYAHPin(wrap,yahPos);
-        return;
-      }
+
       if(!isAdmin||!pinMode)return;
       pendingPinPos={x:x,y:y};
       openPinModal();
@@ -780,19 +761,52 @@ function renderMap(){
   container.appendChild(wrap);
   document.getElementById('upload-map-btn').style.display=isAdmin?'flex':'none';
   document.getElementById('pin-mode-btn').style.display=(isAdmin&&mapB64)?'flex':'none';
-  document.getElementById('yah-btn').style.display=mapB64?'flex':'none';
 }
 
-function renderPin(wrap,pin,data){
+function renderPin(wrap,pin,data,highlightRoom){
+  var isHighlight=(pin.roomNum===highlightRoom);
   var div=document.createElement('div');div.className='map-pin';
   div.style.left=(pin.x*100)+'%';div.style.top=(pin.y*100)+'%';
-  var hasIssues=roomHasIssues(pin.roomNum,data),inspected=roomIsInspected(pin.roomNum,data);
-  var cls=hasIssues?'issues':inspected?'done':'pending';
-  var checkSvg=inspected?'<div class="pin-check"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="2"><polyline points="2,5 4,7 8,3"/></svg></div>':'';
   var shortNum=pin.roomNum.replace(/^\d[A-Z]-/,'');
-  div.innerHTML='<div class="pin-circle '+cls+'">'+shortNum+checkSvg+'</div><div class="pin-tooltip">'+pin.roomNum+'</div>'+(isAdmin?'<button class="pin-del" title="Remove pin">&#x2715;</button>':'');
-  div.querySelector('.pin-circle').addEventListener('click',function(e){if(pinMode)return;e.stopPropagation();openRoom(pin.roomNum,null);});
-  if(isAdmin){var del=div.querySelector('.pin-del');if(del)del.addEventListener('click',function(e){e.stopPropagation();removePin(pin.roomNum);});}
+  // Check if all checks complete (for checkmark)
+  var checks=loadChecks();
+  var allDone=roomIsComplete(pin.roomNum,data,checks);
+
+  if(isHighlight){
+    div.innerHTML=
+      '<div class="pin-pulse"></div>'+
+      '<div class="pin-circle pin-selected">'+shortNum+'</div>'+
+      '<div class="pin-tooltip">'+pin.roomNum+'</div>'+
+      (isAdmin?'<button class="pin-del" title="Remove pin">&#x2715;</button>':'');
+  } else {
+    var checkmark=allDone?'<div class="pin-check"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="2.5"><polyline points="2,5 4,7 8,3"/></svg></div>':'';
+    div.innerHTML=
+      '<div class="pin-circle pin-grey">'+shortNum+checkmark+'</div>'+
+      '<div class="pin-tooltip">'+pin.roomNum+'</div>'+
+      (isAdmin?'<button class="pin-del" title="Remove pin">&#x2715;</button>':'');
+  }
+  // Tap pin → open room and scroll to checklist
+  div.querySelector('.pin-circle').addEventListener('click',function(e){
+    if(pinMode)return;
+    e.stopPropagation();
+    openRoom(pin.roomNum,null);
+    setTimeout(function(){
+      var panel=document.getElementById('room-panel');
+      if(panel)panel.scrollIntoView({behavior:'smooth',block:'start'});
+    },200);
+  });
+  // Admin: long-press or double-tap pin to move it
+  if(isAdmin){
+    var del=div.querySelector('.pin-del');
+    if(del)del.addEventListener('click',function(e){e.stopPropagation();removePin(pin.roomNum);});
+    // Double-tap to reposition
+    var lastTap=0;
+    div.addEventListener('touchend',function(e){
+      var now=Date.now();
+      if(now-lastTap<350){e.preventDefault();e.stopPropagation();openPlacement(pin.roomNum);}
+      lastTap=now;
+    });
+  }
   wrap.appendChild(div);
 }
 
@@ -882,9 +896,11 @@ function openRoom(roomNum,zone){
   switchCheckTab('electrical',document.querySelector('.check-tab'));
   renderChecklist('electrical',roomInfo);renderChecklist('plumbing',roomInfo);renderChecklist('building',roomInfo);renderPhotos();
   document.getElementById('room-panel').scrollIntoView({behavior:'smooth',block:'start'});
+  // Update map to highlight this room's pin
+  renderMap(roomNum);
 }
 
-function closeRoom(){curRoom=null;document.getElementById('room-panel').style.display='none';document.querySelectorAll('.room-chip').forEach(function(c){c.classList.remove('active');});}
+function closeRoom(){curRoom=null;document.getElementById('room-panel').style.display='none';document.querySelectorAll('.room-chip').forEach(function(c){c.classList.remove('active');});renderMap();}
 
 function toggleHistory(){var p=document.getElementById('history-panel');if(p.style.display==='none'){renderHistory();p.style.display='block';}else p.style.display='none';}
 
@@ -1315,7 +1331,7 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
 (function(){
   // Only fetch the keys needed for this level/zone — not maps
   var KEYS=[ROOMS_KEY,CHECKS_KEY,DATA_KEY,HISTORY_KEY,TEMPS_KEY,DATES_KEY,ARCHIVE_KEY,PINS_KEY];
-  // Also fetch map for current level
+  // Also fetch map for current level into memory cache
   var mapKey='mhac-ri-map-'+curLevel;
   var done=false;
   function finish(){
@@ -1339,12 +1355,17 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
   // Hard fallback — show UI after 4s no matter what
   setTimeout(finish, 4000);
   // Fetch all keys in parallel
-  var allKeys=KEYS.concat([mapKey]);
-  Promise.all(allKeys.map(function(k){
+  // Fetch data keys into localStorage, map into memory cache
+  Promise.all(KEYS.map(function(k){
     return sbGet(k).then(function(v){
       if(v!==null)localStorage.setItem(k,JSON.stringify(v));
     }).catch(function(){});
-  })).then(finish).catch(finish);
+  })).then(function(){
+    // Fetch map separately into memory
+    sbGet(mapKey).then(function(v){
+      if(v!==null)_mapCache[curLevel]=v;
+    }).catch(function(){}).then(finish);
+  }).catch(finish);
 })();
 </script>
 </body>
