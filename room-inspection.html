@@ -247,7 +247,7 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
   <!-- INLINE MAP -->
   <div id="map-view" style="margin-bottom:14px">
     <div class="map-controls">
-      <button class="tb-btn admin-only" id="upload-map-btn" onclick="document.getElementById('map-file-input').click()" style="display:none">&#8593; Upload Map</button>
+      <button class="tb-btn admin-only" id="upload-map-btn" onclick="document.getElementById('map-file-input').click()">&#8593; Upload Map</button>
       <input type="file" id="map-file-input" accept="image/*,application/pdf" style="display:none" onchange="handleMapUpload(event)"/>
       <button class="tb-btn admin-only pin-mode-btn" id="pin-mode-btn" onclick="togglePinMode()" style="display:none">+ Add Pin</button>
       <span style="font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.35);text-transform:uppercase" id="pin-hint"></span>
@@ -747,11 +747,10 @@ function renderMap(){
     });
   }
   container.appendChild(wrap);
-  // Show admin controls
-  if(isAdmin){
-    document.getElementById('upload-map-btn').style.display='flex';
-    document.getElementById('pin-mode-btn').style.display='flex';
-  }
+  // Show/hide admin controls
+  document.getElementById('upload-map-btn').style.display=isAdmin?'flex':'none';
+  document.getElementById('pin-mode-btn').style.display=(isAdmin&&mapB64)?'flex':'none';
+  document.getElementById('yah-btn').style.display=mapB64?'flex':'none';
 }
 
 function renderPin(wrap,pin,data){
@@ -1244,22 +1243,63 @@ function deleteRoom(){
 
 // ═══ PRINT ═══════════════════════════════════════════════════════════
 function printYearSummary(){
+  // Use fresh data from Supabase if possible, fallback to localStorage
   var data=loadData(),rooms=loadRooms(),levelRooms=rooms[curLevel]||{};
-  var allRooms=[];Object.values(levelRooms).forEach(function(z){allRooms=allRooms.concat(z);});
-  var dates=loadDates();
-  // Find cycle label for this level
-  var earliest=null;allRooms.forEach(function(r){var d=dates[r.num];if(d&&(!earliest||d<earliest))earliest=d;});
+  var dates=loadDates(),checks=loadChecks();
+  var earliest=null;
+  var allRooms=[];
+  Object.values(levelRooms).forEach(function(z){allRooms=allRooms.concat(z);});
+  allRooms.forEach(function(r){var d=dates[r.num];if(d&&(!earliest||d<earliest))earliest=d;});
   var yearLabel=earliest?cycleLabel(earliest):'Current Cycle';
-  var html='<div class="print-year">MHAC Room Inspection Report &mdash; Level '+curLevel+'<br><span style="font-size:14px;font-weight:normal">'+yearLabel+'</span></div>';
-  html+='<p style="font-size:11px;color:#666;margin-bottom:12px">Printed: '+new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'})+'</p>';
+
+  var html='<div class="print-year">MHAC Room Inspection Report &mdash; Level '+curLevel+'</div>';
+  html+='<div style="font-size:13px;color:#444;margin-bottom:4px">'+yearLabel+'</div>';
+  html+='<div style="font-size:11px;color:#666;margin-bottom:16px">Printed: '+new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'})+'</div>';
+
   var hasAny=false;
-  allRooms.forEach(function(r){
-    if(!roomHasIssues(r.num,data))return;hasAny=true;
-    html+='<div class="print-room"><div class="print-room-title">'+r.num+(r.label?' &mdash; '+r.label:'')+'</div>';
-    ['electrical','plumbing','building'].forEach(function(cat){var catData=(data[r.num]&&data[r.num][cat])||{};var notes=catData.notes||{};Object.entries(notes).forEach(function(kv){if(!kv[1]||!kv[1].trim())return;var cn='';(loadChecks()[cat]||[]).forEach(function(c){if(c.id===kv[0])cn=c.name;});html+='<div class="print-issue"><strong>['+cat.charAt(0).toUpperCase()+cat.slice(1)+'] '+cn+':</strong> '+kv[1]+'</div>';});});
-    html+='</div>';
+
+  // Group by zone
+  Object.keys(levelRooms).forEach(function(zone){
+    var zoneRooms=levelRooms[zone]||[];
+    var zoneHtml='';
+    zoneRooms.forEach(function(r){
+      var d=data[r.num];if(!d)return;
+      var roomHtml='';
+      ['electrical','plumbing','building'].forEach(function(cat){
+        var catData=d[cat]||{};
+        var notes=catData.notes||{};
+        var extras=catData.extras||{};
+        Object.entries(notes).forEach(function(kv){
+          if(!kv[1]||!kv[1].trim())return;
+          var cn='';
+          (checks[cat]||[]).forEach(function(c){if(c.id===kv[0])cn=c.name;});
+          roomHtml+='<div class="print-issue">&#9679; <strong>['+cat.charAt(0).toUpperCase()+cat.slice(1)+']</strong> '+cn+': '+kv[1]+'</div>';
+        });
+        // Also include leak notes
+        Object.keys(extras).forEach(function(k){
+          if(k.endsWith('_leakdesc')&&extras[k]&&extras[k].trim()){
+            roomHtml+='<div class="print-issue">&#9679; <strong>[Plumbing]</strong> Leak: '+extras[k]+'</div>';
+          }
+        });
+      });
+      if(roomHtml){
+        hasAny=true;
+        zoneHtml+='<div class="print-room">';
+        zoneHtml+='<div class="print-room-title">'+r.num+(r.label?' &mdash; '+r.label:'')+'</div>';
+        zoneHtml+=roomHtml;
+        zoneHtml+='</div>';
+      }
+    });
+    if(zoneHtml){
+      html+='<div style="font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:#888;margin:16px 0 6px;border-bottom:1px solid #ddd;padding-bottom:4px">'+zone+'</div>';
+      html+=zoneHtml;
+    }
   });
-  if(!hasAny)html+='<p>No issues recorded on Level '+curLevel+' for this cycle.</p>';
+
+  if(!hasAny){
+    html+='<p style="color:#888;margin-top:16px">No issues recorded on Level '+curLevel+' for this cycle.</p>';
+  }
+
   document.getElementById('print-summary').innerHTML=html;
   window.print();
 }
