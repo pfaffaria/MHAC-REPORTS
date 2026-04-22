@@ -246,20 +246,22 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
     <span class="cycle-prog" id="cycle-prog"></span>
     <span class="reset-warn" id="reset-warn" style="display:none">&#9888; Approaching Reset</span>
   </div>
-  <!-- HARDCODED MAP UPLOAD — always visible for admin -->
-  <div id="map-upload-section" style="display:none;margin-bottom:12px">
-    <div id="map-upload-prompt" style="min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border:2px dashed rgba(245,158,11,.3);border-radius:8px;padding:20px;cursor:pointer;background:rgba(245,158,11,.03)" onclick="document.getElementById('map-file-input').click()">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(245,158,11,.5)" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      <div style="font-size:12px;letter-spacing:2px;color:rgba(245,158,11,.6);text-transform:uppercase;font-family:'Rajdhani',sans-serif;font-weight:700">Tap to Upload Floor Map</div>
-      <div style="font-size:9px;letter-spacing:1.5px;color:rgba(245,158,11,.3);text-transform:uppercase;font-family:'Rajdhani',sans-serif">JPG or PNG image</div>
-    </div>
+  <!-- VIEW TOGGLE -->
+  <div class="view-toggle">
+    <button class="vt-btn active" id="vt-rooms" onclick="setView('rooms')">&#9776; Rooms</button>
+    <button class="vt-btn" id="vt-map" onclick="setView('map')">&#128205; Floor Map</button>
   </div>
-  <input type="file" id="map-file-input" accept="image/*" style="display:none" onchange="handleMapUpload(event)"/>
+
+  <!-- ROOM GRID VIEW -->
+  <div id="rooms-view">
+    <div id="zone-container"></div>
+  </div>
 
   <!-- MAP VIEW -->
-  <div id="map-view" style="margin-bottom:12px">
+  <div id="map-view" style="display:none">
     <div class="map-controls">
       <button class="tb-btn admin-only" id="upload-map-btn" onclick="document.getElementById('map-file-input').click()" style="display:none">&#8593; Upload Map</button>
+      <input type="file" id="map-file-input" accept="image/*" style="display:none" onchange="handleMapUpload(event)"/>
       <button class="tb-btn admin-only pin-mode-btn" id="pin-mode-btn" onclick="togglePinMode()" style="display:none">+ Add Pin</button>
       <span style="font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.35);text-transform:uppercase" id="pin-hint"></span>
       <button class="tb-btn yah-btn" id="yah-btn" onclick="toggleYAH()" style="display:none;border-color:rgba(59,130,246,.3);color:rgba(147,197,253,.7)">&#128205; You Are Here</button>
@@ -270,11 +272,6 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
       </span>
     </div>
     <div id="map-container"></div>
-  </div>
-
-  <!-- ROOM GRID — always visible -->
-  <div id="rooms-view">
-    <div id="zone-container"></div>
   </div>
 
   <!-- ROOM PANEL -->
@@ -649,10 +646,17 @@ function initApp(){
   if(filterLevel)curLevel=filterLevel;
   if(filterZone){document.getElementById('lvl-tabs').style.display='none';var bb=document.getElementById('back-map-btn');if(bb){bb.href='reports.html?level='+curLevel+'&zone='+encodeURIComponent(filterZone);bb.textContent='<- Reports';}}
   checkAndResetRooms();
-  renderLevelTabs();renderZones();renderMap();updateCycleBanner();updateStatus();
+  renderLevelTabs();renderZones();updateCycleBanner();updateStatus();
 }
 
-function setView(v){curView=v;renderMap();}
+function setView(v){
+  curView=v;
+  document.getElementById('rooms-view').style.display=v==='rooms'?'block':'none';
+  document.getElementById('map-view').style.display=v==='map'?'block':'none';
+  document.getElementById('vt-rooms').classList.toggle('active',v==='rooms');
+  document.getElementById('vt-map').classList.toggle('active',v==='map');
+  if(v==='map')renderMap();
+}
 
 // ═══ LEVEL TABS ══════════════════════════════════════════════════════
 function renderLevelTabs(){
@@ -765,10 +769,7 @@ function renderMap(){
     });
   }
   container.appendChild(wrap);
-  // Show upload prompt when admin and no map; hide when map exists
-  var uploadSection=document.getElementById('map-upload-section');
-  if(uploadSection)uploadSection.style.display=(isAdmin&&!mapB64)?'block':'none';
-  document.getElementById('upload-map-btn').style.display=(isAdmin&&mapB64)?'flex':'none';
+  document.getElementById('upload-map-btn').style.display=isAdmin?'flex':'none';
   document.getElementById('pin-mode-btn').style.display=(isAdmin&&mapB64)?'flex':'none';
   document.getElementById('yah-btn').style.display=mapB64?'flex':'none';
 }
@@ -1311,10 +1312,7 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
         if(isAdmin){document.getElementById('role-badge').style.display='inline';document.querySelectorAll('.admin-only').forEach(function(el){el.style.display='';});}
         if(filterZone){var zb=document.getElementById('zone-filter-badge');if(zb){zb.textContent=filterZone;zb.style.display='inline';}}
         initApp();
-        // Re-render map now that isAdmin is known
-        setTimeout(function(){renderMap();},100);
-        // Show upload section if no map yet
-        var us=document.getElementById('map-upload-section');if(us&&isAdmin)us.style.display='block';
+
       } else {
         document.getElementById('login-screen').style.display='flex';
       }
