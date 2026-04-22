@@ -55,6 +55,7 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 .zone-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid rgba(245,158,11,.1)}
 .zone-name{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;color:var(--amber)}
 .room-grid{display:flex;flex-wrap:wrap;gap:6px}
+.admin-only{display:none}
 .room-chip{padding:6px 12px;border:1px solid rgba(245,158,11,.18);border-radius:6px;background:rgba(245,158,11,.04);cursor:pointer;transition:all .2s;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;color:rgba(245,158,11,.6);position:relative;-webkit-tap-highlight-color:transparent}
 .room-chip:hover{border-color:rgba(245,158,11,.4);color:var(--amber-light);background:rgba(245,158,11,.08)}
 .room-chip.active{border-color:var(--amber);color:#fff;background:rgba(245,158,11,.18);box-shadow:0 0 12px rgba(245,158,11,.2)}
@@ -257,9 +258,9 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
   </div>
 
   <!-- MAP -->
-  <div id="map-view" style="margin-top:14px">
+  <div id="map-view" style="margin-top:14px;min-height:60px">
     <div class="map-controls">
-      <button class="tb-btn admin-only" id="upload-map-btn" onclick="document.getElementById('map-file-input').click()" style="display:none">&#8593; Upload Map</button>
+      <button class="tb-btn admin-only" id="upload-map-btn" onclick="document.getElementById('map-file-input').click()">&#8593; Upload Map</button>
       <input type="file" id="map-file-input" accept="image/*" style="display:none" onchange="handleMapUpload(event)"/>
       <button class="tb-btn admin-only pin-mode-btn" id="pin-mode-btn" onclick="togglePinMode()" style="display:none">+ Add Pin</button>
       <span style="font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.35);text-transform:uppercase" id="pin-hint"></span>
@@ -454,7 +455,7 @@ function doLogin(){
   err.textContent='';currentRole=found.role;isAdmin=(found.role==='admin');
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
-  if(isAdmin){document.getElementById('role-badge').style.display='inline';document.querySelectorAll('.admin-only').forEach(function(el){el.style.display='';});}
+  if(isAdmin){document.getElementById('role-badge').style.display='inline';document.querySelectorAll('.admin-only').forEach(function(el){el.style.display='';});setTimeout(function(){renderMap();},50);}
   if(filterZone){var zb=document.getElementById('zone-filter-badge');zb.textContent=filterZone;zb.style.display='inline';}
   initApp();
 }
@@ -759,7 +760,7 @@ function renderMap(highlightRoom){
     });
   }
   container.appendChild(wrap);
-  document.getElementById('upload-map-btn').style.display=isAdmin?'flex':'none';
+  // upload btn visibility handled by CSS admin-only class
   document.getElementById('pin-mode-btn').style.display=(isAdmin&&mapB64)?'flex':'none';
 }
 
@@ -1343,7 +1344,7 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
         currentRole=s.role;isAdmin=(s.role==='admin');
         document.getElementById('login-screen').style.display='none';
         document.getElementById('app').style.display='block';
-        if(isAdmin){document.getElementById('role-badge').style.display='inline';document.querySelectorAll('.admin-only').forEach(function(el){el.style.display='';});}
+        if(isAdmin){document.getElementById('role-badge').style.display='inline';document.querySelectorAll('.admin-only').forEach(function(el){el.style.display='';});setTimeout(function(){renderMap();},50);}
         if(filterZone){var zb=document.getElementById('zone-filter-badge');if(zb){zb.textContent=filterZone;zb.style.display='inline';}}
         initApp();
 
