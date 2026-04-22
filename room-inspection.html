@@ -714,9 +714,14 @@ function renderMap(){
 
   var wrap=document.createElement('div');wrap.className='map-wrap'+(isAdmin?' admin-mode':'');wrap.id='map-wrap';
   if(!mapB64){
-    var ph=document.createElement('div');ph.className='map-placeholder';
-    if(isAdmin){ph.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Click to upload floor plan';ph.onclick=function(){document.getElementById('map-file-input').click();};}
-    else{ph.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>No floor plan uploaded yet';}
+    var ph=document.createElement('div');
+    ph.style.cssText='min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;border:2px dashed rgba(245,158,11,.25);border-radius:8px;padding:24px;cursor:'+(isAdmin?'pointer':'default');
+    if(isAdmin){
+      ph.innerHTML='<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(245,158,11,.5)" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span style="font-size:11px;letter-spacing:2px;color:rgba(245,158,11,.45);text-transform:uppercase">Tap to upload floor plan</span><span style="font-size:9px;letter-spacing:1px;color:rgba(245,158,11,.25);text-transform:uppercase">JPG or PNG</span>';
+      ph.onclick=function(){document.getElementById('map-file-input').click();};
+    } else {
+      ph.innerHTML='<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(245,158,11,.3)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span style="font-size:11px;letter-spacing:2px;color:rgba(245,158,11,.3);text-transform:uppercase">No floor plan uploaded</span>';
+    }
     wrap.appendChild(ph);
   } else {
     var img=document.createElement('img');img.className='map-img';img.src=mapB64;img.id='map-img';img.draggable=false;wrap.appendChild(img);
