@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <title>MHAC — Room Inspection</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>if(typeof pdfjsLib!=='undefined')pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{--amber:#f59e0b;--amber-light:#fcd34d;--amber-pale:#fef3c7;--bg:#0f0a03;--green:#22c55e;--red:#ef4444}
@@ -45,8 +47,7 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 .lvl-btn.active{background:rgba(245,158,11,.12);border-color:var(--amber);color:var(--amber-light)}
 /* VIEW TOGGLE */
 .view-toggle{display:flex;gap:6px;margin-bottom:12px}
-.vt-btn{padding:6px 18px;border:1px solid rgba(245,158,11,.2);border-radius:4px;background:transparent;color:rgba(245,158,11,.45);font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
-.vt-btn.active{background:rgba(245,158,11,.12);border-color:var(--amber);color:var(--amber-light)}
+/* view toggle removed — both views always shown */
 /* ROOM GRID */
 .zone-section{margin-bottom:20px}
 .zone-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid rgba(245,158,11,.1)}
@@ -243,21 +244,11 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
     <span class="cycle-prog" id="cycle-prog"></span>
     <span class="reset-warn" id="reset-warn" style="display:none">&#9888; Approaching Reset</span>
   </div>
-  <div class="view-toggle">
-    <button class="vt-btn active" id="vt-rooms" onclick="setView('rooms')">&#9776; Rooms</button>
-    <button class="vt-btn" id="vt-map" onclick="setView('map')">&#128205; Floor Map</button>
-  </div>
-
-  <!-- ROOM GRID VIEW -->
-  <div id="rooms-view">
-    <div id="zone-container"></div>
-  </div>
-
-  <!-- MAP VIEW -->
-  <div id="map-view">
+  <!-- INLINE MAP -->
+  <div id="map-view" style="margin-bottom:14px">
     <div class="map-controls">
       <button class="tb-btn admin-only" id="upload-map-btn" onclick="document.getElementById('map-file-input').click()" style="display:none">&#8593; Upload Map</button>
-      <input type="file" id="map-file-input" accept="image/*" style="display:none" onchange="handleMapUpload(event)"/>
+      <input type="file" id="map-file-input" accept="image/*,application/pdf" style="display:none" onchange="handleMapUpload(event)"/>
       <button class="tb-btn admin-only pin-mode-btn" id="pin-mode-btn" onclick="togglePinMode()" style="display:none">+ Add Pin</button>
       <span style="font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.35);text-transform:uppercase" id="pin-hint"></span>
       <button class="tb-btn yah-btn" id="yah-btn" onclick="toggleYAH()" style="border-color:rgba(59,130,246,.3);color:rgba(147,197,253,.7)">&#128205; You Are Here</button>
@@ -268,6 +259,11 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
       </span>
     </div>
     <div id="map-container"></div>
+  </div>
+
+  <!-- ROOM GRID (always visible) -->
+  <div id="rooms-view">
+    <div id="zone-container"></div>
   </div>
 
   <!-- ROOM PANEL -->
@@ -642,16 +638,13 @@ function initApp(){
   if(filterLevel)curLevel=filterLevel;
   if(filterZone){document.getElementById('lvl-tabs').style.display='none';var bb=document.getElementById('back-map-btn');if(bb){bb.href='reports.html?level='+curLevel+'&zone='+encodeURIComponent(filterZone);bb.textContent='<- Reports';}}
   checkAndResetRooms();
-  renderLevelTabs();renderZones();updateCycleBanner();updateStatus();
+  renderLevelTabs();renderZones();renderMap();updateCycleBanner();updateStatus();
 }
 
 function setView(v){
+  // Both views always shown — just re-render map if needed
   curView=v;
-  document.getElementById('rooms-view').style.display=v==='rooms'?'block':'none';
-  document.getElementById('map-view').style.display=v==='map'?'block':'none';
-  document.getElementById('vt-rooms').classList.toggle('active',v==='rooms');
-  document.getElementById('vt-map').classList.toggle('active',v==='map');
-  if(v==='map')renderMap();
+  renderMap();
 }
 
 // ═══ LEVEL TABS ══════════════════════════════════════════════════════
@@ -815,22 +808,58 @@ function removePin(roomNum){
 
 function handleMapUpload(event){
   var file=event.target.files[0];if(!file)return;
+  if(file.type==='application/pdf'){
+    handlePDFUpload(file);
+  } else {
+    handleImageUpload(file);
+  }
+  event.target.value='';
+}
+
+function handlePDFUpload(file){
+  showToast('Rendering PDF...');
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var typedArray=new Uint8Array(e.target.result);
+    pdfjsLib.getDocument({data:typedArray}).promise.then(function(pdf){
+      pdf.getPage(1).then(function(page){
+        var scale=4.0;
+        var viewport=page.getViewport({scale:scale});
+        var canvas=document.createElement('canvas');
+        canvas.width=viewport.width;canvas.height=viewport.height;
+        var ctx=canvas.getContext('2d');
+        page.render({canvasContext:ctx,viewport:viewport}).promise.then(function(){
+          var b64=canvas.toDataURL('image/jpeg',0.92);
+          saveMap(curLevel,b64);renderMap();
+          showToast('Map uploaded ✓ ('+Math.round(canvas.width)+'px wide)');
+        });
+      });
+    }).catch(function(err){showToast('PDF error: '+err.message);});
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function handleImageUpload(file){
   var reader=new FileReader();
   reader.onload=function(e){
     var img=new Image();
     img.onload=function(){
-      var canvas=document.createElement('canvas');
-      var maxW=1400,ratio=Math.min(1,maxW/img.width);
-      canvas.width=Math.round(img.width*ratio);canvas.height=Math.round(img.height*ratio);
-      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-      var b64=canvas.toDataURL('image/jpeg',0.78);
-      saveMap(curLevel,b64);renderMap();showToast('Map uploaded \u2713');
+      var steps=[{w:8000,q:0.92},{w:6000,q:0.88},{w:4000,q:0.82},{w:2000,q:0.75},{w:1400,q:0.68}];
+      var b64=null;
+      for(var i=0;i<steps.length;i++){
+        var s=steps[i],sc=Math.min(1,s.w/img.width);
+        var canvas=document.createElement('canvas');
+        canvas.width=Math.round(img.width*sc);canvas.height=Math.round(img.height*sc);
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        b64=canvas.toDataURL('image/jpeg',s.q);
+        if(b64.length<12*1024*1024)break;
+      }
+      saveMap(curLevel,b64);renderMap();showToast('Map uploaded ✓');
     };img.src=e.target.result;
   };reader.readAsDataURL(file);
-  event.target.value='';
 }
 
-// ═══ ROOM PANEL ══════════════════════════════════════════════════════
+
 function openRoom(roomNum,zone){
   document.querySelectorAll('.room-chip').forEach(function(c){c.classList.remove('active');});
   var chip=document.getElementById('chip-'+roomNum);if(chip)chip.classList.add('active');
@@ -846,9 +875,13 @@ function openRoom(roomNum,zone){
   document.getElementById('history-panel').style.display='none';
   switchCheckTab('electrical',document.querySelector('.check-tab'));
   renderChecklist('electrical',roomInfo);renderChecklist('plumbing',roomInfo);renderChecklist('building',roomInfo);renderPhotos();
-  document.getElementById('room-panel').scrollIntoView({behavior:'smooth',block:'start'});
-  // Switch to rooms view if on map
-  if(curView==='map'){setView('rooms');}
+  // Highlight pin on map first, then scroll so both map and panel are visible
+  renderMap(roomNum);
+  document.getElementById('map-view').scrollIntoView({behavior:'smooth',block:'start'});
+  // Small delay so map renders before panel appears
+  setTimeout(function(){
+    document.getElementById('room-panel').scrollIntoView({behavior:'smooth',block:'nearest'});
+  }, 300);
 }
 
 function closeRoom(){curRoom=null;document.getElementById('room-panel').style.display='none';document.querySelectorAll('.room-chip').forEach(function(c){c.classList.remove('active');});}
