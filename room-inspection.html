@@ -519,11 +519,12 @@ function loadArchive(){return ls_get(ARCHIVE_KEY)||[];}
 function saveArchive(d){ls_set(ARCHIVE_KEY,d);sbSet(ARCHIVE_KEY,d);}
 function loadPins(){return ls_get(PINS_KEY)||{};}
 function savePins(d){ls_set(PINS_KEY,d);sbSet(PINS_KEY,d);}
-function loadMap(level){return ls_get('mhac-ri-map-'+level)||null;}
-function saveMap(level,b64){ls_set('mhac-ri-map-'+level,b64);sbSet('mhac-ri-map-'+level,b64);}
+function loadMap(level){return _mapCache[level]||null;}
+function saveMap(level,b64){_mapCache[level]=b64;sbSet('mhac-ri-map-'+level,b64);}
 
 // ═══ STATE ═══════════════════════════════════════════════════════════
 var curLevel='1',curRoom=null,addCheckCategory=null,pendingAddZone=null,pendingAddLevel=null;
+var _mapCache={};  // in-memory map cache — avoids localStorage size issues
 var yahMode=false,yahPos=null;  // You Are Here pin
 var pinMode=false,pendingPinPos=null,curView='rooms';
 var urlParams=new URLSearchParams(window.location.search);
@@ -669,10 +670,11 @@ function renderLevelTabs(){
     b.onclick=function(){
       document.querySelectorAll('.lvl-btn').forEach(function(t){t.classList.remove('active');});
       b.classList.add('active');curLevel=l;closeRoom();
-      // Fetch map for this level if not cached
-      var mk='mhac-ri-map-'+l;
-      if(!localStorage.getItem(mk)){
-        sbGet(mk).then(function(v){if(v!==null)localStorage.setItem(mk,JSON.stringify(v));}).catch(function(){});
+      // Fetch map for this level into memory cache if not already there
+      if(!_mapCache[l]){
+        sbGet('mhac-ri-map-'+l).then(function(v){
+          if(v!==null){_mapCache[l]=v;if(curView==='map')renderMap();}
+        }).catch(function(){});
       }
       renderZones();updateCycleBanner();updateStatus();if(curView==='map')renderMap();
     };
@@ -1315,7 +1317,7 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
 (function(){
   // Only fetch the keys needed for this level/zone — not maps
   var KEYS=[ROOMS_KEY,CHECKS_KEY,DATA_KEY,HISTORY_KEY,TEMPS_KEY,DATES_KEY,ARCHIVE_KEY,PINS_KEY];
-  // Also fetch map for current level
+  // Also fetch map for current level into memory cache
   var mapKey='mhac-ri-map-'+curLevel;
   var done=false;
   function finish(){
@@ -1339,12 +1341,17 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
   // Hard fallback — show UI after 4s no matter what
   setTimeout(finish, 4000);
   // Fetch all keys in parallel
-  var allKeys=KEYS.concat([mapKey]);
-  Promise.all(allKeys.map(function(k){
+  // Fetch data keys into localStorage, map into memory cache
+  Promise.all(KEYS.map(function(k){
     return sbGet(k).then(function(v){
       if(v!==null)localStorage.setItem(k,JSON.stringify(v));
     }).catch(function(){});
-  })).then(finish).catch(finish);
+  })).then(function(){
+    // Fetch map separately into memory
+    sbGet(mapKey).then(function(v){
+      if(v!==null)_mapCache[curLevel]=v;
+    }).catch(function(){}).then(finish);
+  }).catch(finish);
 })();
 </script>
 </body>
