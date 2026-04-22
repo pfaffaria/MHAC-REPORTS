@@ -244,14 +244,18 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
     <span class="cycle-prog" id="cycle-prog"></span>
     <span class="reset-warn" id="reset-warn" style="display:none">&#9888; Approaching Reset</span>
   </div>
+  <!-- ADMIN MAP TOOLBAR — always visible for admin -->
+  <div id="map-admin-bar" class="admin-only" style="display:none;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
+    <button class="tb-btn" onclick="document.getElementById('map-file-input').click()">&#8593; Upload Map</button>
+    <input type="file" id="map-file-input" accept="image/*,application/pdf" style="display:none" onchange="handleMapUpload(event)"/>
+    <span style="font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.3);text-transform:uppercase">PDF or image · Pinch to zoom</span>
+  </div>
   <!-- INLINE MAP -->
-  <div id="map-view" style="margin-bottom:14px">
-    <div class="map-controls">
-      <button class="tb-btn admin-only" id="upload-map-btn" onclick="document.getElementById('map-file-input').click()">&#8593; Upload Map</button>
-      <input type="file" id="map-file-input" accept="image/*,application/pdf" style="display:none" onchange="handleMapUpload(event)"/>
+  <div id="map-view" style="margin-bottom:14px;min-height:60px">
+    <div class="map-controls" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center">
+      <span id="pin-hint" style="font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.35);text-transform:uppercase"></span>
       <button class="tb-btn admin-only pin-mode-btn" id="pin-mode-btn" onclick="togglePinMode()" style="display:none">+ Add Pin</button>
-      <span style="font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.35);text-transform:uppercase" id="pin-hint"></span>
-      <button class="tb-btn yah-btn" id="yah-btn" onclick="toggleYAH()" style="border-color:rgba(59,130,246,.3);color:rgba(147,197,253,.7)">&#128205; You Are Here</button>
+      <button class="tb-btn yah-btn" id="yah-btn" onclick="toggleYAH()" style="display:none;border-color:rgba(59,130,246,.3);color:rgba(147,197,253,.7)">&#128205; You Are Here</button>
       <span style="font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.3);text-transform:uppercase;margin-left:auto">
         <span style="color:rgba(34,197,94,.6)">&#10003; Inspected</span> &nbsp;
         <span style="color:rgba(239,68,68,.5)">&#9679; Has Issues</span> &nbsp;
@@ -452,7 +456,7 @@ function doLogin(){
   err.textContent='';currentRole=found.role;isAdmin=(found.role==='admin');
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
-  if(isAdmin){document.getElementById('role-badge').style.display='inline';document.querySelectorAll('.admin-only').forEach(function(el){el.style.display='';});}
+  if(isAdmin){document.getElementById('role-badge').style.display='inline';document.querySelectorAll('.admin-only').forEach(function(el){el.style.display='';});document.getElementById('map-admin-bar').style.display='flex';}
   if(filterZone){var zb=document.getElementById('zone-filter-badge');zb.textContent=filterZone;zb.style.display='inline';}
   initApp();
 }
@@ -1325,7 +1329,7 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
         currentRole=s.role;isAdmin=(s.role==='admin');
         document.getElementById('login-screen').style.display='none';
         document.getElementById('app').style.display='block';
-        if(isAdmin){document.getElementById('role-badge').style.display='inline';document.querySelectorAll('.admin-only').forEach(function(el){el.style.display='';});}
+        if(isAdmin){document.getElementById('role-badge').style.display='inline';document.querySelectorAll('.admin-only').forEach(function(el){el.style.display='';});document.getElementById('map-admin-bar').style.display='flex';}
         if(filterZone){var zb=document.getElementById('zone-filter-badge');if(zb){zb.textContent=filterZone;zb.style.display='inline';}}
         initApp();
       } else {
