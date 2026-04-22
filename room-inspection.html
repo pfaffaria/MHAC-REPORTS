@@ -79,6 +79,11 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 /* PIN */
 .map-pin{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:10;transition:transform .15s}
 .map-pin:hover{transform:translate(-50%,-50%) scale(1.15)}
+.yah-pin{position:absolute;transform:translate(-50%,-100%);cursor:pointer;z-index:20;pointer-events:all;filter:drop-shadow(0 2px 6px rgba(59,130,246,.7))}
+.yah-pin svg{width:32px;height:32px}
+.yah-pulse{position:absolute;width:40px;height:40px;border-radius:50%;background:rgba(59,130,246,.25);transform:translate(-50%,-50%);top:88%;left:50%;animation:yahpulse 1.8s ease-in-out infinite}
+@keyframes yahpulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.6}50%{transform:translate(-50%,-50%) scale(1.8);opacity:0}}
+.yah-btn.active{background:rgba(59,130,246,.2);border-color:#3b82f6;color:#93c5fd}
 .pin-circle{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:8px;font-weight:700;color:#fff;letter-spacing:.5px;text-align:center;line-height:1.1;padding:2px;box-shadow:0 2px 8px rgba(0,0,0,.5);position:relative;overflow:hidden;transition:all .2s}
 .pin-circle.pending{background:rgba(100,80,0,.85);border-color:rgba(245,158,11,.6)}
 .pin-circle.done{background:rgba(10,60,20,.9);border-color:rgba(34,197,94,.7)}
@@ -255,6 +260,7 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
       <input type="file" id="map-file-input" accept="image/*" style="display:none" onchange="handleMapUpload(event)"/>
       <button class="tb-btn admin-only pin-mode-btn" id="pin-mode-btn" onclick="togglePinMode()" style="display:none">+ Add Pin</button>
       <span style="font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.35);text-transform:uppercase" id="pin-hint"></span>
+      <button class="tb-btn yah-btn" id="yah-btn" onclick="toggleYAH()" style="border-color:rgba(59,130,246,.3);color:rgba(147,197,253,.7)">&#128205; You Are Here</button>
       <span style="font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.3);text-transform:uppercase;margin-left:auto">
         <span style="color:rgba(34,197,94,.6)">&#10003; Inspected</span> &nbsp;
         <span style="color:rgba(239,68,68,.5)">&#9679; Has Issues</span> &nbsp;
@@ -514,6 +520,7 @@ function saveMap(level,b64){ls_set('mhac-ri-map-'+level,b64);sbSet('mhac-ri-map-
 
 // ═══ STATE ═══════════════════════════════════════════════════════════
 var curLevel='1',curRoom=null,addCheckCategory=null,pendingAddZone=null,pendingAddLevel=null;
+var yahMode=false,yahPos=null;  // You Are Here pin
 var pinMode=false,pendingPinPos=null,curView='rooms';
 var urlParams=new URLSearchParams(window.location.search);
 var filterLevel=urlParams.get('level')||null;
@@ -724,18 +731,27 @@ function renderMap(){
     var img=document.createElement('img');img.className='map-img';img.src=mapB64;img.id='map-img';img.draggable=false;wrap.appendChild(img);
     // Render pins
     levelPins.forEach(function(pin){renderPin(wrap,pin,data);});
-    // Click to add pin
-    if(isAdmin){
-      wrap.addEventListener('click',function(e){
-        if(!pinMode)return;
-        if(e.target.closest('.map-pin'))return;
-        var rect=wrap.getBoundingClientRect();
-        var x=(e.clientX-rect.left)/rect.width;
-        var y=(e.clientY-rect.top)/rect.height;
-        pendingPinPos={x:x,y:y};
-        openPinModal();
-      });
-    }
+    // Render YAH pin if set for this level
+    var yahKey='mhac-ri-yah-'+curLevel;
+    try{yahPos=JSON.parse(localStorage.getItem(yahKey))||null;}catch(e){yahPos=null;}
+    if(yahPos)renderYAHPin(wrap,yahPos);
+
+    // Click handler — YAH mode or pin mode
+    wrap.addEventListener('click',function(e){
+      if(e.target.closest('.map-pin')||e.target.closest('.yah-pin'))return;
+      var rect=wrap.getBoundingClientRect();
+      var x=(e.clientX-rect.left)/rect.width;
+      var y=(e.clientY-rect.top)/rect.height;
+      if(yahMode){
+        yahPos={x:x,y:y};
+        localStorage.setItem('mhac-ri-yah-'+curLevel,JSON.stringify(yahPos));
+        renderYAHPin(wrap,yahPos);
+        return;
+      }
+      if(!isAdmin||!pinMode)return;
+      pendingPinPos={x:x,y:y};
+      openPinModal();
+    });
   }
   container.appendChild(wrap);
   // Show admin controls
@@ -1095,6 +1111,42 @@ function saveBulkRooms(){
   });
   renderZones();renderLevelTabs();updateCycleBanner();
   showToast(added+' rooms added to '+zone+' ✓');
+}
+
+// ═══ YOU ARE HERE ════════════════════════════════════════════════════
+function toggleYAH(){
+  yahMode=!yahMode;
+  var btn=document.getElementById('yah-btn');
+  if(btn)btn.classList.toggle('active',yahMode);
+  var wrap=document.getElementById('map-wrap');
+  if(wrap)wrap.style.cursor=yahMode?'crosshair':'default';
+  if(yahMode)showToast('Tap map to place Your Location');
+  else showToast('');
+}
+
+function renderYAHPin(wrap,pos){
+  // Remove existing YAH pin
+  var old=wrap.querySelector('.yah-pin');if(old)old.remove();
+  var old2=wrap.querySelector('.yah-pulse');if(old2)old2.remove();
+  var pulse=document.createElement('div');
+  pulse.className='yah-pulse';
+  pulse.style.left=(pos.x*100)+'%';
+  pulse.style.top=(pos.y*100)+'%';
+  wrap.appendChild(pulse);
+  var pin=document.createElement('div');
+  pin.className='yah-pin';
+  pin.style.left=(pos.x*100)+'%';
+  pin.style.top=(pos.y*100)+'%';
+  pin.title='Your location — tap to remove';
+  pin.innerHTML='<svg viewBox="0 0 24 24" fill="#3b82f6" stroke="white" stroke-width="1"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill="white"/></svg>';
+  pin.onclick=function(e){
+    e.stopPropagation();
+    if(confirm('Remove your location pin?')){
+      localStorage.removeItem('mhac-ri-yah-'+curLevel);
+      yahPos=null;pin.remove();pulse.remove();
+    }
+  };
+  wrap.appendChild(pin);
 }
 
 // ═══ EDIT / DELETE ROOM ══════════════════════════════════════════════
