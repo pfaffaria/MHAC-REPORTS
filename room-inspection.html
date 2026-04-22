@@ -246,11 +246,20 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
     <span class="cycle-prog" id="cycle-prog"></span>
     <span class="reset-warn" id="reset-warn" style="display:none">&#9888; Approaching Reset</span>
   </div>
-  <!-- MAP VIEW — always visible -->
-  <div id="map-view" style="min-height:160px;margin-bottom:12px">
+  <!-- HARDCODED MAP UPLOAD — always visible for admin -->
+  <div id="map-upload-section" style="display:none;margin-bottom:12px">
+    <div id="map-upload-prompt" style="min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border:2px dashed rgba(245,158,11,.3);border-radius:8px;padding:20px;cursor:pointer;background:rgba(245,158,11,.03)" onclick="document.getElementById('map-file-input').click()">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(245,158,11,.5)" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <div style="font-size:12px;letter-spacing:2px;color:rgba(245,158,11,.6);text-transform:uppercase;font-family:'Rajdhani',sans-serif;font-weight:700">Tap to Upload Floor Map</div>
+      <div style="font-size:9px;letter-spacing:1.5px;color:rgba(245,158,11,.3);text-transform:uppercase;font-family:'Rajdhani',sans-serif">JPG or PNG image</div>
+    </div>
+  </div>
+  <input type="file" id="map-file-input" accept="image/*" style="display:none" onchange="handleMapUpload(event)"/>
+
+  <!-- MAP VIEW -->
+  <div id="map-view" style="margin-bottom:12px">
     <div class="map-controls">
       <button class="tb-btn admin-only" id="upload-map-btn" onclick="document.getElementById('map-file-input').click()" style="display:none">&#8593; Upload Map</button>
-      <input type="file" id="map-file-input" accept="image/*" style="display:none" onchange="handleMapUpload(event)"/>
       <button class="tb-btn admin-only pin-mode-btn" id="pin-mode-btn" onclick="togglePinMode()" style="display:none">+ Add Pin</button>
       <span style="font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.35);text-transform:uppercase" id="pin-hint"></span>
       <button class="tb-btn yah-btn" id="yah-btn" onclick="toggleYAH()" style="display:none;border-color:rgba(59,130,246,.3);color:rgba(147,197,253,.7)">&#128205; You Are Here</button>
@@ -756,8 +765,10 @@ function renderMap(){
     });
   }
   container.appendChild(wrap);
-  // Show/hide admin controls
-  document.getElementById('upload-map-btn').style.display=isAdmin?'flex':'none';
+  // Show upload prompt when admin and no map; hide when map exists
+  var uploadSection=document.getElementById('map-upload-section');
+  if(uploadSection)uploadSection.style.display=(isAdmin&&!mapB64)?'block':'none';
+  document.getElementById('upload-map-btn').style.display=(isAdmin&&mapB64)?'flex':'none';
   document.getElementById('pin-mode-btn').style.display=(isAdmin&&mapB64)?'flex':'none';
   document.getElementById('yah-btn').style.display=mapB64?'flex':'none';
 }
@@ -1302,6 +1313,8 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
         initApp();
         // Re-render map now that isAdmin is known
         setTimeout(function(){renderMap();},100);
+        // Show upload section if no map yet
+        var us=document.getElementById('map-upload-section');if(us&&isAdmin)us.style.display='block';
       } else {
         document.getElementById('login-screen').style.display='flex';
       }
