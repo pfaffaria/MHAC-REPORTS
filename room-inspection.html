@@ -57,8 +57,10 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 .room-chip.active{border-color:var(--amber);color:#fff;background:rgba(245,158,11,.18);box-shadow:0 0 12px rgba(245,158,11,.2)}
 .room-chip.has-issues{border-color:rgba(239,68,68,.4);color:#fca5a5}
 .room-chip.inspected{border-color:rgba(34,197,94,.3);color:rgba(34,197,94,.7)}
+.room-chip.started{border-color:rgba(245,158,11,.5);color:rgba(245,158,11,.8)}
 .room-chip .issue-dot{position:absolute;top:3px;right:3px;width:6px;height:6px;border-radius:50%;background:#ef4444;box-shadow:0 0 4px #ef4444}
 .room-chip .done-dot{position:absolute;top:3px;right:3px;width:6px;height:6px;border-radius:50%;background:#22c55e;box-shadow:0 0 4px #22c55e}
+.room-chip .started-dot{position:absolute;top:3px;right:3px;width:6px;height:6px;border-radius:50%;background:#f59e0b;box-shadow:0 0 4px #f59e0b}
 .room-chip .sub-label{display:block;font-size:8px;letter-spacing:1px;color:rgba(245,158,11,.35);font-weight:600;margin-top:1px}
 .add-room-btn{padding:6px 12px;border:1px dashed rgba(245,158,11,.2);border-radius:6px;background:transparent;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;color:rgba(245,158,11,.3)}
 /* CYCLE BANNER */
@@ -358,6 +360,21 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
     </div>
   </div>
 </div>
+<div class="modal-bg" id="edit-room-modal">
+  <div class="modal">
+    <div class="modal-title">Edit Room</div>
+    <div class="modal-field"><label>Room Number</label><input id="edit-room-num" autocomplete="off"/></div>
+    <div class="modal-field"><label>Label (optional)</label><input id="edit-room-label" autocomplete="off"/></div>
+    <div class="modal-field"><label>Has Toilet</label><select id="edit-room-toilet"><option value="0">No</option><option value="1">Yes</option></select></div>
+    <div class="modal-field"><label>Has Shower</label><select id="edit-room-shower"><option value="0">No</option><option value="1">Yes</option></select></div>
+    <div class="modal-field"><label>Has Sink</label><select id="edit-room-sink"><option value="1">Yes</option><option value="0">No</option></select></div>
+    <div class="modal-btns">
+      <button class="modal-btn primary" onclick="saveEditRoom()">Save</button>
+      <button class="modal-btn secondary" style="border-color:rgba(239,68,68,.3);color:rgba(239,68,68,.6)" onclick="deleteRoom()">Delete Room</button>
+      <button class="modal-btn secondary" onclick="closeModal('edit-room-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
 <div class="modal-bg" id="add-room-modal">
   <div class="modal">
     <div class="modal-title">Add Room</div>
@@ -575,6 +592,7 @@ function updateCycleBanner(){
 }
 
 function roomIsInspected(roomNum,data){
+  // Any activity at all
   var d=data[roomNum];if(!d)return false;
   var cats=['electrical','plumbing','building'];
   for(var i=0;i<cats.length;i++){
@@ -586,6 +604,23 @@ function roomIsInspected(roomNum,data){
   }
   if(d.photos&&d.photos.length)return true;
   return false;
+}
+
+function roomIsComplete(roomNum,data,checks){
+  // All check items in all categories must be checked
+  var d=data[roomNum];if(!d)return false;
+  var cats=['electrical','plumbing','building'];
+  for(var i=0;i<cats.length;i++){
+    var cat=d[cats[i]]||{};
+    var checked=cat.checked||{};
+    var catChecks=checks[cats[i]]||[];
+    if(!catChecks.length)continue;
+    // Every check item must be checked
+    for(var j=0;j<catChecks.length;j++){
+      if(!checked[catChecks[j].id])return false;
+    }
+  }
+  return roomIsInspected(roomNum,data);
 }
 
 function roomHasIssues(roomNum,data){
@@ -644,11 +679,24 @@ function renderZones(){
     var hdr=document.createElement('div');hdr.className='zone-hdr';hdr.innerHTML='<div class="zone-name">'+zone+'</div>';section.appendChild(hdr);
     var grid=document.createElement('div');grid.className='room-grid';
     (levelRooms[zone]||[]).forEach(function(r){
-      var chip=document.createElement('div');var hasIssues=roomHasIssues(r.num,data),inspected=roomIsInspected(r.num,data);
-      chip.className='room-chip'+(r.num===curRoom?' active':'')+(hasIssues?' has-issues':inspected?' inspected':'');chip.id='chip-'+r.num;
-      var dotHtml=hasIssues?'<span class="issue-dot"></span>':inspected?'<span class="done-dot"></span>':'';
+      var chip=document.createElement('div');
+      var hasIssues=roomHasIssues(r.num,data);
+      var inspected=roomIsInspected(r.num,data);
+      var complete=inspected&&roomIsComplete(r.num,data,loadChecks());
+      var chipClass='room-chip'+(r.num===curRoom?' active':'')+(hasIssues?' has-issues':complete?' inspected':inspected?' started':'');
+      chip.className=chipClass;chip.id='chip-'+r.num;
+      var dotHtml=hasIssues?'<span class="issue-dot"></span>':complete?'<span class="done-dot"></span>':inspected?'<span class="started-dot"></span>':'';
       chip.innerHTML=r.num+(r.label?'<span class="sub-label">'+r.label+'</span>':'')+dotHtml;
-      chip.onclick=function(){openRoom(r.num,zone);};grid.appendChild(chip);
+      chip.onclick=function(){openRoom(r.num,zone);};
+      if(isAdmin){
+        var editRoomBtn=document.createElement('button');
+        editRoomBtn.style.cssText='position:absolute;top:2px;left:2px;background:none;border:none;color:rgba(245,158,11,.3);font-size:9px;cursor:pointer;padding:1px 3px;line-height:1;z-index:5';
+        editRoomBtn.innerHTML='&#9998;';
+        editRoomBtn.onclick=function(e){e.stopPropagation();openEditRoom(r.num,zone);};
+        chip.style.position='relative';
+        chip.appendChild(editRoomBtn);
+      }
+      grid.appendChild(chip);
     });
     if(isAdmin){var ab=document.createElement('button');ab.className='add-room-btn admin-only';ab.textContent='+ Add Room';ab.onclick=function(){openAddRoom(curLevel,zone);};grid.appendChild(ab);}
     section.appendChild(grid);container.appendChild(section);
@@ -1047,6 +1095,66 @@ function saveBulkRooms(){
   });
   renderZones();renderLevelTabs();updateCycleBanner();
   showToast(added+' rooms added to '+zone+' ✓');
+}
+
+// ═══ EDIT / DELETE ROOM ══════════════════════════════════════════════
+var editingRoom=null, editingZone=null;
+
+function openEditRoom(roomNum, zone){
+  if(!isAdmin)return;
+  var rooms=loadRooms(),levelRooms=rooms[curLevel]||{},roomInfo=null;
+  (levelRooms[zone]||[]).forEach(function(r){if(r.num===roomNum)roomInfo=r;});
+  if(!roomInfo)return;
+  editingRoom=roomNum; editingZone=zone;
+  document.getElementById('edit-room-num').value=roomInfo.num;
+  document.getElementById('edit-room-label').value=roomInfo.label||'';
+  document.getElementById('edit-room-toilet').value=roomInfo.toilet||0;
+  document.getElementById('edit-room-shower').value=roomInfo.shower||0;
+  document.getElementById('edit-room-sink').value=roomInfo.sink!==undefined?roomInfo.sink:1;
+  document.getElementById('edit-room-modal').classList.add('active');
+  setTimeout(function(){document.getElementById('edit-room-num').focus();},50);
+}
+
+function saveEditRoom(){
+  var newNum=document.getElementById('edit-room-num').value.trim();
+  var newLabel=document.getElementById('edit-room-label').value.trim();
+  var toilet=parseInt(document.getElementById('edit-room-toilet').value);
+  var shower=parseInt(document.getElementById('edit-room-shower').value);
+  var sink=parseInt(document.getElementById('edit-room-sink').value);
+  if(!newNum){showToast('Room number required');return;}
+  var rooms=loadRooms();
+  var levelRooms=rooms[curLevel]||{};
+  var zoneRooms=levelRooms[editingZone]||[];
+  var idx=zoneRooms.findIndex(function(r){return r.num===editingRoom;});
+  if(idx<0){showToast('Room not found');return;}
+  // If number changed, update data keys too
+  if(newNum!==editingRoom){
+    var data=loadData(),dates=loadDates(),hist=loadHistory();
+    if(data[editingRoom]){data[newNum]=data[editingRoom];delete data[editingRoom];saveData(data);}
+    if(dates[editingRoom]){dates[newNum]=dates[editingRoom];delete dates[editingRoom];saveDates(dates);}
+    if(hist[editingRoom]){hist[newNum]=hist[editingRoom];delete hist[editingRoom];saveHistory(hist);}
+  }
+  zoneRooms[idx]={num:newNum,label:newLabel,toilet:toilet,shower:shower,sink:sink};
+  rooms[curLevel][editingZone]=zoneRooms;
+  saveRooms(rooms);
+  closeModal('edit-room-modal');
+  renderZones();updateCycleBanner();
+  showToast('Room updated ✓');
+}
+
+function deleteRoom(){
+  if(!confirm('Delete '+editingRoom+'? This will also remove all inspection data for this room.'))return;
+  var rooms=loadRooms();
+  rooms[curLevel][editingZone]=(rooms[curLevel][editingZone]||[]).filter(function(r){return r.num!==editingRoom;});
+  saveRooms(rooms);
+  // Clean up data
+  var data=loadData();delete data[editingRoom];saveData(data);
+  var dates=loadDates();delete dates[editingRoom];saveDates(dates);
+  var hist=loadHistory();delete hist[editingRoom];saveHistory(hist);
+  closeModal('edit-room-modal');
+  if(curRoom===editingRoom)closeRoom();
+  renderZones();updateCycleBanner();
+  showToast('Room deleted');
 }
 
 // ═══ PRINT ═══════════════════════════════════════════════════════════
