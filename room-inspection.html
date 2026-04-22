@@ -666,7 +666,16 @@ function renderLevelTabs(){
   levels.sort(function(a,b){if(a==='PH')return 1;if(b==='PH')return -1;return a.localeCompare(b);});
   levels.forEach(function(l){
     var b=document.createElement('button');b.className='lvl-btn'+(l===curLevel?' active':'');b.textContent=l==='PH'?'Penthouse':'Level '+l;
-    b.onclick=function(){document.querySelectorAll('.lvl-btn').forEach(function(t){t.classList.remove('active');});b.classList.add('active');curLevel=l;closeRoom();renderZones();updateCycleBanner();updateStatus();if(curView==='map')renderMap();};
+    b.onclick=function(){
+      document.querySelectorAll('.lvl-btn').forEach(function(t){t.classList.remove('active');});
+      b.classList.add('active');curLevel=l;closeRoom();
+      // Fetch map for this level if not cached
+      var mk='mhac-ri-map-'+l;
+      if(!localStorage.getItem(mk)){
+        sbGet(mk).then(function(v){if(v!==null)localStorage.setItem(mk,JSON.stringify(v));}).catch(function(){});
+      }
+      renderZones();updateCycleBanner();updateStatus();if(curView==='map')renderMap();
+    };
     c.appendChild(b);
   });
 }
@@ -828,26 +837,34 @@ function removePin(roomNum){
 
 function handleMapUpload(event){
   var file=event.target.files[0];if(!file)return;
+  showToast('Processing map...');
   var reader=new FileReader();
   reader.onload=function(e){
     var img=new Image();
+    img.onerror=function(){showToast('Could not read image');};
     img.onload=function(){
-      var steps=[{w:5000,q:0.90},{w:3500,q:0.85},{w:2500,q:0.80},{w:1800,q:0.75}];
-      var b64=null;
-      for(var i=0;i<steps.length;i++){
-        var s=steps[i],sc=Math.min(1,s.w/img.width);
-        var canvas=document.createElement('canvas');
-        canvas.width=Math.round(img.width*sc);canvas.height=Math.round(img.height*sc);
-        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-        b64=canvas.toDataURL('image/jpeg',s.q);
-        if(b64.length<8*1024*1024)break;
-      }
-      saveMap(curLevel,b64);renderMap();showToast('Map uploaded ✓');
-    };img.src=e.target.result;
-  };reader.readAsDataURL(file);
+      var maxW=1400,sc=Math.min(1,maxW/img.width);
+      var canvas=document.createElement('canvas');
+      canvas.width=Math.round(img.width*sc);
+      canvas.height=Math.round(img.height*sc);
+      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+      var b64=canvas.toDataURL('image/jpeg',0.82);
+      if(!b64||b64.length<100){showToast('Image processing failed');return;}
+      var testImg=new Image();
+      testImg.onerror=function(){showToast('Compression failed — try a different image');};
+      testImg.onload=function(){
+        saveMap(curLevel,b64);
+        renderMap();
+        showToast('Map uploaded ✓ ('+canvas.width+'x'+canvas.height+'px)');
+      };
+      testImg.src=b64;
+    };
+    img.src=e.target.result;
+  };
+  reader.onerror=function(){showToast('Could not read file');};
+  reader.readAsDataURL(file);
   event.target.value='';
 }
-
 
 function openRoom(roomNum,zone){
   document.querySelectorAll('.room-chip').forEach(function(c){c.classList.remove('active');});
@@ -1298,7 +1315,8 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
 (function(){
   // Only fetch the keys needed for this level/zone — not maps
   var KEYS=[ROOMS_KEY,CHECKS_KEY,DATA_KEY,HISTORY_KEY,TEMPS_KEY,DATES_KEY,ARCHIVE_KEY,PINS_KEY];
-  // Maps loaded lazily when map view is opened
+  // Also fetch map for current level
+  var mapKey='mhac-ri-map-'+curLevel;
   var done=false;
   function finish(){
     if(done)return; done=true;
@@ -1321,7 +1339,8 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
   // Hard fallback — show UI after 4s no matter what
   setTimeout(finish, 4000);
   // Fetch all keys in parallel
-  Promise.all(KEYS.map(function(k){
+  var allKeys=KEYS.concat([mapKey]);
+  Promise.all(allKeys.map(function(k){
     return sbGet(k).then(function(v){
       if(v!==null)localStorage.setItem(k,JSON.stringify(v));
     }).catch(function(){});
