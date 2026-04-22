@@ -247,7 +247,7 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
     <span class="reset-warn" id="reset-warn" style="display:none">&#9888; Approaching Reset</span>
   </div>
   <!-- MAP VIEW — always visible -->
-  <div id="map-view">
+  <div id="map-view" style="min-height:160px;margin-bottom:12px">
     <div class="map-controls">
       <button class="tb-btn admin-only" id="upload-map-btn" onclick="document.getElementById('map-file-input').click()" style="display:none">&#8593; Upload Map</button>
       <input type="file" id="map-file-input" accept="image/*" style="display:none" onchange="handleMapUpload(event)"/>
@@ -708,11 +708,17 @@ function renderZones(){
 
 // ═══ MAP VIEW ════════════════════════════════════════════════════════
 function renderMap(){
-  var container=document.getElementById('map-container');container.innerHTML='';
+  var container=document.getElementById('map-container');
+  if(!container)return;
+  container.innerHTML='';
   var mapB64=loadMap(curLevel);var pins=loadPins();var levelPins=pins[curLevel]||[];
   var data=loadData();
 
+  // Always give the container a visible size
+  container.style.minHeight='150px';
+
   var wrap=document.createElement('div');wrap.className='map-wrap'+(isAdmin?' admin-mode':'');wrap.id='map-wrap';
+  wrap.style.minHeight='150px';
   if(!mapB64){
     var ph=document.createElement('div');
     ph.style.cssText='min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;border:2px dashed rgba(245,158,11,.25);border-radius:8px;padding:24px;cursor:'+(isAdmin?'pointer':'default');
@@ -1294,6 +1300,8 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
         if(isAdmin){document.getElementById('role-badge').style.display='inline';document.querySelectorAll('.admin-only').forEach(function(el){el.style.display='';});}
         if(filterZone){var zb=document.getElementById('zone-filter-badge');if(zb){zb.textContent=filterZone;zb.style.display='inline';}}
         initApp();
+        // Re-render map now that isAdmin is known
+        setTimeout(function(){renderMap();},100);
       } else {
         document.getElementById('login-screen').style.display='flex';
       }
