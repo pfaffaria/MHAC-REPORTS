@@ -92,6 +92,9 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 .pin-circle.pin-grey{background:rgba(255,255,255,.92);border-color:rgba(255,255,255,.9);color:#1a1200}
 .pin-circle.pin-selected{background:#f59e0b;border-color:#fff;color:#000;font-weight:900;width:34px;height:34px;font-size:9px;box-shadow:0 0 0 4px rgba(245,158,11,.5),0 0 20px rgba(245,158,11,.9),0 0 40px rgba(245,158,11,.5);animation:pinGlow 1s ease-in-out infinite}
 @keyframes pinGlow{0%,100%{box-shadow:0 0 0 4px rgba(245,158,11,.4),0 0 16px rgba(245,158,11,.7),0 0 32px rgba(245,158,11,.4)}50%{box-shadow:0 0 0 8px rgba(245,158,11,.2),0 0 28px rgba(245,158,11,1),0 0 56px rgba(245,158,11,.6)}}
+@keyframes pinFilterGlow{0%,100%{filter:drop-shadow(0 0 6px #f59e0b) drop-shadow(0 0 12px #f59e0b)}50%{filter:drop-shadow(0 0 12px #fcd34d) drop-shadow(0 0 24px #f59e0b) drop-shadow(0 0 36px #fcd34d)}}
+.pin-circle.pin-selected-live{background:#f59e0b!important;border:3px solid #fff!important;color:#000!important;width:36px!important;height:36px!important;font-weight:900!important;font-size:10px!important;animation:pinGlow 1s ease-in-out infinite!important;z-index:2}
+.map-pin.pin-glowing{animation:pinFilterGlow 1s ease-in-out infinite;z-index:20!important}
 .pin-pulse{position:absolute;width:56px;height:56px;border-radius:50%;background:rgba(245,158,11,.3);transform:translate(-50%,-50%);top:50%;left:50%;animation:pinPulseRing 1s ease-out infinite;pointer-events:none}
 @keyframes pinPulseRing{0%{transform:translate(-50%,-50%) scale(.4);opacity:.9}100%{transform:translate(-50%,-50%) scale(2.5);opacity:0}}
 .pin-circle.pending{background:rgba(100,80,0,.85);border-color:rgba(245,158,11,.6)}
@@ -729,8 +732,7 @@ function renderZones(){
 }
 
 // ═══ MAP VIEW ════════════════════════════════════════════════════════
-function renderMap(highlightRoom){
-  if(highlightRoom===undefined)highlightRoom=curRoom;
+function renderMap(){
   var container=document.getElementById('map-container');
   if(!container)return;
   container.innerHTML='';
@@ -748,7 +750,7 @@ function renderMap(highlightRoom){
   } else {
     var img=document.createElement('img');img.className='map-img';img.src=mapB64;img.id='map-img';img.draggable=false;wrap.appendChild(img);
     // Render pins
-    levelPins.forEach(function(pin){renderPin(wrap,pin,data,highlightRoom);});
+    levelPins.forEach(function(pin){renderPin(wrap,pin,data);});
 
 
     // Click handler — YAH mode or pin mode
@@ -764,6 +766,8 @@ function renderMap(highlightRoom){
     });
   }
   container.appendChild(wrap);
+  // Re-apply pin highlight if a room is open
+  if(curRoom)setTimeout(function(){highlightPin(curRoom);},0);
   // Show/hide map controls
   var uploadZone=document.getElementById('map-upload-zone');
   var controlsBar=document.getElementById('map-controls-bar');
@@ -779,10 +783,11 @@ function renderMap(highlightRoom){
   if(pinModeBtn)pinModeBtn.style.display=(isAdmin&&mapB64)?'flex':'none';
 }
 
-function renderPin(wrap,pin,data,highlightRoom){
-  var isHighlight=(pin.roomNum===highlightRoom);
+function renderPin(wrap,pin,data){
+  var isHighlight=false; // glow handled by highlightPin() after render
   var div=document.createElement('div');
   div.className='map-pin';
+  div.id='map-pin-'+pin.roomNum.replace(/[^a-z0-9]/gi,'-');
   div.style.left=(pin.x*100)+'%';
   div.style.top=(pin.y*100)+'%';
   var shortNum=pin.roomNum.replace(/^\d[A-Z]-/,'');
@@ -792,25 +797,14 @@ function renderPin(wrap,pin,data,highlightRoom){
   var circle=document.createElement('div');
   circle.className='pin-circle';
 
-  if(isHighlight){
-    // Amber glow
-    div.style.cssText='position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:20;filter:drop-shadow(0 0 8px #f59e0b) drop-shadow(0 0 16px #f59e0b) drop-shadow(0 0 24px #fcd34d);animation:pinGlow 1s ease-in-out infinite;left:'+pin.x*100+'%;top:'+pin.y*100+'%';
-    circle.style.background='#f59e0b';
-    circle.style.border='3px solid #fff';
-    circle.style.color='#000';
-    circle.style.width='36px';
-    circle.style.height='36px';
-    circle.style.fontWeight='900';
-    circle.style.fontSize='10px';
-  } else {
-    div.style.filter='none';
-    circle.style.background='rgba(50,50,50,.85)';
-    circle.style.borderColor='rgba(200,200,200,.6)';
+  // Always render as white pin — highlightPin() handles glow after render
+  circle.style.background='rgba(255,255,255,.92)';
+  circle.style.borderColor='rgba(255,255,255,.9)';
+  circle.style.color='#1a1200';
+  if(allDone){
+    circle.style.background='rgba(20,80,20,.85)';
+    circle.style.borderColor='rgba(34,197,94,.7)';
     circle.style.color='#fff';
-    if(allDone){
-      circle.style.background='rgba(20,80,20,.85)';
-      circle.style.borderColor='rgba(34,197,94,.7)';
-    }
   }
   circle.textContent=shortNum;
   if(allDone&&!isHighlight){
@@ -958,11 +952,35 @@ function openRoom(roomNum,zone){
   switchCheckTab('electrical',document.querySelector('.check-tab'));
   renderChecklist('electrical',roomInfo);renderChecklist('plumbing',roomInfo);renderChecklist('building',roomInfo);renderPhotos();
   document.getElementById('room-panel').scrollIntoView({behavior:'smooth',block:'start'});
-  // Update map to highlight this room's pin
-  renderMap(roomNum);
+  // Highlight the pin without re-rendering the whole map
+  highlightPin(roomNum);
 }
 
-function closeRoom(){curRoom=null;document.getElementById('room-panel').style.display='none';document.querySelectorAll('.room-chip').forEach(function(c){c.classList.remove('active');});renderMap();}
+function highlightPin(roomNum){
+  // Clear all pins first
+  document.querySelectorAll('.map-pin').forEach(function(div){
+    div.classList.remove('pin-glowing');
+    var c=div.querySelector('.pin-circle');
+    if(c)c.classList.remove('pin-selected-live');
+  });
+  if(!roomNum)return;
+  var pinId='map-pin-'+roomNum.replace(/[^a-z0-9]/gi,'-');
+  var div=document.getElementById(pinId);
+  if(!div)return;
+  div.classList.add('pin-glowing');
+  var c=div.querySelector('.pin-circle');
+  if(c)c.classList.add('pin-selected-live');
+}
+
+function clearPinHighlight(){
+  document.querySelectorAll('.map-pin').forEach(function(div){
+    div.classList.remove('pin-glowing');
+    var c=div.querySelector('.pin-circle');
+    if(c)c.classList.remove('pin-selected-live');
+  });
+}
+
+function closeRoom(){curRoom=null;document.getElementById('room-panel').style.display='none';document.querySelectorAll('.room-chip').forEach(function(c){c.classList.remove('active');});clearPinHighlight();}
 
 function toggleHistory(){var p=document.getElementById('history-panel');if(p.style.display==='none'){renderHistory();p.style.display='block';}else p.style.display='none';}
 
