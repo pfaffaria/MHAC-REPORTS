@@ -89,7 +89,9 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 @keyframes yahpulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.6}50%{transform:translate(-50%,-50%) scale(1.8);opacity:0}}
 .yah-btn.active{background:rgba(59,130,246,.2);border-color:#3b82f6;color:#93c5fd}
 .pin-circle{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:8px;font-weight:700;color:#fff;letter-spacing:.5px;text-align:center;line-height:1.1;padding:2px;box-shadow:0 2px 8px rgba(0,0,0,.5);position:relative;transition:all .2s}
-@keyframes pinGlowCircle{0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,.6),0 0 12px rgba(245,158,11,.9),0 0 24px rgba(245,158,11,.5)}50%{box-shadow:0 0 0 6px rgba(245,158,11,.3),0 0 22px rgba(245,158,11,1),0 0 44px rgba(245,158,11,.7)}}
+@keyframes pinGlowCircle{0%,100%{box-shadow:0 0 0 4px rgba(245,158,11,.6),0 0 14px rgba(245,158,11,.9),0 0 28px rgba(245,158,11,.5)}50%{box-shadow:0 0 0 8px rgba(245,158,11,.3),0 0 24px rgba(245,158,11,1),0 0 48px rgba(245,158,11,.7)}}
+.pin-circle.pin-active{background-color:#f59e0b!important;background:#f59e0b!important;border:3px solid #fff!important;color:#000!important;width:36px!important;height:36px!important;font-weight:900!important;font-size:10px!important;transition:none!important;animation:pinGlowCircle 1s ease-in-out infinite!important}
+.map-pin.pin-active{z-index:20!important;filter:drop-shadow(0 0 6px #f59e0b) drop-shadow(0 0 14px #f59e0b)!important}
 .pin-circle.pin-grey{background:rgba(255,255,255,.92);border-color:rgba(255,255,255,.9);color:#1a1200}
 .pin-circle.pin-selected{background:#f59e0b;border-color:#fff;color:#000;font-weight:900;width:34px;height:34px;font-size:9px;box-shadow:0 0 0 4px rgba(245,158,11,.5),0 0 20px rgba(245,158,11,.9),0 0 40px rgba(245,158,11,.5);animation:pinGlow 1s ease-in-out infinite}
 @keyframes pinGlow{0%,100%{box-shadow:0 0 0 4px rgba(245,158,11,.4),0 0 16px rgba(245,158,11,.7),0 0 32px rgba(245,158,11,.4)}50%{box-shadow:0 0 0 8px rgba(245,158,11,.2),0 0 28px rgba(245,158,11,1),0 0 56px rgba(245,158,11,.6)}}
@@ -791,20 +793,10 @@ function renderPin(wrap,pin,data,highlightRoom){
   var allDone=roomIsComplete(pin.roomNum,data,checks);
 
   var circle=document.createElement('div');
-  circle.className='pin-circle';
+  circle.className='pin-circle'+(isHighlight?' pin-active':'');
 
   if(isHighlight){
-    div.style.zIndex='20';
-    div.style.filter='drop-shadow(0 0 6px #f59e0b) drop-shadow(0 0 14px #f59e0b)';
-    circle.style.background='#f59e0b';
-    circle.style.border='3px solid #fff';
-    circle.style.color='#000';
-    circle.style.width='36px';
-    circle.style.height='36px';
-    circle.style.fontWeight='900';
-    circle.style.fontSize='10px';
-    circle.style.boxShadow='0 0 0 3px rgba(245,158,11,.6),0 0 12px rgba(245,158,11,.9),0 0 24px rgba(245,158,11,.5)';
-    circle.style.animation='pinGlowCircle 1s ease-in-out infinite';
+    div.classList.add('pin-active');
   } else {
     div.style.filter='none';
     circle.style.background='rgba(50,50,50,.85)';
