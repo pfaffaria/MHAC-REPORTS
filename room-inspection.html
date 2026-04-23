@@ -782,98 +782,79 @@ function renderMap(highlightRoom){
 function renderPin(overlay,pin,data,highlightRoom){
   var isHl=(pin.roomNum===highlightRoom);
   var shortNum=pin.roomNum.replace(/^\d[A-Z]-/,'');
-  var checks=loadChecks();
-  var allDone=roomIsComplete(pin.roomNum,data,checks);
-  var hasIssues=roomHasIssues(pin.roomNum,data);
-
-  // Colour logic
-  var gc  = isHl      ? '#f59e0b'
-          : hasIssues ? '#ef4444'
-          : allDone   ? '#22c55e'
-          :             '#94a3b8';
-  var gc2 = isHl      ? '#fcd34d'
-          : hasIssues ? '#fca5a5'
-          : allDone   ? '#4ade80'
-          :             '#cbd5e1';
 
   var wrap=document.createElement('div');
   wrap.setAttribute('data-room',pin.roomNum);
-  wrap.style.cssText=
-    'position:absolute;'+
-    'left:'+(pin.x*100).toFixed(2)+'%;'+
-    'top:'+(pin.y*100).toFixed(2)+'%;'+
-    'transform:translate(-50%,-100%);'+
-    'display:flex;flex-direction:column;align-items:center;gap:1px;'+
-    'pointer-events:all;cursor:pointer;user-select:none;z-index:'+(isHl?20:10)+';'+
-    'filter:drop-shadow(0 0 '+(isHl?'8':'3')+'px '+gc+') drop-shadow(0 0 '+(isHl?'16':'6')+'px '+gc2+');'+
-    (isHl?'animation:pinGlow 1s ease-in-out infinite;':'');
+  wrap.style.position='absolute';
+  wrap.style.left=(pin.x*100).toFixed(2)+'%';
+  wrap.style.top=(pin.y*100).toFixed(2)+'%';
+  wrap.style.transform='translate(-50%,-100%)';
+  wrap.style.display='flex';
+  wrap.style.flexDirection='column';
+  wrap.style.alignItems='center';
+  wrap.style.gap='2px';
+  wrap.style.pointerEvents='all';
+  wrap.style.cursor='pointer';
+  wrap.style.zIndex=isHl?'20':'10';
+  wrap.style.userSelect='none';
 
-  // Pin emoji with background ring for visibility on white maps
-  var emojiWrap=document.createElement('div');
-  emojiWrap.style.cssText=
-    'position:relative;display:flex;align-items:center;justify-content:center;'+
-    'width:'+(isHl?'36':'28')+'px;height:'+(isHl?'36':'28')+'px;'+
-    'border-radius:50%;'+
-    'background:'+(isHl?'#f59e0b':hasIssues?'rgba(239,68,68,.85)':allDone?'rgba(34,197,94,.85)':'rgba(60,60,60,.85)')+';'+
-    'border:2px solid '+(isHl?'#fff':'rgba(255,255,255,.6)')+';';
+  // Emoji pin
+  var pin_el=document.createElement('div');
+  pin_el.style.fontSize=isHl?'32px':'24px';
+  pin_el.style.lineHeight='1';
+  pin_el.textContent='\uD83D\uDCCD';
 
-  var emoji=document.createElement('div');
-  emoji.style.cssText='font-size:'+(isHl?'20':'16')+'px;line-height:1;';
-  emoji.textContent='\uD83D\uDCCD'; // 📍
-  emojiWrap.appendChild(emoji);
+  // Apply amber glow when selected, grey when not
+  if(isHl){
+    wrap.style.filter='drop-shadow(0 0 6px #f59e0b) drop-shadow(0 0 12px #f59e0b)';
+    wrap.style.animation='pinGlow 1s ease-in-out infinite';
+  } else {
+    wrap.style.filter='grayscale(1) brightness(0.7)';
+  }
 
-  // Room number label below pin
-  var label=document.createElement('div');
-  label.style.cssText=
-    'font-family:Rajdhani,sans-serif;font-size:'+(isHl?'10':'9')+'px;font-weight:700;'+
-    'color:'+(isHl?'#f59e0b':'#fff')+';'+
-    'background:rgba(0,0,0,.65);'+
-    'border-radius:3px;padding:1px 4px;letter-spacing:.5px;'+
-    'white-space:nowrap;margin-top:-2px;';
-  label.textContent=shortNum;
+  // Label
+  var lbl=document.createElement('div');
+  lbl.style.cssText=
+    'font-family:Rajdhani,sans-serif;font-size:9px;font-weight:700;'+
+    'color:#fff;background:rgba(0,0,0,.7);border-radius:3px;padding:1px 4px;'+
+    'white-space:nowrap;'+(isHl?'color:#f59e0b;':'');
+  lbl.textContent=shortNum;
 
-  wrap.appendChild(emojiWrap);
-  wrap.appendChild(label);
+  wrap.appendChild(pin_el);
+  wrap.appendChild(lbl);
 
-  // Tooltip on hover
-  var tt=document.createElement('div');tt.className='pin-tooltip';tt.textContent=pin.roomNum;
-  wrap.appendChild(tt);
-
-  // Delete button (admin)
+  // Delete btn
   if(isAdmin){
-    var del=document.createElement('button');del.className='pin-del';
-    del.style.cssText='position:absolute;top:-6px;right:-6px;';
-    del.title='Remove';del.innerHTML='&#x2715;';
+    var del=document.createElement('button');
+    del.className='pin-del';del.innerHTML='&#x2715;';
     del.addEventListener('click',function(e){e.stopPropagation();removePin(pin.roomNum);});
     wrap.appendChild(del);
   }
 
-  // Tap to open room
-  var _dragMoved=false,_dragX,_dragY;
-  function handleTap(e){if(_dragMoved)return;e.stopPropagation();e.preventDefault();openRoom(pin.roomNum,null);}
-  emojiWrap.addEventListener('click',handleTap);
-  emojiWrap.addEventListener('touchend',function(e){if(!_dragMoved)handleTap(e);});
+  // Tap → open room
+  var _dm=false,_dx,_dy;
+  wrap.addEventListener('click',function(e){if(_dm)return;e.stopPropagation();openRoom(pin.roomNum,null);});
+  wrap.addEventListener('touchend',function(e){if(!_dm){e.stopPropagation();openRoom(pin.roomNum,null);}});
 
-  // Drag to reposition (admin)
-  wrap.addEventListener('touchstart',function(e){_dragX=e.touches[0].clientX;_dragY=e.touches[0].clientY;_dragMoved=false;},{passive:true});
+  // Drag to move (admin)
+  wrap.addEventListener('touchstart',function(e){_dx=e.touches[0].clientX;_dy=e.touches[0].clientY;_dm=false;},{passive:true});
   wrap.addEventListener('touchmove',function(e){
     if(!isAdmin)return;
-    var dx=e.touches[0].clientX-_dragX,dy=e.touches[0].clientY-_dragY;
+    var dx=e.touches[0].clientX-_dx,dy=e.touches[0].clientY-_dy;
     if(Math.sqrt(dx*dx+dy*dy)>8){
-      _dragMoved=true;e.preventDefault();
+      _dm=true;e.preventDefault();
       var mw=document.getElementById('map-wrap');if(!mw)return;
-      var rect=mw.getBoundingClientRect();
-      var nx=Math.max(0.01,Math.min(0.99,(e.touches[0].clientX-rect.left)/rect.width));
-      var ny=Math.max(0.01,Math.min(0.99,(e.touches[0].clientY-rect.top)/rect.height));
-      wrap.style.left=(nx*100)+'%';wrap.style.top=(ny*100)+'%';
-      _dragX=e.touches[0].clientX;_dragY=e.touches[0].clientY;
+      var r=mw.getBoundingClientRect();
+      wrap.style.left=(Math.max(.01,Math.min(.99,(e.touches[0].clientX-r.left)/r.width))*100)+'%';
+      wrap.style.top=(Math.max(.01,Math.min(.99,(e.touches[0].clientY-r.top)/r.height))*100)+'%';
+      _dx=e.touches[0].clientX;_dy=e.touches[0].clientY;
     }
   },{passive:false});
   wrap.addEventListener('touchend',function(){
-    if(_dragMoved&&isAdmin){
-      var pins2=loadPins();
-      var p=(pins2[zoneKey()]||[]).find(function(q){return q.roomNum===pin.roomNum;});
-      if(p){p.x=parseFloat(wrap.style.left)/100;p.y=parseFloat(wrap.style.top)/100;savePins(pins2);showToast('Pin moved \u2713');}
+    if(_dm&&isAdmin){
+      var p2=loadPins();var zk=zoneKey();if(!p2[zk])p2[zk]=[];
+      var p=(p2[zk]).find(function(q){return q.roomNum===pin.roomNum;});
+      if(p){p.x=parseFloat(wrap.style.left)/100;p.y=parseFloat(wrap.style.top)/100;savePins(p2);showToast('Pin moved \u2713');}
     }
   },{passive:true});
 
