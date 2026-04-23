@@ -786,88 +786,95 @@ function renderPin(overlay,pin,data,highlightRoom){
   var allDone=roomIsComplete(pin.roomNum,data,checks);
   var hasIssues=roomHasIssues(pin.roomNum,data);
 
-  // Colours
-  var gc=isHl?'#f59e0b':hasIssues?'#ef4444':allDone?'#22c55e':'#888';
-  var gc2=isHl?'#fcd34d':hasIssues?'#fca5a5':allDone?'#4ade80':'#aaa';
-  var bg=isHl?'#f59e0b':hasIssues?'#ef4444':allDone?'#22c55e':'rgba(50,50,50,.85)';
-  var tc=isHl||hasIssues?'#000':'#fff';
+  // Colour logic
+  var gc  = isHl      ? '#f59e0b'
+          : hasIssues ? '#ef4444'
+          : allDone   ? '#22c55e'
+          :             '#94a3b8';
+  var gc2 = isHl      ? '#fcd34d'
+          : hasIssues ? '#fca5a5'
+          : allDone   ? '#4ade80'
+          :             '#cbd5e1';
 
-  // Outer wrapper — filter applied here so glow shows (same as FE)
-  var div=document.createElement('div');
-  div.setAttribute('data-room',pin.roomNum);
-  div.style.cssText=
+  var wrap=document.createElement('div');
+  wrap.setAttribute('data-room',pin.roomNum);
+  wrap.style.cssText=
     'position:absolute;'+
     'left:'+(pin.x*100).toFixed(2)+'%;'+
     'top:'+(pin.y*100).toFixed(2)+'%;'+
-    'transform:translate(-50%,-50%);'+
+    'transform:translate(-50%,-100%);'+
+    'display:flex;flex-direction:column;align-items:center;gap:1px;'+
     'pointer-events:all;cursor:pointer;user-select:none;z-index:'+(isHl?20:10)+';'+
-    'filter:drop-shadow(0 0 '+(isHl?'8':'4')+'px '+gc+') drop-shadow(0 0 '+(isHl?'16':'8')+'px '+gc2+');'+
+    'filter:drop-shadow(0 0 '+(isHl?'8':'3')+'px '+gc+') drop-shadow(0 0 '+(isHl?'16':'6')+'px '+gc2+');'+
     (isHl?'animation:pinGlow 1s ease-in-out infinite;':'');
 
-  // Circle
-  var circle=document.createElement('div');
-  circle.style.cssText=
-    'width:'+(isHl?'34':'28')+'px;height:'+(isHl?'34':'28')+'px;'+
-    'border-radius:50%;'+
-    'background:'+bg+';'+
-    'border:2px solid rgba(255,255,255,.7);'+
-    'display:flex;align-items:center;justify-content:center;'+
-    'font-family:Rajdhani,sans-serif;font-size:'+(isHl?'9':'8')+'px;font-weight:700;'+
-    'color:'+tc+';line-height:1;text-align:center;';
-  circle.textContent=shortNum;
-
-  // Checkmark
-  if(allDone&&!isHl){
-    var ck=document.createElement('div');
-    ck.style.cssText='position:absolute;top:0;right:0;width:11px;height:11px;background:#22c55e;border-radius:50%;display:flex;align-items:center;justify-content:center';
-    ck.innerHTML='<svg width="7" height="7" viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="2.5"><polyline points="2,5 4,7 8,3"/></svg>';
-    circle.style.position='relative';
-    circle.appendChild(ck);
+  // Pin emoji — coloured via filter
+  var emoji=document.createElement('div');
+  emoji.style.cssText='font-size:'+(isHl?'30':'24')+'px;line-height:1;';
+  // Tint pin colour using hue-rotate on non-highlight pins
+  if(!isHl){
+    if(hasIssues) emoji.style.filter='hue-rotate(290deg) saturate(2)';
+    else if(allDone) emoji.style.filter='hue-rotate(85deg) saturate(2)';
+    else emoji.style.filter='grayscale(0.4) brightness(1.1)';
   }
+  emoji.textContent='\uD83D\uDCCD'; // 📍
 
-  div.appendChild(circle);
+  // Room number label below pin
+  var label=document.createElement('div');
+  label.style.cssText=
+    'font-family:Rajdhani,sans-serif;font-size:'+(isHl?'10':'9')+'px;font-weight:700;'+
+    'color:'+(isHl?'#f59e0b':'#fff')+';'+
+    'background:rgba(0,0,0,.65);'+
+    'border-radius:3px;padding:1px 4px;letter-spacing:.5px;'+
+    'white-space:nowrap;margin-top:-2px;';
+  label.textContent=shortNum;
 
-  // Tooltip
+  wrap.appendChild(emoji);
+  wrap.appendChild(label);
+
+  // Tooltip on hover
   var tt=document.createElement('div');tt.className='pin-tooltip';tt.textContent=pin.roomNum;
-  div.appendChild(tt);
+  wrap.appendChild(tt);
 
   // Delete button (admin)
   if(isAdmin){
-    var del=document.createElement('button');del.className='pin-del';del.title='Remove';del.innerHTML='&#x2715;';
+    var del=document.createElement('button');del.className='pin-del';
+    del.style.cssText='position:absolute;top:-6px;right:-6px;';
+    del.title='Remove';del.innerHTML='&#x2715;';
     del.addEventListener('click',function(e){e.stopPropagation();removePin(pin.roomNum);});
-    div.appendChild(del);
+    wrap.appendChild(del);
   }
 
   // Tap to open room
-  function handleTap(e){e.stopPropagation();e.preventDefault();openRoom(pin.roomNum,null);}
-  circle.addEventListener('click',handleTap);
-  circle.addEventListener('touchend',function(e){if(!_pinDragMoved)handleTap(e);});
+  var _dragMoved=false,_dragX,_dragY;
+  function handleTap(e){if(_dragMoved)return;e.stopPropagation();e.preventDefault();openRoom(pin.roomNum,null);}
+  emoji.addEventListener('click',handleTap);
+  emoji.addEventListener('touchend',function(e){if(!_dragMoved)handleTap(e);});
 
   // Drag to reposition (admin)
-  var _pinDragMoved=false,_pinDragX,_pinDragY;
-  div.addEventListener('touchstart',function(e){_pinDragX=e.touches[0].clientX;_pinDragY=e.touches[0].clientY;_pinDragMoved=false;},{passive:true});
-  div.addEventListener('touchmove',function(e){
+  wrap.addEventListener('touchstart',function(e){_dragX=e.touches[0].clientX;_dragY=e.touches[0].clientY;_dragMoved=false;},{passive:true});
+  wrap.addEventListener('touchmove',function(e){
     if(!isAdmin)return;
-    var dx=e.touches[0].clientX-_pinDragX,dy=e.touches[0].clientY-_pinDragY;
+    var dx=e.touches[0].clientX-_dragX,dy=e.touches[0].clientY-_dragY;
     if(Math.sqrt(dx*dx+dy*dy)>8){
-      _pinDragMoved=true;e.preventDefault();
-      var wrap2=document.getElementById('map-wrap');if(!wrap2)return;
-      var rect=wrap2.getBoundingClientRect();
+      _dragMoved=true;e.preventDefault();
+      var mw=document.getElementById('map-wrap');if(!mw)return;
+      var rect=mw.getBoundingClientRect();
       var nx=Math.max(0.01,Math.min(0.99,(e.touches[0].clientX-rect.left)/rect.width));
       var ny=Math.max(0.01,Math.min(0.99,(e.touches[0].clientY-rect.top)/rect.height));
-      div.style.left=(nx*100)+'%';div.style.top=(ny*100)+'%';
-      _pinDragX=e.touches[0].clientX;_pinDragY=e.touches[0].clientY;
+      wrap.style.left=(nx*100)+'%';wrap.style.top=(ny*100)+'%';
+      _dragX=e.touches[0].clientX;_dragY=e.touches[0].clientY;
     }
   },{passive:false});
-  div.addEventListener('touchend',function(){
-    if(_pinDragMoved&&isAdmin){
+  wrap.addEventListener('touchend',function(){
+    if(_dragMoved&&isAdmin){
       var pins2=loadPins();
       var p=(pins2[zoneKey()]||[]).find(function(q){return q.roomNum===pin.roomNum;});
-      if(p){p.x=parseFloat(div.style.left)/100;p.y=parseFloat(div.style.top)/100;savePins(pins2);showToast('Pin moved \u2713');}
+      if(p){p.x=parseFloat(wrap.style.left)/100;p.y=parseFloat(wrap.style.top)/100;savePins(pins2);showToast('Pin moved \u2713');}
     }
   },{passive:true});
 
-  overlay.appendChild(div);
+  overlay.appendChild(wrap);
 }
 
 function togglePinMode(){
@@ -956,27 +963,7 @@ function openRoom(roomNum,zone){
   switchCheckTab('electrical',document.querySelector('.check-tab'));
   renderChecklist('electrical',roomInfo);renderChecklist('plumbing',roomInfo);renderChecklist('building',roomInfo);renderPhotos();
   document.getElementById('room-panel').scrollIntoView({behavior:'smooth',block:'start'});
-  // Highlight pin directly — fastest approach
-  var allPins=document.querySelectorAll('[data-room]');
-  allPins.forEach(function(d){
-    var circle=d.querySelector('div');if(!circle)return;
-    d.style.filter='none';d.style.zIndex='10';
-    circle.style.background='rgba(50,50,50,.85)';
-    circle.style.border='2px solid rgba(200,200,200,.6)';
-    circle.style.color='#fff';
-    circle.style.width='28px';circle.style.height='28px';
-  });
-  var sel=document.querySelector('[data-room="'+roomNum+'"]');
-  if(sel){
-    var sc=sel.querySelector('div');if(sc){
-      sel.style.filter='drop-shadow(0 0 8px #f59e0b) drop-shadow(0 0 16px #fcd34d)';
-      sel.style.zIndex='20';
-      sc.style.background='#f59e0b';
-      sc.style.border='3px solid #fff';
-      sc.style.color='#000';
-      sc.style.width='34px';sc.style.height='34px';
-    }
-  }
+  rebuildPins(roomNum);
 }
 
 function closeRoom(){
@@ -986,14 +973,18 @@ function closeRoom(){
   updatePinHighlight(null);
 }
 
-function updatePinHighlight(activeRoom){
+function rebuildPins(highlightRoom){
   var overlay=document.getElementById('map-pins-overlay');
-  if(!overlay){setTimeout(function(){updatePinHighlight(activeRoom);},100);return;}
-  var data=loadData();
-  var pins=loadPins();var levelPins=pins[zoneKey()]||[];
+  if(!overlay)return;
   overlay.innerHTML='';
-  levelPins.forEach(function(pin){renderPin(overlay,pin,data,activeRoom);});
+  var data=loadData();
+  var pins=loadPins();
+  var levelPins=pins[zoneKey()]||[];
+  levelPins.forEach(function(pin){
+    renderPin(overlay,pin,data,highlightRoom);
+  });
 }
+function updatePinHighlight(r){rebuildPins(r);}
 
 function toggleHistory(){var p=document.getElementById('history-panel');if(p.style.display==='none'){renderHistory();p.style.display='block';}else p.style.display='none';}
 
