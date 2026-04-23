@@ -89,7 +89,10 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 @keyframes yahpulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.6}50%{transform:translate(-50%,-50%) scale(1.8);opacity:0}}
 .yah-btn.active{background:rgba(59,130,246,.2);border-color:#3b82f6;color:#93c5fd}
 .pin-circle{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:8px;font-weight:700;color:#fff;letter-spacing:.5px;text-align:center;line-height:1.1;padding:2px;box-shadow:0 2px 8px rgba(0,0,0,.5);position:relative;transition:all .2s}
-@keyframes pinFilterPulse{0%,100%{filter:drop-shadow(0 0 6px #f59e0b) drop-shadow(0 0 10px rgba(245,158,11,.7))}50%{filter:drop-shadow(0 0 14px #fcd34d) drop-shadow(0 0 24px #f59e0b) drop-shadow(0 0 36px rgba(245,158,11,.5))}}
+@keyframes pinGlow{0%,100%{box-shadow:0 0 0 4px rgba(245,158,11,.5),0 0 16px rgba(245,158,11,.8),0 0 32px rgba(245,158,11,.4)}50%{box-shadow:0 0 0 8px rgba(245,158,11,.25),0 0 28px rgba(245,158,11,1),0 0 56px rgba(245,158,11,.6)}}
+@keyframes pinOuterGlow{0%,100%{filter:drop-shadow(0 0 6px #f59e0b) drop-shadow(0 0 12px rgba(245,158,11,.6))}50%{filter:drop-shadow(0 0 14px #fcd34d) drop-shadow(0 0 28px #f59e0b)}}
+.map-pin.pin-active{animation:pinOuterGlow 1s ease-in-out infinite;z-index:20!important}
+.pin-circle.pin-active{background:#f59e0b!important;border:3px solid #fff!important;color:#000!important;font-weight:900!important;width:36px!important;height:36px!important;font-size:10px!important;box-shadow:0 0 0 4px rgba(245,158,11,.5),0 0 16px rgba(245,158,11,.8),0 0 32px rgba(245,158,11,.4)!important;animation:pinGlow 1s ease-in-out infinite!important}
 .pin-circle.pin-grey{background:rgba(255,255,255,.92);border-color:rgba(255,255,255,.9);color:#1a1200}
 .pin-circle.pin-selected{background:#f59e0b;border-color:#fff;color:#000;font-weight:900;width:34px;height:34px;font-size:9px;box-shadow:0 0 0 4px rgba(245,158,11,.5),0 0 20px rgba(245,158,11,.9),0 0 40px rgba(245,158,11,.5);animation:pinGlow 1s ease-in-out infinite}
 @keyframes pinGlow{0%,100%{box-shadow:0 0 0 4px rgba(245,158,11,.4),0 0 16px rgba(245,158,11,.7),0 0 32px rgba(245,158,11,.4)}50%{box-shadow:0 0 0 8px rgba(245,158,11,.2),0 0 28px rgba(245,158,11,1),0 0 56px rgba(245,158,11,.6)}}
@@ -783,7 +786,8 @@ function renderMap(highlightRoom){
 function renderPin(wrap,pin,data,highlightRoom){
   var isHighlight=(pin.roomNum===highlightRoom);
   var div=document.createElement('div');
-  div.className='map-pin';
+  div.className='map-pin'+(isHighlight?' pin-active':'');
+  div.id='map-pin-'+pin.roomNum.replace(/[^a-z0-9]/gi,'-');
   div.style.left=(pin.x*100)+'%';
   div.style.top=(pin.y*100)+'%';
   var shortNum=pin.roomNum.replace(/^\d[A-Z]-/,'');
@@ -791,28 +795,16 @@ function renderPin(wrap,pin,data,highlightRoom){
   var allDone=roomIsComplete(pin.roomNum,data,checks);
 
   var circle=document.createElement('div');
-  circle.className='pin-circle';
+  circle.className='pin-circle'+(isHighlight?' pin-active':'');
 
-  if(isHighlight){
-    // Outer div: pulsing filter glow
-    div.style.cssText='position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:20;animation:pinFilterPulse 1s ease-in-out infinite;left:'+pin.x*100+'%;top:'+pin.y*100+'%';
-    // Circle: amber fill + box-shadow glow animation
-    circle.style.background='#f59e0b';
-    circle.style.border='3px solid #fff';
-    circle.style.color='#000';
-    circle.style.width='36px';
-    circle.style.height='36px';
-    circle.style.fontWeight='900';
-    circle.style.fontSize='10px';
-    circle.style.animation='pinGlow 1s ease-in-out infinite';
-  } else {
-    div.style.filter='none';
-    circle.style.background='rgba(50,50,50,.85)';
-    circle.style.borderColor='rgba(200,200,200,.6)';
-    circle.style.color='#fff';
+  if(!isHighlight){
+    circle.style.background='rgba(255,255,255,.92)';
+    circle.style.borderColor='rgba(255,255,255,.9)';
+    circle.style.color='#1a1200';
     if(allDone){
       circle.style.background='rgba(20,80,20,.85)';
       circle.style.borderColor='rgba(34,197,94,.7)';
+      circle.style.color='#fff';
     }
   }
   circle.textContent=shortNum;
