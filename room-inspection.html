@@ -742,8 +742,7 @@ function renderMap(highlightRoom){
   var wrap=document.createElement('div');wrap.className='map-wrap'+(isAdmin?' admin-mode':'');wrap.id='map-wrap';
   wrap.style.minHeight='150px';
     if(!mapB64){
-    // Static upload zone in HTML handles the empty state
-    container.appendChild(wrap);
+    // Static upload zone in HTML handles the empty state — nothing to render
     return;
   } else {
     var img=document.createElement('img');img.className='map-img';img.src=mapB64;img.id='map-img';img.draggable=false;wrap.appendChild(img);
@@ -772,7 +771,7 @@ function renderMap(highlightRoom){
   // Upload zone: only shown for admin when no map loaded
   if(uploadZone)uploadZone.style.display=(isAdmin&&!mapB64)?'flex':'none';
   // Controls bar: always visible for admin, also visible for non-admin if map exists
-  if(controlsBar)controlsBar.style.display=(isAdmin||mapB64)?'flex':'none';
+  if(controlsBar)controlsBar.style.display=(isAdmin&&mapB64)?'flex':'none';
   // Replace map button: admin only, always shown so they can upload
   if(uploadMapBtn)uploadMapBtn.style.display=isAdmin?'inline-flex':'none';
   // Pin mode button: admin only, only useful when map exists
