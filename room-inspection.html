@@ -956,8 +956,27 @@ function openRoom(roomNum,zone){
   switchCheckTab('electrical',document.querySelector('.check-tab'));
   renderChecklist('electrical',roomInfo);renderChecklist('plumbing',roomInfo);renderChecklist('building',roomInfo);renderPhotos();
   document.getElementById('room-panel').scrollIntoView({behavior:'smooth',block:'start'});
-  // Update map to highlight this room's pin
-  setTimeout(function(){updatePinHighlight(roomNum);},50);
+  // Highlight pin directly — fastest approach
+  var allPins=document.querySelectorAll('[data-room]');
+  allPins.forEach(function(d){
+    var circle=d.querySelector('div');if(!circle)return;
+    d.style.filter='none';d.style.zIndex='10';
+    circle.style.background='rgba(50,50,50,.85)';
+    circle.style.border='2px solid rgba(200,200,200,.6)';
+    circle.style.color='#fff';
+    circle.style.width='28px';circle.style.height='28px';
+  });
+  var sel=document.querySelector('[data-room="'+roomNum+'"]');
+  if(sel){
+    var sc=sel.querySelector('div');if(sc){
+      sel.style.filter='drop-shadow(0 0 8px #f59e0b) drop-shadow(0 0 16px #fcd34d)';
+      sel.style.zIndex='20';
+      sc.style.background='#f59e0b';
+      sc.style.border='3px solid #fff';
+      sc.style.color='#000';
+      sc.style.width='34px';sc.style.height='34px';
+    }
+  }
 }
 
 function closeRoom(){
