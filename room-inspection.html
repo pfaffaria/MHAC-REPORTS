@@ -81,7 +81,7 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 .map-placeholder{width:100%;min-height:300px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:rgba(245,158,11,.3);font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer}
 .map-placeholder svg{width:40px;height:40px}
 /* PIN */
-.map-pin{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:10;transition:transform .15s}
+.map-pin{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:10;transition:transform .15s;pointer-events:all}
 .map-pin:hover{transform:translate(-50%,-50%) scale(1.15)}
 .yah-pin{position:absolute;transform:translate(-50%,-100%);cursor:pointer;z-index:20;pointer-events:all;filter:drop-shadow(0 2px 6px rgba(59,130,246,.7))}
 .yah-pin svg{width:32px;height:32px}
@@ -90,9 +90,9 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 .yah-btn.active{background:rgba(59,130,246,.2);border-color:#3b82f6;color:#93c5fd}
 .pin-circle{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:8px;font-weight:700;color:#fff;letter-spacing:.5px;text-align:center;line-height:1.1;padding:2px;box-shadow:0 2px 8px rgba(0,0,0,.5);position:relative;overflow:hidden;transition:all .2s}
 .pin-circle.pin-grey{background:rgba(255,255,255,.92);border-color:rgba(255,255,255,.9);color:#1a1200}
-.pin-circle.pin-selected{background:rgba(180,90,0,.9);border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,158,11,.35),0 0 18px rgba(245,158,11,.7);animation:pinGlow 1.2s ease-in-out infinite;width:32px;height:32px;font-size:9px}
+.pin-circle.pin-selected{background:#f59e0b;border-color:#fff;color:#000;font-weight:900;box-shadow:0 0 0 3px rgba(245,158,11,.35),0 0 18px rgba(245,158,11,.7);animation:pinGlow 1.2s ease-in-out infinite;width:32px;height:32px;font-size:9px}
 @keyframes pinGlow{0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,.3),0 0 14px rgba(245,158,11,.6)}50%{box-shadow:0 0 0 7px rgba(245,158,11,.15),0 0 26px rgba(245,158,11,.9)}}
-.pin-pulse{position:absolute;width:50px;height:50px;border-radius:50%;background:rgba(245,158,11,.25);transform:translate(-50%,-50%);top:50%;left:50%;animation:pinPulseRing 1.2s ease-out infinite;pointer-events:none}
+.pin-pulse{position:absolute;width:54px;height:54px;border-radius:50%;background:rgba(245,158,11,.35);transform:translate(-50%,-50%);top:50%;left:50%;animation:pinPulseRing 1.2s ease-out infinite;pointer-events:none}
 @keyframes pinPulseRing{0%{transform:translate(-50%,-50%) scale(.5);opacity:.8}100%{transform:translate(-50%,-50%) scale(2.2);opacity:0}}
 .pin-circle.pending{background:rgba(100,80,0,.85);border-color:rgba(245,158,11,.6)}
 .pin-circle.done{background:rgba(10,60,20,.9);border-color:rgba(34,197,94,.7)}
@@ -801,15 +801,20 @@ function renderPin(wrap,pin,data,highlightRoom){
       '<div class="pin-tooltip">'+pin.roomNum+'</div>'+
       (isAdmin?'<button class="pin-del" title="Remove pin">&#x2715;</button>':'');
   }
-  // Tap pin → open room and scroll to checklist
-  div.querySelector('.pin-circle').addEventListener('click',function(e){
-    if(pinMode)return;
+  // Tap pin → open room (handles both click and touch)
+  function handlePinTap(e){
+    if(pinMode||dragMoved)return;
     e.stopPropagation();
+    e.preventDefault();
     openRoom(pin.roomNum,null);
     setTimeout(function(){
       var panel=document.getElementById('room-panel');
       if(panel)panel.scrollIntoView({behavior:'smooth',block:'start'});
-    },200);
+    },300);
+  }
+  div.querySelector('.pin-circle').addEventListener('click',handlePinTap);
+  div.querySelector('.pin-circle').addEventListener('touchend',function(e){
+    if(!dragMoved)handlePinTap(e);
   });
   if(isAdmin){
     var del=div.querySelector('.pin-del');
