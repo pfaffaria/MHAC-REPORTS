@@ -730,6 +730,7 @@ function renderZones(){
 
 // ═══ MAP VIEW ════════════════════════════════════════════════════════
 function renderMap(highlightRoom){
+  if(highlightRoom===undefined)highlightRoom=curRoom;
   var container=document.getElementById('map-container');
   if(!container)return;
   container.innerHTML='';
@@ -810,18 +811,43 @@ function renderPin(wrap,pin,data,highlightRoom){
       if(panel)panel.scrollIntoView({behavior:'smooth',block:'start'});
     },200);
   });
-  // Admin: long-press or double-tap pin to move it
   if(isAdmin){
     var del=div.querySelector('.pin-del');
     if(del)del.addEventListener('click',function(e){e.stopPropagation();removePin(pin.roomNum);});
-    // Double-tap to reposition
-    var lastTap=0;
-    div.addEventListener('touchend',function(e){
-      var now=Date.now();
-      if(now-lastTap<350){e.preventDefault();e.stopPropagation();openPlacement(pin.roomNum);}
-      lastTap=now;
-    });
   }
+  // Drag to reposition (admin only)
+  var dragStartX,dragStartY,dragging=false,dragMoved=false;
+  div.addEventListener('touchstart',function(e){
+    dragStartX=e.touches[0].clientX;dragStartY=e.touches[0].clientY;
+    dragging=true;dragMoved=false;
+  },{passive:true});
+  div.addEventListener('touchmove',function(e){
+    if(!dragging||!isAdmin)return;
+    var dx=e.touches[0].clientX-dragStartX,dy=e.touches[0].clientY-dragStartY;
+    if(Math.sqrt(dx*dx+dy*dy)>8){dragMoved=true;e.preventDefault();
+      var wrap=document.getElementById('map-wrap');if(!wrap)return;
+      var rect=wrap.getBoundingClientRect();
+      var nx=Math.max(0.01,Math.min(0.99,(e.touches[0].clientX-rect.left)/rect.width));
+      var ny=Math.max(0.01,Math.min(0.99,(e.touches[0].clientY-rect.top)/rect.height));
+      div.style.left=(nx*100)+'%';div.style.top=(ny*100)+'%';
+      dragStartX=e.touches[0].clientX;dragStartY=e.touches[0].clientY;
+    }
+  },{passive:false});
+  div.addEventListener('touchend',function(e){
+    if(dragMoved&&isAdmin){
+      // Save new position
+      var pins2=loadPins();if(!pins2[zoneKey()])pins2[zoneKey()]=[];
+      var p=pins2[zoneKey()].find(function(p){return p.roomNum===pin.roomNum;});
+      if(p){
+        var wrap=document.getElementById('map-wrap');if(!wrap)return;
+        var rect=wrap.getBoundingClientRect();
+        p.x=parseFloat(div.style.left)/100;
+        p.y=parseFloat(div.style.top)/100;
+        savePins(pins2);showToast('Pin moved ✓');
+      }
+    }
+    dragging=false;
+  },{passive:true});
   wrap.appendChild(div);
 }
 
