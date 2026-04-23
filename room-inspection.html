@@ -73,7 +73,7 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 .cycle-prog{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:var(--amber-light)}
 .reset-warn{font-size:9px;letter-spacing:1px;color:#f87171;text-transform:uppercase;animation:sblink 1.5s ease-in-out infinite}
 /* MAP VIEW */
-#map-view{display:none;padding-top:4px}
+#map-view{display:block;padding-top:4px}
 .map-controls{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
 .map-wrap{position:relative;display:inline-block;max-width:100%;overflow:hidden;border-radius:8px;border:1px solid rgba(245,158,11,.2);background:rgba(0,0,0,.3);cursor:crosshair}
 .map-wrap.no-pin-mode{cursor:default}
@@ -89,7 +89,7 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 @keyframes yahpulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.6}50%{transform:translate(-50%,-50%) scale(1.8);opacity:0}}
 .yah-btn.active{background:rgba(59,130,246,.2);border-color:#3b82f6;color:#93c5fd}
 .pin-circle{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:8px;font-weight:700;color:#fff;letter-spacing:.5px;text-align:center;line-height:1.1;padding:2px;box-shadow:0 2px 8px rgba(0,0,0,.5);position:relative;overflow:hidden;transition:all .2s}
-.pin-circle.pin-grey{background:rgba(80,80,80,.85);border-color:rgba(180,180,180,.6)}
+.pin-circle.pin-grey{background:rgba(255,255,255,.92);border-color:rgba(255,255,255,.9);color:#1a1200}
 .pin-circle.pin-selected{background:rgba(180,90,0,.9);border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,158,11,.35),0 0 18px rgba(245,158,11,.7);animation:pinGlow 1.2s ease-in-out infinite;width:32px;height:32px;font-size:9px}
 @keyframes pinGlow{0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,.3),0 0 14px rgba(245,158,11,.6)}50%{box-shadow:0 0 0 7px rgba(245,158,11,.15),0 0 26px rgba(245,158,11,.9)}}
 .pin-pulse{position:absolute;width:50px;height:50px;border-radius:50%;background:rgba(245,158,11,.25);transform:translate(-50%,-50%);top:50%;left:50%;animation:pinPulseRing 1.2s ease-out infinite;pointer-events:none}
@@ -258,16 +258,24 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
   </div>
 
   <!-- MAP -->
-  <div id="map-view" style="margin-top:14px;min-height:60px">
-    <div class="map-controls">
-      <button class="tb-btn admin-only" id="upload-map-btn" onclick="document.getElementById('map-file-input').click()">&#8593; Upload Map</button>
-      <input type="file" id="map-file-input" accept="image/*" style="display:none" onchange="handleMapUpload(event)"/>
+  <div id="map-view" style="margin-top:14px">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:3px;color:rgba(245,158,11,.35);text-transform:uppercase;margin-bottom:6px">Floor Plan</div>
+    <!-- Upload prompt: always visible for admin when no map loaded -->
+    <div id="map-upload-zone" class="admin-only" style="display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:120px;border:2px dashed rgba(245,158,11,.3);border-radius:8px;padding:20px;cursor:pointer;margin-bottom:10px" onclick="document.getElementById('map-file-input').click()">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(245,158,11,.6)" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;color:rgba(245,158,11,.7);text-transform:uppercase">Tap to Upload Floor Map</div>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:9px;letter-spacing:1.5px;color:rgba(245,158,11,.3);text-transform:uppercase">JPG or PNG</div>
+    </div>
+    <input type="file" id="map-file-input" accept="image/*" style="display:none" onchange="handleMapUpload(event)"/>
+    <!-- Map controls: only show when map exists -->
+    <div class="map-controls" id="map-controls-bar" style="display:none">
+      <button class="tb-btn admin-only" id="upload-map-btn" onclick="document.getElementById('map-file-input').click()">&#8593; Replace Map</button>
       <button class="tb-btn admin-only pin-mode-btn" id="pin-mode-btn" onclick="togglePinMode()" style="display:none">+ Add Pin</button>
       <span style="font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.35);text-transform:uppercase" id="pin-hint"></span>
-
     </div>
     <div id="map-container"></div>
   </div>
+
 
   <!-- ROOM PANEL -->
   <div id="room-panel">
@@ -455,7 +463,8 @@ function doLogin(){
   err.textContent='';currentRole=found.role;isAdmin=(found.role==='admin');
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
-  if(isAdmin){document.getElementById('role-badge').style.display='inline';document.querySelectorAll('.admin-only').forEach(function(el){el.style.display='';});setTimeout(function(){renderMap();},50);}
+  if(isAdmin){document.getElementById('role-badge').style.display='inline';document.querySelectorAll('.admin-only').forEach(function(el){el.style.display='';});
+        var uz=document.getElementById('map-upload-zone');if(uz)uz.style.display='flex';}
   if(filterZone){var zb=document.getElementById('zone-filter-badge');zb.textContent=filterZone;zb.style.display='inline';}
   initApp();
 }
@@ -760,7 +769,12 @@ function renderMap(highlightRoom){
     });
   }
   container.appendChild(wrap);
-  // upload btn visibility handled by CSS admin-only class
+  // Toggle upload zone vs map controls based on whether map exists
+  var uploadZone=document.getElementById('map-upload-zone');
+  var controlsBar=document.getElementById('map-controls-bar');
+  if(uploadZone)uploadZone.style.display=(isAdmin&&!mapB64)?'flex':'none';
+  if(controlsBar)controlsBar.style.display=mapB64?'flex':'none';
+  document.getElementById('pin-mode-btn').style.display=(isAdmin&&mapB64)?'flex':'none';
   document.getElementById('pin-mode-btn').style.display=(isAdmin&&mapB64)?'flex':'none';
 }
 
@@ -1344,7 +1358,8 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
         currentRole=s.role;isAdmin=(s.role==='admin');
         document.getElementById('login-screen').style.display='none';
         document.getElementById('app').style.display='block';
-        if(isAdmin){document.getElementById('role-badge').style.display='inline';document.querySelectorAll('.admin-only').forEach(function(el){el.style.display='';});setTimeout(function(){renderMap();},50);}
+        if(isAdmin){document.getElementById('role-badge').style.display='inline';document.querySelectorAll('.admin-only').forEach(function(el){el.style.display='';});
+        var uz=document.getElementById('map-upload-zone');if(uz)uz.style.display='flex';}
         if(filterZone){var zb=document.getElementById('zone-filter-badge');if(zb){zb.textContent=filterZone;zb.style.display='inline';}}
         initApp();
 
