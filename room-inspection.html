@@ -521,13 +521,14 @@ function loadDates(){return ls_get(DATES_KEY)||{};}
 function saveDates(d){ls_set(DATES_KEY,d);sbSet(DATES_KEY,d);}
 function loadArchive(){return ls_get(ARCHIVE_KEY)||[];}
 function saveArchive(d){ls_set(ARCHIVE_KEY,d);sbSet(ARCHIVE_KEY,d);}
-function loadPins(){return ls_get(PINS_KEY)||{};}
+function loadPins(){var d=ls_get(PINS_KEY)||{};return d;}
 function savePins(d){ls_set(PINS_KEY,d);sbSet(PINS_KEY,d);}
-function loadMap(level){return _mapCache[level]||null;}
-function saveMap(level,b64){_mapCache[level]=b64;sbSet('mhac-ri-map-'+level,b64);}
+function loadMap(level){return _mapCache[zoneKey()]||null;}
+function saveMap(level,b64){var k=zoneKey();_mapCache[k]=b64;sbSet('mhac-ri-map-'+k,b64);}
 
 // ═══ STATE ═══════════════════════════════════════════════════════════
 var curLevel='1',curRoom=null,addCheckCategory=null,pendingAddZone=null,pendingAddLevel=null;
+function zoneKey(){return curLevel+(filterZone?'-'+filterZone.replace(/[^a-zA-Z0-9]/g,'-'):'');}
 var _mapCache={};  // in-memory map cache — avoids localStorage size issues
 var yahMode=false,yahPos=null;  // You Are Here pin
 var pinMode=false,pendingPinPos=null,curView='rooms';
@@ -732,7 +733,7 @@ function renderMap(highlightRoom){
   var container=document.getElementById('map-container');
   if(!container)return;
   container.innerHTML='';
-  var mapB64=loadMap(curLevel);var pins=loadPins();var levelPins=pins[curLevel]||[];
+  var mapB64=loadMap(curLevel);var pins=loadPins();var levelPins=pins[zoneKey()]||[];
   var data=loadData();
 
   // Always give the container a visible size
@@ -842,7 +843,7 @@ function togglePinMode(){
 function openPinModal(){
   var rooms=loadRooms(),levelRooms=rooms[curLevel]||{};
   var sel=document.getElementById('pin-room-select');sel.innerHTML='';
-  var pins=loadPins(),levelPins=pins[curLevel]||[];
+  var pins=loadPins(),levelPins=pins[zoneKey()]||[];
   var pinned=levelPins.map(function(p){return p.roomNum;});
   Object.keys(levelRooms).forEach(function(zone){
     (levelRooms[zone]||[]).forEach(function(r){
@@ -857,8 +858,8 @@ function openPinModal(){
 function confirmPin(){
   var roomNum=document.getElementById('pin-room-select').value;
   if(!roomNum||!pendingPinPos)return;
-  var pins=loadPins();if(!pins[curLevel])pins[curLevel]=[];
-  pins[curLevel].push({roomNum:roomNum,x:pendingPinPos.x,y:pendingPinPos.y});
+  var pins=loadPins();if(!pins[zoneKey()])pins[zoneKey()]=[];
+  pins[zoneKey()].push({roomNum:roomNum,x:pendingPinPos.x,y:pendingPinPos.y});
   savePins(pins);pendingPinPos=null;
   closeModal('pin-room-modal');renderMap();
 }
@@ -866,7 +867,7 @@ function cancelPin(){pendingPinPos=null;closeModal('pin-room-modal');}
 
 function removePin(roomNum){
   if(!confirm('Remove pin for '+roomNum+'?'))return;
-  var pins=loadPins();if(pins[curLevel])pins[curLevel]=pins[curLevel].filter(function(p){return p.roomNum!==roomNum;});
+  var pins=loadPins();if(pins[zoneKey()])pins[zoneKey()]=pins[zoneKey()].filter(function(p){return p.roomNum!==roomNum;});
   savePins(pins);renderMap();
 }
 
@@ -1353,7 +1354,7 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
   // Only fetch the keys needed for this level/zone — not maps
   var KEYS=[ROOMS_KEY,CHECKS_KEY,DATA_KEY,HISTORY_KEY,TEMPS_KEY,DATES_KEY,ARCHIVE_KEY,PINS_KEY];
   // Also fetch map for current level into memory cache
-  var mapKey='mhac-ri-map-'+curLevel;
+  var mapKey='mhac-ri-map-'+(curLevel+(filterZone?'-'+filterZone.replace(/[^a-zA-Z0-9]/g,'-'):''));
   var done=false;
   function finish(){
     if(done)return; done=true;
@@ -1385,7 +1386,7 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
   })).then(function(){
     // Fetch map separately into memory
     sbGet(mapKey).then(function(v){
-      if(v!==null)_mapCache[curLevel]=v;
+      if(v!==null)_mapCache[zoneKey()]=v;
     }).catch(function(){}).then(finish);
   }).catch(finish);
 })();
