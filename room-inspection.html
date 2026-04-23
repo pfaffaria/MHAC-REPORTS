@@ -651,7 +651,7 @@ function initApp(){
   if(filterLevel)curLevel=filterLevel;
   if(filterZone){document.getElementById('lvl-tabs').style.display='none';var bb=document.getElementById('back-map-btn');if(bb){bb.href='reports.html?level='+curLevel+'&zone='+encodeURIComponent(filterZone);bb.textContent='<- Reports';}}
   checkAndResetRooms();
-  renderLevelTabs();renderZones();renderMap();updateCycleBanner();updateStatus();
+  renderLevelTabs();renderZones();renderMap(curRoom);updateCycleBanner();updateStatus();
 }
 
 function setView(v){curView=v;renderMap(curRoom);}
@@ -670,10 +670,10 @@ function renderLevelTabs(){
       // Fetch map for this level into memory cache if not already there
       if(!_mapCache[l]){
         sbGet('mhac-ri-map-'+l).then(function(v){
-          if(v!==null){_mapCache[l]=v;renderMap();}
+          if(v!==null){_mapCache[l]=v;renderMap(curRoom);}
         }).catch(function(){});
       }
-      renderZones();renderMap();updateCycleBanner();updateStatus();
+      renderZones();renderMap(curRoom);updateCycleBanner();updateStatus();
     };
     c.appendChild(b);
   });
@@ -808,16 +808,19 @@ function renderPin(overlay,pin,data,highlightRoom){
     'filter:drop-shadow(0 0 '+(isHl?'8':'3')+'px '+gc+') drop-shadow(0 0 '+(isHl?'16':'6')+'px '+gc2+');'+
     (isHl?'animation:pinGlow 1s ease-in-out infinite;':'');
 
-  // Pin emoji — coloured via filter
+  // Pin emoji with background ring for visibility on white maps
+  var emojiWrap=document.createElement('div');
+  emojiWrap.style.cssText=
+    'position:relative;display:flex;align-items:center;justify-content:center;'+
+    'width:'+(isHl?'36':'28')+'px;height:'+(isHl?'36':'28')+'px;'+
+    'border-radius:50%;'+
+    'background:'+(isHl?'#f59e0b':hasIssues?'rgba(239,68,68,.85)':allDone?'rgba(34,197,94,.85)':'rgba(60,60,60,.85)')+';'+
+    'border:2px solid '+(isHl?'#fff':'rgba(255,255,255,.6)')+';';
+
   var emoji=document.createElement('div');
-  emoji.style.cssText='font-size:'+(isHl?'30':'24')+'px;line-height:1;';
-  // Tint pin colour using hue-rotate on non-highlight pins
-  if(!isHl){
-    if(hasIssues) emoji.style.filter='hue-rotate(290deg) saturate(2)';
-    else if(allDone) emoji.style.filter='hue-rotate(85deg) saturate(2)';
-    else emoji.style.filter='grayscale(0.4) brightness(1.1)';
-  }
+  emoji.style.cssText='font-size:'+(isHl?'20':'16')+'px;line-height:1;';
   emoji.textContent='\uD83D\uDCCD'; // 📍
+  emojiWrap.appendChild(emoji);
 
   // Room number label below pin
   var label=document.createElement('div');
@@ -829,7 +832,7 @@ function renderPin(overlay,pin,data,highlightRoom){
     'white-space:nowrap;margin-top:-2px;';
   label.textContent=shortNum;
 
-  wrap.appendChild(emoji);
+  wrap.appendChild(emojiWrap);
   wrap.appendChild(label);
 
   // Tooltip on hover
@@ -848,8 +851,8 @@ function renderPin(overlay,pin,data,highlightRoom){
   // Tap to open room
   var _dragMoved=false,_dragX,_dragY;
   function handleTap(e){if(_dragMoved)return;e.stopPropagation();e.preventDefault();openRoom(pin.roomNum,null);}
-  emoji.addEventListener('click',handleTap);
-  emoji.addEventListener('touchend',function(e){if(!_dragMoved)handleTap(e);});
+  emojiWrap.addEventListener('click',handleTap);
+  emojiWrap.addEventListener('touchend',function(e){if(!_dragMoved)handleTap(e);});
 
   // Drag to reposition (admin)
   wrap.addEventListener('touchstart',function(e){_dragX=e.touches[0].clientX;_dragY=e.touches[0].clientY;_dragMoved=false;},{passive:true});
@@ -906,14 +909,14 @@ function confirmPin(){
   var pins=loadPins();if(!pins[zoneKey()])pins[zoneKey()]=[];
   pins[zoneKey()].push({roomNum:roomNum,x:pendingPinPos.x,y:pendingPinPos.y});
   savePins(pins);pendingPinPos=null;
-  closeModal('pin-room-modal');renderMap();
+  closeModal('pin-room-modal');renderMap(curRoom);
 }
 function cancelPin(){pendingPinPos=null;closeModal('pin-room-modal');}
 
 function removePin(roomNum){
   if(!confirm('Remove pin for '+roomNum+'?'))return;
   var pins=loadPins();if(pins[zoneKey()])pins[zoneKey()]=pins[zoneKey()].filter(function(p){return p.roomNum!==roomNum;});
-  savePins(pins);renderMap();
+  savePins(pins);renderMap(curRoom);
 }
 
 function handleMapUpload(event){
@@ -935,7 +938,7 @@ function handleMapUpload(event){
       testImg.onerror=function(){showToast('Compression failed — try a different image');};
       testImg.onload=function(){
         saveMap(curLevel,b64);
-        renderMap();
+        renderMap(curRoom);
         showToast('Map uploaded ✓ ('+canvas.width+'x'+canvas.height+'px)');
       };
       testImg.src=b64;
@@ -1055,7 +1058,7 @@ function saveRoomData(){
     saveHistory(hist);
   }
   showToast('Saved \u2713');renderZones();updateCycleBanner();updateStatus();
-  if(curView==='map')renderMap();
+  if(curView==='map')renderMap(curRoom);
 }
 
 // ═══ PHOTOS (Supabase Storage) ═══════════════════════════════════════
