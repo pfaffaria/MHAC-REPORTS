@@ -794,6 +794,22 @@ function renderPin(wrap,pin,data,highlightRoom){
       '<div class="pin-circle pin-selected">'+shortNum+'</div>'+
       '<div class="pin-tooltip">'+pin.roomNum+'</div>'+
       (isAdmin?'<button class="pin-del" title="Remove pin">&#x2715;</button>':'');
+    // Force inline styles so no caching issues
+    setTimeout(function(){
+      var circle=div.querySelector('.pin-circle');
+      if(circle){
+        circle.style.background='#f59e0b';
+        circle.style.borderColor='#fff';
+        circle.style.color='#000';
+        circle.style.boxShadow='0 0 0 4px rgba(245,158,11,.6),0 0 20px rgba(245,158,11,.9),0 0 40px rgba(245,158,11,.5)';
+        circle.style.width='34px';
+        circle.style.height='34px';
+      }
+      var pulse=div.querySelector('.pin-pulse');
+      if(pulse){
+        pulse.style.background='rgba(245,158,11,.4)';
+      }
+    },0);
   } else {
     var checkmark=allDone?'<div class="pin-check"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="2.5"><polyline points="2,5 4,7 8,3"/></svg></div>':'';
     div.innerHTML=
