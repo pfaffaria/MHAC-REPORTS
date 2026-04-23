@@ -769,13 +769,19 @@ function renderMap(highlightRoom){
     });
   }
   container.appendChild(wrap);
-  // Toggle upload zone vs map controls based on whether map exists
+  // Show/hide map controls
   var uploadZone=document.getElementById('map-upload-zone');
   var controlsBar=document.getElementById('map-controls-bar');
+  var uploadMapBtn=document.getElementById('upload-map-btn');
+  var pinModeBtn=document.getElementById('pin-mode-btn');
+  // Upload zone: only shown for admin when no map loaded
   if(uploadZone)uploadZone.style.display=(isAdmin&&!mapB64)?'flex':'none';
-  if(controlsBar)controlsBar.style.display=mapB64?'flex':'none';
-  document.getElementById('pin-mode-btn').style.display=(isAdmin&&mapB64)?'flex':'none';
-  document.getElementById('pin-mode-btn').style.display=(isAdmin&&mapB64)?'flex':'none';
+  // Controls bar: always visible for admin, also visible for non-admin if map exists
+  if(controlsBar)controlsBar.style.display=(isAdmin||mapB64)?'flex':'none';
+  // Replace map button: admin only, always shown so they can upload
+  if(uploadMapBtn)uploadMapBtn.style.display=isAdmin?'inline-flex':'none';
+  // Pin mode button: admin only, only useful when map exists
+  if(pinModeBtn)pinModeBtn.style.display=(isAdmin&&mapB64)?'flex':'none';
 }
 
 function renderPin(wrap,pin,data,highlightRoom){
