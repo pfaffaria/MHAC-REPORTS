@@ -90,10 +90,10 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 .yah-btn.active{background:rgba(59,130,246,.2);border-color:#3b82f6;color:#93c5fd}
 .pin-circle{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:8px;font-weight:700;color:#fff;letter-spacing:.5px;text-align:center;line-height:1.1;padding:2px;box-shadow:0 2px 8px rgba(0,0,0,.5);position:relative;overflow:hidden;transition:all .2s}
 .pin-circle.pin-grey{background:rgba(255,255,255,.92);border-color:rgba(255,255,255,.9);color:#1a1200}
-.pin-circle.pin-selected{background:#f59e0b;border-color:#fff;color:#000;font-weight:900;box-shadow:0 0 0 3px rgba(245,158,11,.35),0 0 18px rgba(245,158,11,.7);animation:pinGlow 1.2s ease-in-out infinite;width:32px;height:32px;font-size:9px}
-@keyframes pinGlow{0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,.3),0 0 14px rgba(245,158,11,.6)}50%{box-shadow:0 0 0 7px rgba(245,158,11,.15),0 0 26px rgba(245,158,11,.9)}}
-.pin-pulse{position:absolute;width:54px;height:54px;border-radius:50%;background:rgba(245,158,11,.35);transform:translate(-50%,-50%);top:50%;left:50%;animation:pinPulseRing 1.2s ease-out infinite;pointer-events:none}
-@keyframes pinPulseRing{0%{transform:translate(-50%,-50%) scale(.5);opacity:.8}100%{transform:translate(-50%,-50%) scale(2.2);opacity:0}}
+.pin-circle.pin-selected{background:#f59e0b;border-color:#fff;color:#000;font-weight:900;width:34px;height:34px;font-size:9px;box-shadow:0 0 0 4px rgba(245,158,11,.5),0 0 20px rgba(245,158,11,.9),0 0 40px rgba(245,158,11,.5);animation:pinGlow 1s ease-in-out infinite}
+@keyframes pinGlow{0%,100%{box-shadow:0 0 0 4px rgba(245,158,11,.4),0 0 16px rgba(245,158,11,.7),0 0 32px rgba(245,158,11,.4)}50%{box-shadow:0 0 0 8px rgba(245,158,11,.2),0 0 28px rgba(245,158,11,1),0 0 56px rgba(245,158,11,.6)}}
+.pin-pulse{position:absolute;width:56px;height:56px;border-radius:50%;background:rgba(245,158,11,.3);transform:translate(-50%,-50%);top:50%;left:50%;animation:pinPulseRing 1s ease-out infinite;pointer-events:none}
+@keyframes pinPulseRing{0%{transform:translate(-50%,-50%) scale(.4);opacity:.9}100%{transform:translate(-50%,-50%) scale(2.5);opacity:0}}
 .pin-circle.pending{background:rgba(100,80,0,.85);border-color:rgba(245,158,11,.6)}
 .pin-circle.done{background:rgba(10,60,20,.9);border-color:rgba(34,197,94,.7)}
 .pin-circle.issues{background:rgba(80,10,10,.9);border-color:rgba(239,68,68,.6)}
