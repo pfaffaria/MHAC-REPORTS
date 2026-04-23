@@ -88,10 +88,7 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 .yah-pulse{position:absolute;width:40px;height:40px;border-radius:50%;background:rgba(59,130,246,.25);transform:translate(-50%,-50%);top:88%;left:50%;animation:yahpulse 1.8s ease-in-out infinite}
 @keyframes yahpulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.6}50%{transform:translate(-50%,-50%) scale(1.8);opacity:0}}
 .yah-btn.active{background:rgba(59,130,246,.2);border-color:#3b82f6;color:#93c5fd}
-.pin-circle{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:8px;font-weight:700;color:#fff;letter-spacing:.5px;text-align:center;line-height:1.1;padding:2px;box-shadow:0 2px 8px rgba(0,0,0,.5);position:relative;transition:all .2s}
-@keyframes pinGlowCircle{0%,100%{box-shadow:0 0 0 4px rgba(245,158,11,.6),0 0 14px rgba(245,158,11,.9),0 0 28px rgba(245,158,11,.5)}50%{box-shadow:0 0 0 8px rgba(245,158,11,.3),0 0 24px rgba(245,158,11,1),0 0 48px rgba(245,158,11,.7)}}
-.pin-circle.pin-active{background-color:#f59e0b!important;background:#f59e0b!important;border:3px solid #fff!important;color:#000!important;width:36px!important;height:36px!important;font-weight:900!important;font-size:10px!important;transition:none!important;animation:pinGlowCircle 1s ease-in-out infinite!important}
-.map-pin.pin-active{z-index:20!important;filter:drop-shadow(0 0 6px #f59e0b) drop-shadow(0 0 14px #f59e0b)!important}
+.pin-circle{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:8px;font-weight:700;color:#fff;letter-spacing:.5px;text-align:center;line-height:1.1;padding:2px;box-shadow:0 2px 8px rgba(0,0,0,.5);position:relative;overflow:hidden;transition:all .2s}
 .pin-circle.pin-grey{background:rgba(255,255,255,.92);border-color:rgba(255,255,255,.9);color:#1a1200}
 .pin-circle.pin-selected{background:#f59e0b;border-color:#fff;color:#000;font-weight:900;width:34px;height:34px;font-size:9px;box-shadow:0 0 0 4px rgba(245,158,11,.5),0 0 20px rgba(245,158,11,.9),0 0 40px rgba(245,158,11,.5);animation:pinGlow 1s ease-in-out infinite}
 @keyframes pinGlow{0%,100%{box-shadow:0 0 0 4px rgba(245,158,11,.4),0 0 16px rgba(245,158,11,.7),0 0 32px rgba(245,158,11,.4)}50%{box-shadow:0 0 0 8px rgba(245,158,11,.2),0 0 28px rgba(245,158,11,1),0 0 56px rgba(245,158,11,.6)}}
@@ -420,7 +417,7 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
   <div class="modal">
     <div class="modal-title">Assign Room to Pin</div>
     <div class="modal-field"><label>Room Number</label>
-      <select id="pin-room-select"></select>
+      <select id="pin-room-select" style="background:#1a1000;color:#fef3c7;border:1px solid rgba(245,158,11,.3);border-radius:4px;padding:6px 8px;font-family:Rajdhani,sans-serif;font-size:13px;font-weight:600;width:100%"></select>
     </div>
     <div class="modal-btns">
       <button class="modal-btn primary" onclick="confirmPin()">Place Pin</button>
@@ -466,7 +463,7 @@ function doLogin(){
   err.textContent='';currentRole=found.role;isAdmin=(found.role==='admin');
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
-  if(isAdmin){document.getElementById('role-badge').style.display='inline';document.querySelectorAll('.admin-only').forEach(function(el){el.style.display='';});
+  if(isAdmin){document.getElementById('role-badge').style.display='inline';document.querySelectorAll('.admin-only').forEach(function(el){el.style.display=el.tagName==='BUTTON'?'inline-flex':'block';});
         var uz=document.getElementById('map-upload-zone');if(uz)uz.style.display='flex';}
   if(filterZone){var zb=document.getElementById('zone-filter-badge');zb.textContent=filterZone;zb.style.display='inline';}
   initApp();
@@ -786,6 +783,7 @@ function renderPin(wrap,pin,data,highlightRoom){
   var isHighlight=(pin.roomNum===highlightRoom);
   var div=document.createElement('div');
   div.className='map-pin';
+  div.setAttribute('data-room',pin.roomNum);
   div.style.left=(pin.x*100)+'%';
   div.style.top=(pin.y*100)+'%';
   var shortNum=pin.roomNum.replace(/^\d[A-Z]-/,'');
@@ -793,10 +791,18 @@ function renderPin(wrap,pin,data,highlightRoom){
   var allDone=roomIsComplete(pin.roomNum,data,checks);
 
   var circle=document.createElement('div');
-  circle.className='pin-circle'+(isHighlight?' pin-active':'');
+  circle.className='pin-circle';
 
   if(isHighlight){
-    div.classList.add('pin-active');
+    // Amber glow
+    div.style.cssText='position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:20;filter:drop-shadow(0 0 8px #f59e0b) drop-shadow(0 0 16px #f59e0b) drop-shadow(0 0 24px #fcd34d);animation:pinGlow 1s ease-in-out infinite;left:'+pin.x*100+'%;top:'+pin.y*100+'%';
+    circle.style.background='#f59e0b';
+    circle.style.border='3px solid #fff';
+    circle.style.color='#000';
+    circle.style.width='36px';
+    circle.style.height='36px';
+    circle.style.fontWeight='900';
+    circle.style.fontSize='10px';
   } else {
     div.style.filter='none';
     circle.style.background='rgba(50,50,50,.85)';
@@ -953,11 +959,46 @@ function openRoom(roomNum,zone){
   switchCheckTab('electrical',document.querySelector('.check-tab'));
   renderChecklist('electrical',roomInfo);renderChecklist('plumbing',roomInfo);renderChecklist('building',roomInfo);renderPhotos();
   document.getElementById('room-panel').scrollIntoView({behavior:'smooth',block:'start'});
-  // Update map to highlight this room's pin
-  renderMap(roomNum);
+  // Update map to highlight this room's pin (no full rebuild)
+  updatePinHighlight(roomNum);
 }
 
-function closeRoom(){curRoom=null;document.getElementById('room-panel').style.display='none';document.querySelectorAll('.room-chip').forEach(function(c){c.classList.remove('active');});renderMap();}
+function closeRoom(){
+  curRoom=null;
+  document.getElementById('room-panel').style.display='none';
+  document.querySelectorAll('.room-chip').forEach(function(c){c.classList.remove('active');});
+  updatePinHighlight(null);
+}
+
+function updatePinHighlight(activeRoom){
+  // Update pin styles without rebuilding the whole map
+  var wrap=document.getElementById('map-wrap');
+  if(!wrap)return;
+  var pins=wrap.querySelectorAll('.map-pin');
+  pins.forEach(function(div){
+    var circle=div.querySelector('.pin-circle');
+    if(!circle)return;
+    var roomNum=div.getAttribute('data-room');
+    if(!roomNum)return;
+    if(roomNum===activeRoom){
+      div.style.filter='drop-shadow(0 0 8px #f59e0b) drop-shadow(0 0 16px #f59e0b) drop-shadow(0 0 24px #fcd34d)';
+      div.style.zIndex='20';
+      circle.style.background='#f59e0b';
+      circle.style.border='3px solid #fff';
+      circle.style.color='#000';
+      circle.style.width='36px';
+      circle.style.height='36px';
+    } else {
+      div.style.filter='none';
+      div.style.zIndex='10';
+      circle.style.background='rgba(50,50,50,.85)';
+      circle.style.border='2px solid rgba(200,200,200,.6)';
+      circle.style.color='#fff';
+      circle.style.width='28px';
+      circle.style.height='28px';
+    }
+  });
+}
 
 function toggleHistory(){var p=document.getElementById('history-panel');if(p.style.display==='none'){renderHistory();p.style.display='block';}else p.style.display='none';}
 
@@ -1400,7 +1441,7 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
         currentRole=s.role;isAdmin=(s.role==='admin');
         document.getElementById('login-screen').style.display='none';
         document.getElementById('app').style.display='block';
-        if(isAdmin){document.getElementById('role-badge').style.display='inline';document.querySelectorAll('.admin-only').forEach(function(el){el.style.display='';});
+        if(isAdmin){document.getElementById('role-badge').style.display='inline';document.querySelectorAll('.admin-only').forEach(function(el){el.style.display=el.tagName==='BUTTON'?'inline-flex':'block';});
         var uz=document.getElementById('map-upload-zone');if(uz)uz.style.display='flex';}
         if(filterZone){var zb=document.getElementById('zone-filter-badge');if(zb){zb.textContent=filterZone;zb.style.display='inline';}}
         initApp();
