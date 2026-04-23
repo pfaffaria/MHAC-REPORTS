@@ -748,7 +748,7 @@ function renderMap(highlightRoom){
     var overlay=document.createElement('div');overlay.id='map-pins-overlay';
     overlay.style.cssText='position:absolute;inset:0;pointer-events:none';
     wrap.appendChild(overlay);
-    levelPins.forEach(function(pin){renderPin(overlay,pin,data,highlightRoom);});
+    levelPins.forEach(function(pin){renderPin(overlay,pin,data,curRoom);});
 
 
     // Click handler — YAH mode or pin mode
@@ -813,14 +813,7 @@ function renderPin(overlay,pin,data,highlightRoom){
 
   div.appendChild(circle);
 
-  // Label under pin
-  var lbl=document.createElement('div');
-  lbl.style.cssText=
-    'font-family:Rajdhani,sans-serif;font-size:8px;font-weight:700;'+
-    'color:'+(isHl?'#f59e0b':'#ddd')+';'+
-    'background:rgba(0,0,0,.6);border-radius:3px;padding:1px 3px;white-space:nowrap;';
-  lbl.textContent=shortNum;
-  div.appendChild(lbl);
+
 
   // Delete
   if(isAdmin){
@@ -949,7 +942,7 @@ function openRoom(roomNum,zone){
   switchCheckTab('electrical',document.querySelector('.check-tab'));
   renderChecklist('electrical',roomInfo);renderChecklist('plumbing',roomInfo);renderChecklist('building',roomInfo);renderPhotos();
   document.getElementById('room-panel').scrollIntoView({behavior:'smooth',block:'start'});
-  rebuildPins(roomNum);
+  renderMap(curRoom);
 }
 
 function closeRoom(){
@@ -959,18 +952,6 @@ function closeRoom(){
   updatePinHighlight(null);
 }
 
-function rebuildPins(highlightRoom){
-  var overlay=document.getElementById('map-pins-overlay');
-  if(!overlay)return;
-  overlay.innerHTML='';
-  var data=loadData();
-  var pins=loadPins();
-  var levelPins=pins[zoneKey()]||[];
-  levelPins.forEach(function(pin){
-    renderPin(overlay,pin,data,highlightRoom);
-  });
-}
-function updatePinHighlight(r){rebuildPins(r);}
 
 function toggleHistory(){var p=document.getElementById('history-panel');if(p.style.display==='none'){renderHistory();p.style.display='block';}else p.style.display='none';}
 
