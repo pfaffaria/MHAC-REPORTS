@@ -270,6 +270,7 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
     <div class="map-controls" id="map-controls-bar" style="display:none">
       <button class="tb-btn admin-only" id="upload-map-btn" onclick="document.getElementById('map-file-input').click()">&#8593; Replace Map</button>
       <button class="tb-btn admin-only pin-mode-btn" id="pin-mode-btn" onclick="togglePinMode()" style="display:none">+ Add Pin</button>
+      <button class="tb-btn admin-only" id="clear-pins-btn" onclick="clearAllPins()" style="display:none;border-color:rgba(239,68,68,.3);color:rgba(239,68,68,.6)">&#x2715; Clear Pins</button>
       <span style="font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.35);text-transform:uppercase" id="pin-hint"></span>
     </div>
     <div id="map-container"></div>
@@ -943,6 +944,19 @@ function openRoom(roomNum,zone){
   renderChecklist('electrical',roomInfo);renderChecklist('plumbing',roomInfo);renderChecklist('building',roomInfo);renderPhotos();
   document.getElementById('room-panel').scrollIntoView({behavior:'smooth',block:'start'});
   renderMap(curRoom);
+  // Keep trying to highlight the pin every 200ms while this room is open
+  var _hlRoom=roomNum;
+  var _hlTimer=setInterval(function(){
+    if(curRoom!==_hlRoom){clearInterval(_hlTimer);return;}
+    var el=document.querySelector('[data-room="'+_hlRoom+'"] div');
+    if(el&&el.style.background!=='rgb(245, 158, 11)'){
+      el.style.background='#f59e0b';
+      el.style.border='2px solid #fff';
+      el.style.color='#000';
+      el.style.width='32px';el.style.height='32px';
+      el.style.boxShadow='0 0 0 4px rgba(245,158,11,.4),0 0 16px rgba(245,158,11,.8)';
+    }
+  },200);
 }
 
 function closeRoom(){
@@ -1153,6 +1167,14 @@ function saveNewCheck(){var name=document.getElementById('new-check-name').value
 function deleteCheck(cat,id){if(!isAdmin)return;if(!confirm('Remove this check item?'))return;var checks=loadChecks();checks[cat]=checks[cat].filter(function(c){return c.id!==id;});saveChecks(checks);var rooms=loadRooms(),levelRooms=rooms[curLevel]||{},roomInfo=null;Object.values(levelRooms).forEach(function(z){var f=z.find(function(r){return r.num===curRoom;});if(f)roomInfo=f;});renderChecklist(cat,roomInfo);}
 function openAddRoom(level,zone){if(!isAdmin)return;pendingAddLevel=level;pendingAddZone=zone;document.getElementById('new-room-num').value='';document.getElementById('new-room-label').value='';document.getElementById('add-room-modal').classList.add('active');setTimeout(function(){document.getElementById('new-room-num').focus();},50);}
 function saveNewRoom(){var num=document.getElementById('new-room-num').value.trim(),label=document.getElementById('new-room-label').value.trim(),toilet=parseInt(document.getElementById('new-room-toilet').value),shower=parseInt(document.getElementById('new-room-shower').value),sink=parseInt(document.getElementById('new-room-sink').value);if(!num){showToast('Enter a room number');return;}var rooms=loadRooms();if(!rooms[pendingAddLevel])rooms[pendingAddLevel]={};if(!rooms[pendingAddLevel][pendingAddZone])rooms[pendingAddLevel][pendingAddZone]=[];rooms[pendingAddLevel][pendingAddZone].push({num:num,label:label,toilet:toilet,shower:shower,sink:sink});saveRooms(rooms);closeModal('add-room-modal');renderZones();showToast('Room added \u2713');}
+function clearAllPins(){
+  if(!confirm('Remove all pins for this zone?'))return;
+  var pins=loadPins();
+  pins[zoneKey()]=[];
+  savePins(pins);
+  renderMap(curRoom);
+  showToast('Pins cleared');
+}
 function addZone(){if(!isAdmin)return;var name=prompt('Zone name:',filterZone||'');if(!name||!name.trim())return;var rooms=loadRooms();if(!rooms[curLevel])rooms[curLevel]={};rooms[curLevel][name.trim()]=[];saveRooms(rooms);renderZones();}
 
 // ═══ BULK ADD ════════════════════════════════════════════════════════
