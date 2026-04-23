@@ -783,82 +783,84 @@ function renderPin(overlay,pin,data,highlightRoom){
   var isHl=(pin.roomNum===highlightRoom);
   var shortNum=pin.roomNum.replace(/^\d[A-Z]-/,'');
 
-  var wrap=document.createElement('div');
-  wrap.setAttribute('data-room',pin.roomNum);
-  wrap.style.position='absolute';
-  wrap.style.left=(pin.x*100).toFixed(2)+'%';
-  wrap.style.top=(pin.y*100).toFixed(2)+'%';
-  wrap.style.transform='translate(-50%,-100%)';
-  wrap.style.display='flex';
-  wrap.style.flexDirection='column';
-  wrap.style.alignItems='center';
-  wrap.style.gap='2px';
-  wrap.style.pointerEvents='all';
-  wrap.style.cursor='pointer';
-  wrap.style.zIndex=isHl?'20':'10';
-  wrap.style.userSelect='none';
+  var div=document.createElement('div');
+  div.setAttribute('data-room',pin.roomNum);
+  div.style.cssText=
+    'position:absolute;'+
+    'left:'+(pin.x*100).toFixed(2)+'%;'+
+    'top:'+(pin.y*100).toFixed(2)+'%;'+
+    'transform:translate(-50%,-50%);'+
+    'pointer-events:all;cursor:pointer;z-index:'+(isHl?20:10)+';'+
+    'display:flex;flex-direction:column;align-items:center;gap:2px;';
 
-  // Emoji pin
-  var pin_el=document.createElement('div');
-  pin_el.style.fontSize=isHl?'32px':'24px';
-  pin_el.style.lineHeight='1';
-  pin_el.textContent='\uD83D\uDCCD';
+  // Circle
+  var size=isHl?36:28;
+  var bg=isHl?'#f59e0b':'#555';
+  var border=isHl?'#fff':'rgba(255,255,255,.5)';
+  var color=isHl?'#000':'#fff';
 
-  // Apply amber glow when selected, grey when not
-  if(isHl){
-    wrap.style.filter='drop-shadow(0 0 6px #f59e0b) drop-shadow(0 0 12px #f59e0b)';
-    wrap.style.animation='pinGlow 1s ease-in-out infinite';
-  } else {
-    wrap.style.filter='grayscale(1) brightness(0.7)';
-  }
+  var circle=document.createElement('div');
+  circle.style.cssText=
+    'width:'+size+'px;height:'+size+'px;'+
+    'border-radius:50%;'+
+    'background:'+bg+';'+
+    'border:2px solid '+border+';'+
+    'display:flex;align-items:center;justify-content:center;'+
+    'font-family:Rajdhani,sans-serif;font-size:'+(isHl?10:8)+'px;'+
+    'font-weight:700;color:'+color+';'+
+    (isHl?'box-shadow:0 0 0 4px rgba(245,158,11,.4),0 0 16px rgba(245,158,11,.8);':'');
+  circle.textContent=shortNum;
 
-  // Label
+  div.appendChild(circle);
+
+  // Label under pin
   var lbl=document.createElement('div');
   lbl.style.cssText=
-    'font-family:Rajdhani,sans-serif;font-size:9px;font-weight:700;'+
-    'color:#fff;background:rgba(0,0,0,.7);border-radius:3px;padding:1px 4px;'+
-    'white-space:nowrap;'+(isHl?'color:#f59e0b;':'');
+    'font-family:Rajdhani,sans-serif;font-size:8px;font-weight:700;'+
+    'color:'+(isHl?'#f59e0b':'#ddd')+';'+
+    'background:rgba(0,0,0,.6);border-radius:3px;padding:1px 3px;white-space:nowrap;';
   lbl.textContent=shortNum;
+  div.appendChild(lbl);
 
-  wrap.appendChild(pin_el);
-  wrap.appendChild(lbl);
-
-  // Delete btn
+  // Delete
   if(isAdmin){
-    var del=document.createElement('button');
-    del.className='pin-del';del.innerHTML='&#x2715;';
+    var del=document.createElement('button');del.className='pin-del';del.innerHTML='&#x2715;';
     del.addEventListener('click',function(e){e.stopPropagation();removePin(pin.roomNum);});
-    wrap.appendChild(del);
+    div.appendChild(del);
   }
 
-  // Tap → open room
-  var _dm=false,_dx,_dy;
-  wrap.addEventListener('click',function(e){if(_dm)return;e.stopPropagation();openRoom(pin.roomNum,null);});
-  wrap.addEventListener('touchend',function(e){if(!_dm){e.stopPropagation();openRoom(pin.roomNum,null);}});
+  // Tooltip
+  var tt=document.createElement('div');tt.className='pin-tooltip';tt.textContent=pin.roomNum;
+  div.appendChild(tt);
 
-  // Drag to move (admin)
-  wrap.addEventListener('touchstart',function(e){_dx=e.touches[0].clientX;_dy=e.touches[0].clientY;_dm=false;},{passive:true});
-  wrap.addEventListener('touchmove',function(e){
+  // Tap
+  var _dm=false,_dx,_dy;
+  div.addEventListener('click',function(e){if(_dm)return;e.stopPropagation();openRoom(pin.roomNum,null);});
+  div.addEventListener('touchend',function(e){if(!_dm){e.stopPropagation();openRoom(pin.roomNum,null);}});
+
+  // Drag
+  div.addEventListener('touchstart',function(e){_dx=e.touches[0].clientX;_dy=e.touches[0].clientY;_dm=false;},{passive:true});
+  div.addEventListener('touchmove',function(e){
     if(!isAdmin)return;
     var dx=e.touches[0].clientX-_dx,dy=e.touches[0].clientY-_dy;
     if(Math.sqrt(dx*dx+dy*dy)>8){
       _dm=true;e.preventDefault();
       var mw=document.getElementById('map-wrap');if(!mw)return;
       var r=mw.getBoundingClientRect();
-      wrap.style.left=(Math.max(.01,Math.min(.99,(e.touches[0].clientX-r.left)/r.width))*100)+'%';
-      wrap.style.top=(Math.max(.01,Math.min(.99,(e.touches[0].clientY-r.top)/r.height))*100)+'%';
+      div.style.left=(Math.max(.01,Math.min(.99,(e.touches[0].clientX-r.left)/r.width))*100)+'%';
+      div.style.top=(Math.max(.01,Math.min(.99,(e.touches[0].clientY-r.top)/r.height))*100)+'%';
       _dx=e.touches[0].clientX;_dy=e.touches[0].clientY;
     }
   },{passive:false});
-  wrap.addEventListener('touchend',function(){
+  div.addEventListener('touchend',function(){
     if(_dm&&isAdmin){
-      var p2=loadPins();var zk=zoneKey();if(!p2[zk])p2[zk]=[];
-      var p=(p2[zk]).find(function(q){return q.roomNum===pin.roomNum;});
-      if(p){p.x=parseFloat(wrap.style.left)/100;p.y=parseFloat(wrap.style.top)/100;savePins(p2);showToast('Pin moved \u2713');}
+      var p2=loadPins();var zk=zoneKey();
+      var p=(p2[zk]||[]).find(function(q){return q.roomNum===pin.roomNum;});
+      if(p){p.x=parseFloat(div.style.left)/100;p.y=parseFloat(div.style.top)/100;savePins(p2);showToast('Pin moved \u2713');}
     }
   },{passive:true});
 
-  overlay.appendChild(wrap);
+  overlay.appendChild(div);
 }
 
 function togglePinMode(){
