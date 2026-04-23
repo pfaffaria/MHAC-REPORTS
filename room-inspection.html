@@ -781,96 +781,97 @@ function renderMap(highlightRoom){
 
 function renderPin(wrap,pin,data,highlightRoom){
   var isHighlight=(pin.roomNum===highlightRoom);
-  var div=document.createElement('div');div.className='map-pin';
-  div.style.left=(pin.x*100)+'%';div.style.top=(pin.y*100)+'%';
+  var div=document.createElement('div');
+  div.className='map-pin';
+  div.style.left=(pin.x*100)+'%';
+  div.style.top=(pin.y*100)+'%';
   var shortNum=pin.roomNum.replace(/^\d[A-Z]-/,'');
-  // Check if all checks complete (for checkmark)
   var checks=loadChecks();
   var allDone=roomIsComplete(pin.roomNum,data,checks);
 
+  var circle=document.createElement('div');
+  circle.className='pin-circle';
+
   if(isHighlight){
-    div.innerHTML=
-      '<div class="pin-pulse"></div>'+
-      '<div class="pin-circle pin-selected">'+shortNum+'</div>'+
-      '<div class="pin-tooltip">'+pin.roomNum+'</div>'+
-      (isAdmin?'<button class="pin-del" title="Remove pin">&#x2715;</button>':'');
-    // Force inline styles so no caching issues
-    setTimeout(function(){
-      var circle=div.querySelector('.pin-circle');
-      if(circle){
-        circle.style.background='#f59e0b';
-        circle.style.borderColor='#fff';
-        circle.style.color='#000';
-        circle.style.boxShadow='0 0 0 4px rgba(245,158,11,.6),0 0 20px rgba(245,158,11,.9),0 0 40px rgba(245,158,11,.5)';
-        circle.style.width='34px';
-        circle.style.height='34px';
-      }
-      var pulse=div.querySelector('.pin-pulse');
-      if(pulse){
-        pulse.style.background='rgba(245,158,11,.4)';
-      }
-    },0);
+    // Amber glow using filter:drop-shadow (same as fire extinguisher)
+    div.style.filter='drop-shadow(0 0 6px #f59e0b) drop-shadow(0 0 14px #fcd34d)';
+    div.style.animation='pinGlow 1s ease-in-out infinite';
+    div.style.zIndex='20';
+    circle.style.background='#f59e0b';
+    circle.style.borderColor='#fff';
+    circle.style.color='#000';
+    circle.style.width='34px';
+    circle.style.height='34px';
+    circle.style.fontWeight='900';
   } else {
-    var checkmark=allDone?'<div class="pin-check"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="2.5"><polyline points="2,5 4,7 8,3"/></svg></div>':'';
-    div.innerHTML=
-      '<div class="pin-circle pin-grey">'+shortNum+checkmark+'</div>'+
-      '<div class="pin-tooltip">'+pin.roomNum+'</div>'+
-      (isAdmin?'<button class="pin-del" title="Remove pin">&#x2715;</button>':'');
+    div.style.filter='none';
+    circle.style.background='rgba(50,50,50,.85)';
+    circle.style.borderColor='rgba(200,200,200,.6)';
+    circle.style.color='#fff';
+    if(allDone){
+      circle.style.background='rgba(20,80,20,.85)';
+      circle.style.borderColor='rgba(34,197,94,.7)';
+    }
   }
-  // Tap pin → open room (handles both click and touch)
+  circle.textContent=shortNum;
+  if(allDone&&!isHighlight){
+    var ck=document.createElement('div');ck.className='pin-check';
+    ck.innerHTML='<svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="2.5"><polyline points="2,5 4,7 8,3"/></svg>';
+    circle.appendChild(ck);
+  }
+  div.appendChild(circle);
+
+  var tooltip=document.createElement('div');tooltip.className='pin-tooltip';tooltip.textContent=pin.roomNum;
+  div.appendChild(tooltip);
+
+  if(isAdmin){
+    var del=document.createElement('button');del.className='pin-del';del.title='Remove pin';del.innerHTML='&#x2715;';
+    del.addEventListener('click',function(e){e.stopPropagation();removePin(pin.roomNum);});
+    div.appendChild(del);
+  }
+
+  // Tap to open room
+  var dragMoved=false,dragStartX,dragStartY;
   function handlePinTap(e){
-    if(pinMode||dragMoved)return;
-    e.stopPropagation();
-    e.preventDefault();
+    if(dragMoved)return;
+    e.stopPropagation();e.preventDefault();
     openRoom(pin.roomNum,null);
     setTimeout(function(){
       var panel=document.getElementById('room-panel');
       if(panel)panel.scrollIntoView({behavior:'smooth',block:'start'});
     },300);
   }
-  div.querySelector('.pin-circle').addEventListener('click',handlePinTap);
-  div.querySelector('.pin-circle').addEventListener('touchend',function(e){
-    if(!dragMoved)handlePinTap(e);
-  });
-  if(isAdmin){
-    var del=div.querySelector('.pin-del');
-    if(del)del.addEventListener('click',function(e){e.stopPropagation();removePin(pin.roomNum);});
-  }
-  // Drag to reposition (admin only)
-  var dragStartX,dragStartY,dragging=false,dragMoved=false;
+  circle.addEventListener('click',handlePinTap);
+  circle.addEventListener('touchend',function(e){if(!dragMoved)handlePinTap(e);});
+
+  // Drag to reposition
   div.addEventListener('touchstart',function(e){
-    dragStartX=e.touches[0].clientX;dragStartY=e.touches[0].clientY;
-    dragging=true;dragMoved=false;
+    dragStartX=e.touches[0].clientX;dragStartY=e.touches[0].clientY;dragMoved=false;
   },{passive:true});
   div.addEventListener('touchmove',function(e){
-    if(!dragging||!isAdmin)return;
+    if(!isAdmin)return;
     var dx=e.touches[0].clientX-dragStartX,dy=e.touches[0].clientY-dragStartY;
-    if(Math.sqrt(dx*dx+dy*dy)>8){dragMoved=true;e.preventDefault();
-      var wrap=document.getElementById('map-wrap');if(!wrap)return;
-      var rect=wrap.getBoundingClientRect();
+    if(Math.sqrt(dx*dx+dy*dy)>8){
+      dragMoved=true;e.preventDefault();
+      var wrap2=document.getElementById('map-wrap');if(!wrap2)return;
+      var rect=wrap2.getBoundingClientRect();
       var nx=Math.max(0.01,Math.min(0.99,(e.touches[0].clientX-rect.left)/rect.width));
       var ny=Math.max(0.01,Math.min(0.99,(e.touches[0].clientY-rect.top)/rect.height));
       div.style.left=(nx*100)+'%';div.style.top=(ny*100)+'%';
       dragStartX=e.touches[0].clientX;dragStartY=e.touches[0].clientY;
     }
   },{passive:false});
-  div.addEventListener('touchend',function(e){
+  div.addEventListener('touchend',function(){
     if(dragMoved&&isAdmin){
-      // Save new position
       var pins2=loadPins();if(!pins2[zoneKey()])pins2[zoneKey()]=[];
-      var p=pins2[zoneKey()].find(function(p){return p.roomNum===pin.roomNum;});
-      if(p){
-        var wrap=document.getElementById('map-wrap');if(!wrap)return;
-        var rect=wrap.getBoundingClientRect();
-        p.x=parseFloat(div.style.left)/100;
-        p.y=parseFloat(div.style.top)/100;
-        savePins(pins2);showToast('Pin moved ✓');
-      }
+      var p=pins2[zoneKey()].find(function(q){return q.roomNum===pin.roomNum;});
+      if(p){p.x=parseFloat(div.style.left)/100;p.y=parseFloat(div.style.top)/100;savePins(pins2);showToast('Pin moved ✓');}
     }
-    dragging=false;
   },{passive:true});
+
   wrap.appendChild(div);
 }
+
 
 function togglePinMode(){
   pinMode=!pinMode;
