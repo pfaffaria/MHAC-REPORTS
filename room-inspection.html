@@ -699,13 +699,7 @@ function renderZones(){
       addFirstBtn.className='tb-btn';
       addFirstBtn.textContent='+ Add Room';
       addFirstBtn.onclick=function(){
-        var zn=prompt('Zone name:','Zone 1');
-        if(!zn||!zn.trim())return;
-        pendingAddLevel=curLevel;pendingAddZone=zn.trim();
-        document.getElementById('new-room-num').value='';
-        document.getElementById('new-room-label').value='';
-        document.getElementById('add-room-modal').classList.add('active');
-        setTimeout(function(){document.getElementById('new-room-num').focus();},50);
+        openAddRoom(curLevel, filterZone||'General');
       };
       noRoomDiv.appendChild(addFirstBtn);
       container.appendChild(noRoomDiv);
