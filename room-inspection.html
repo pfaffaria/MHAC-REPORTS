@@ -823,11 +823,11 @@ function renderPin(overlay,pin,data,highlightRoom){
     'transform:translate(-50%,-50%);'+
     'width:'+(isHl?36:28)+'px;height:'+(isHl?36:28)+'px;'+
     'border-radius:50%;'+
-    'background:'+(isHl?'#f59e0b':'rgba(245,158,11,.35)')+';'+
-    'border:2px solid '+(isHl?'#fff':'rgba(245,158,11,.6)')+';'+
+    'background:'+(isHl?'#f59e0b':'#fff')+';'+
+    'border:2px solid '+(isHl?'#fff':'#f59e0b')+';'+
     'display:flex;align-items:center;justify-content:center;'+
     'font-family:Rajdhani,sans-serif;font-size:'+(isHl?11:9)+'px;font-weight:700;'+
-    'color:'+(isHl?'#000':'rgba(245,158,11,.9)')+';'+
+    'color:'+(isHl?'#000':'#1a1000')+';'+
     'pointer-events:all;cursor:pointer;z-index:'+(isHl?20:10)+';'+
     'box-shadow:'+(isHl?'0 0 0 3px rgba(245,158,11,.3),0 2px 8px rgba(0,0,0,.4)':'0 1px 4px rgba(0,0,0,.3)')+';';
   div.textContent=shortNum;
