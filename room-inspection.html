@@ -671,9 +671,10 @@ function renderLevelTabs(){
       document.querySelectorAll('.lvl-btn').forEach(function(t){t.classList.remove('active');});
       b.classList.add('active');curLevel=l;closeRoom();
       // Fetch map for this level into memory cache if not already there
-      if(!_mapCache[l]){
-        sbGet('mhac-ri-map-'+l).then(function(v){
-          if(v!==null){_mapCache[l]=v;renderMap(curRoom);}
+      var _mk='mhac-ri-map-'+(l+(filterZone?'-'+filterZone.replace(/[^a-zA-Z0-9]/g,'-'):''));
+      if(!_mapCache[l+(filterZone?'-'+filterZone.replace(/[^a-zA-Z0-9]/g,'-'):'')]){
+        sbGet(_mk).then(function(v){
+          if(v!==null){_mapCache[l+(filterZone?'-'+filterZone.replace(/[^a-zA-Z0-9]/g,'-'):'')] =v;renderMap(curRoom);}
         }).catch(function(){});
       }
       renderZones();renderMap(curRoom);updateCycleBanner();updateStatus();
@@ -1441,7 +1442,7 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
   })).then(function(){
     // Fetch map separately into memory
     sbGet(mapKey).then(function(v){
-      if(v!==null)_mapCache[zoneKey()]=v;
+      if(v!==null){_mapCache[zoneKey()]=v;}
     }).catch(function(){}).then(finish);
   }).catch(finish);
 })();
