@@ -784,10 +784,10 @@ function renderMap(highlightRoom){
 function renderPin(overlay,pin,data,highlightRoom){
   var isHl=(pin.roomNum===highlightRoom);
   var shortNum=pin.roomNum.replace(/^\d[A-Z]-/,'');
-  var size=isHl?44:32;
-  var col=isHl?'#f59e0b':'#555555';
-  var txtCol=isHl?'#000':'#fff';
-  var txtSize=isHl?10:8;
+  var size=isHl?52:30;
+  var col=isHl?'#f59e0b':'#4a4a4a';
+  var txtCol=isHl?'#000':'#eee';
+  var txtSize=isHl?13:9;
 
   var wrap=document.createElement('div');
   wrap.setAttribute('data-room',pin.roomNum);
@@ -805,10 +805,10 @@ function renderPin(overlay,pin,data,highlightRoom){
   svg.setAttribute('width',size);
   svg.setAttribute('height',size*1.3);
   svg.setAttribute('viewBox','0 0 40 52');
-  svg.style.cssText='display:block;filter:'+
+  svg.style.cssText='display:block;overflow:visible;filter:'+
     (isHl?
-      'drop-shadow(0 0 6px #f59e0b) drop-shadow(0 0 12px #f59e0b) drop-shadow(0 0 20px #fcd34d)':
-      'drop-shadow(0 1px 3px rgba(0,0,0,.5))');
+      'drop-shadow(0 0 8px #f59e0b) drop-shadow(0 0 18px #f59e0b) drop-shadow(0 0 30px #f59e0b)':
+      'drop-shadow(0 2px 4px rgba(0,0,0,.6))');
 
   // Pin body (teardrop shape)
   var path=document.createElementNS(svgNS,'path');
@@ -830,7 +830,8 @@ function renderPin(overlay,pin,data,highlightRoom){
   text.setAttribute('text-anchor','middle');
   text.setAttribute('font-family','Rajdhani,sans-serif');
   text.setAttribute('font-size',txtSize+'');
-  text.setAttribute('font-weight','700');
+  text.setAttribute('font-weight','800');
+  text.setAttribute('letter-spacing','-0.5');
   text.setAttribute('fill',txtCol);
   text.textContent=shortNum;
   svg.appendChild(text);
