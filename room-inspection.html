@@ -969,8 +969,31 @@ function openRoom(roomNum,zone){
   renderChecklist('electrical',roomInfo);renderChecklist('plumbing',roomInfo);renderChecklist('building',roomInfo);renderPhotos();
   document.getElementById('room-panel').scrollIntoView({behavior:'smooth',block:'start'});
   renderMap(curRoom);
-  // SVG pins handle their own highlight via renderMap(curRoom)
-  
+  // Directly paint the selected pin amber — belt and suspenders
+  setTimeout(function(){
+    document.querySelectorAll('[data-room]').forEach(function(wrap){
+      var path=wrap.querySelector('path');
+      var txt=wrap.querySelector('text');
+      if(!path||!txt)return;
+      if(wrap.getAttribute('data-room')===curRoom){
+        path.setAttribute('fill','#f59e0b');
+        path.setAttribute('stroke','#fff');
+        txt.setAttribute('fill','#000');
+        txt.setAttribute('font-size','13');
+        wrap.querySelector('svg').style.filter='drop-shadow(0 0 8px #f59e0b) drop-shadow(0 0 20px #f59e0b)';
+        wrap.querySelector('svg').setAttribute('width','52');
+        wrap.querySelector('svg').setAttribute('height','68');
+      } else {
+        path.setAttribute('fill','#4a4a4a');
+        path.setAttribute('stroke','rgba(255,255,255,.4)');
+        txt.setAttribute('fill','#eee');
+        txt.setAttribute('font-size','9');
+        wrap.querySelector('svg').style.filter='drop-shadow(0 2px 4px rgba(0,0,0,.6))';
+        wrap.querySelector('svg').setAttribute('width','30');
+        wrap.querySelector('svg').setAttribute('height','39');
+      }
+    });
+  },50);
 }
 
 function closeRoom(){
