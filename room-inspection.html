@@ -811,101 +811,78 @@ function renderMap(highlightRoom){
 function renderPin(overlay,pin,data,highlightRoom){
   var isHl=(pin.roomNum===highlightRoom);
   var shortNum=pin.roomNum.replace(/^\d[A-Z]-/,'');
-  var size=isHl?52:30;
-  var col=isHl?'#f59e0b':'#4a4a4a';
-  var txtCol=isHl?'#000':'#eee';
-  var txtSize=isHl?13:9;
+  var checks=loadChecks();
+  var allDone=roomIsComplete(pin.roomNum,data,checks);
+  var hasIssues=roomHasIssues(pin.roomNum,data);
 
-  var wrap=document.createElement('div');
-  wrap.setAttribute('data-room',pin.roomNum);
-  wrap.style.cssText=
+  // Colour: amber=selected, green=all done, red=issues, grey=pending
+  var gc  = isHl?'#f59e0b': hasIssues?'#ef4444': allDone?'#22c55e': '#888888';
+  var gc2 = isHl?'#fcd34d': hasIssues?'#fca5a5': allDone?'#4ade80': '#aaaaaa';
+
+  var pin_div=document.createElement('div');
+  pin_div.setAttribute('data-room',pin.roomNum);
+
+  // EXACT same style approach as fire extinguisher
+  pin_div.style.cssText=
     'position:absolute;'+
     'left:'+(pin.x*100).toFixed(2)+'%;'+
     'top:'+(pin.y*100).toFixed(2)+'%;'+
-    'transform:translate(-50%,-100%);'+
-    'pointer-events:all;cursor:pointer;z-index:'+(isHl?20:10)+';'+
-    'transition:all .2s;';
+    'transform:translate(-50%,-50%);'+
+    'font-size:'+(isHl?30:22)+'px;'+
+    'line-height:1;'+
+    'filter:drop-shadow(0 0 5px '+gc+') drop-shadow(0 0 12px '+gc2+');'+
+    'pointer-events:all;cursor:pointer;user-select:none;z-index:'+(isHl?20:10)+';'+
+    (isHl?'animation:pinPulse 1.2s ease-in-out infinite;':'');
 
-  // SVG map pin — glows cleanly
-  var svgNS='http://www.w3.org/2000/svg';
-  var svg=document.createElementNS(svgNS,'svg');
-  svg.setAttribute('width',size);
-  svg.setAttribute('height',size*1.3);
-  svg.setAttribute('viewBox','0 0 40 52');
-  svg.style.cssText='display:block;overflow:visible;filter:'+
-    (isHl?
-      'drop-shadow(0 0 8px #f59e0b) drop-shadow(0 0 18px #f59e0b) drop-shadow(0 0 30px #f59e0b)':
-      'drop-shadow(0 2px 4px rgba(0,0,0,.6))');
+  pin_div.textContent='\uD83D\uDCCD'; // 📍
 
-  // Pin body (teardrop shape)
-  var path=document.createElementNS(svgNS,'path');
-  path.setAttribute('d','M20 2 C10 2 3 9 3 18 C3 30 20 50 20 50 C20 50 37 30 37 18 C37 9 30 2 20 2 Z');
-  path.setAttribute('fill',col);
-  path.setAttribute('stroke',isHl?'#fff':'rgba(255,255,255,.4)');
-  path.setAttribute('stroke-width','2');
-  svg.appendChild(path);
+  // Room number label
+  var lbl=document.createElement('div');
+  lbl.style.cssText=
+    'position:absolute;top:100%;left:50%;transform:translateX(-50%);'+
+    'font-family:Rajdhani,sans-serif;font-size:'+(isHl?11:9)+'px;font-weight:700;'+
+    'color:'+(isHl?'#f59e0b':'#fff')+';text-shadow:0 1px 3px rgba(0,0,0,.9);'+
+    'white-space:nowrap;pointer-events:none;margin-top:1px;';
+  lbl.textContent=shortNum;
+  pin_div.appendChild(lbl);
 
-  // Inner circle
-  var circle=document.createElementNS(svgNS,'circle');
-  circle.setAttribute('cx','20');circle.setAttribute('cy','18');circle.setAttribute('r','9');
-  circle.setAttribute('fill',isHl?'rgba(0,0,0,.25)':'rgba(255,255,255,.2)');
-  svg.appendChild(circle);
-
-  // Room number text
-  var text=document.createElementNS(svgNS,'text');
-  text.setAttribute('x','20');text.setAttribute('y','22');
-  text.setAttribute('text-anchor','middle');
-  text.setAttribute('font-family','Rajdhani,sans-serif');
-  text.setAttribute('font-size',txtSize+'');
-  text.setAttribute('font-weight','800');
-  text.setAttribute('letter-spacing','-0.5');
-  text.setAttribute('fill',txtCol);
-  text.textContent=shortNum;
-  svg.appendChild(text);
-
-  wrap.appendChild(svg);
-
-  // Delete btn
+  // Delete button
   if(isAdmin){
     var del=document.createElement('button');
+    del.style.cssText='position:absolute;top:-6px;right:-6px;width:16px;height:16px;background:#ef4444;border:none;border-radius:50%;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:30;';
     del.innerHTML='&#x2715;';
-    del.style.cssText='position:absolute;top:-4px;right:-4px;width:16px;height:16px;background:#ef4444;border:none;border-radius:50%;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:30;line-height:1;';
-    del.addEventListener('click',function(e){e.stopPropagation();removePin(pin.roomNum);});
-    wrap.appendChild(del);
+    del.addEventListener('click',function(e){e.stopPropagation();e.preventDefault();removePin(pin.roomNum);});
+    pin_div.appendChild(del);
   }
-
-  // Tooltip
-  var tt=document.createElement('div');tt.className='pin-tooltip';tt.textContent=pin.roomNum;
-  wrap.appendChild(tt);
 
   // Tap to open room
   var _dm=false,_dx,_dy;
-  wrap.addEventListener('click',function(e){if(_dm)return;e.stopPropagation();openRoom(pin.roomNum,null);});
-  wrap.addEventListener('touchend',function(e){if(!_dm){e.stopPropagation();openRoom(pin.roomNum,null);}});
+  pin_div.addEventListener('click',function(e){if(_dm)return;e.stopPropagation();openRoom(pin.roomNum,null);});
+  pin_div.addEventListener('touchend',function(e){if(!_dm){e.stopPropagation();openRoom(pin.roomNum,null);}});
 
-  // Drag
-  wrap.addEventListener('touchstart',function(e){_dx=e.touches[0].clientX;_dy=e.touches[0].clientY;_dm=false;},{passive:true});
-  wrap.addEventListener('touchmove',function(e){
+  // Drag to reposition
+  pin_div.addEventListener('touchstart',function(e){_dx=e.touches[0].clientX;_dy=e.touches[0].clientY;_dm=false;},{passive:true});
+  pin_div.addEventListener('touchmove',function(e){
     if(!isAdmin)return;
     var dx=e.touches[0].clientX-_dx,dy=e.touches[0].clientY-_dy;
     if(Math.sqrt(dx*dx+dy*dy)>8){
       _dm=true;e.preventDefault();
       var mw=document.getElementById('map-wrap');if(!mw)return;
       var r=mw.getBoundingClientRect();
-      wrap.style.left=(Math.max(.01,Math.min(.99,(e.touches[0].clientX-r.left)/r.width))*100)+'%';
-      wrap.style.top=(Math.max(.01,Math.min(.99,(e.touches[0].clientY-r.top)/r.height))*100)+'%';
+      pin_div.style.left=(Math.max(.01,Math.min(.99,(e.touches[0].clientX-r.left)/r.width))*100)+'%';
+      pin_div.style.top=(Math.max(.01,Math.min(.99,(e.touches[0].clientY-r.top)/r.height))*100)+'%';
       _dx=e.touches[0].clientX;_dy=e.touches[0].clientY;
     }
   },{passive:false});
-  wrap.addEventListener('touchend',function(){
+  pin_div.addEventListener('touchend',function(){
     if(_dm&&isAdmin){
       var p2=loadPins();var zk=zoneKey();
       var p=(p2[zk]||[]).find(function(q){return q.roomNum===pin.roomNum;});
-      if(p){p.x=parseFloat(wrap.style.left)/100;p.y=parseFloat(wrap.style.top)/100;savePins(p2);showToast('Pin moved \u2713');}
+      if(p){p.x=parseFloat(pin_div.style.left)/100;p.y=parseFloat(pin_div.style.top)/100;savePins(p2);showToast('Pin moved \u2713');}
     }
   },{passive:true});
 
-  overlay.appendChild(wrap);
+  overlay.appendChild(pin_div);
 }
 
 function togglePinMode(){
@@ -996,20 +973,7 @@ function openRoom(roomNum,zone){
   renderChecklist('electrical',roomInfo);renderChecklist('plumbing',roomInfo);renderChecklist('building',roomInfo);renderPhotos();
   document.getElementById('room-panel').scrollIntoView({behavior:'smooth',block:'start'});
   renderMap(curRoom);
-  // Enlarge selected pin
-  setTimeout(function(){
-    document.querySelectorAll('[data-room]').forEach(function(wrap){
-      var svg=wrap.querySelector('svg');if(!svg)return;
-      if(wrap.getAttribute('data-room')===curRoom){
-        wrap.style.zIndex='20';
-        wrap.style.transform='translate(-50%,-100%) scale(2)';
-        wrap.style.transformOrigin='bottom center';
-      } else {
-        wrap.style.zIndex='10';
-        wrap.style.transform='translate(-50%,-100%) scale(1)';
-      }
-    });
-  },50);
+
 }
 
 function closeRoom(){
