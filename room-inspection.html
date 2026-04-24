@@ -259,21 +259,22 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
   <!-- MAP -->
   <div id="map-view" style="margin-top:14px">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:3px;color:rgba(245,158,11,.35);text-transform:uppercase;margin-bottom:6px">Floor Plan</div>
-    <!-- Upload prompt: always visible for admin when no map loaded -->
-    <div id="map-upload-zone" class="admin-only" style="display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:120px;border:2px dashed rgba(245,158,11,.3);border-radius:8px;padding:20px;cursor:pointer;margin-bottom:10px" onclick="document.getElementById('map-file-input').click()">
+    <div id="map-upload-zone" style="display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:120px;border:2px dashed rgba(245,158,11,.3);border-radius:8px;padding:20px;cursor:pointer;margin-bottom:10px" onclick="document.getElementById('map-file-input').click()">
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(245,158,11,.6)" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       <div style="font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;color:rgba(245,158,11,.7);text-transform:uppercase">Tap to Upload Floor Map</div>
-      <div style="font-family:'Rajdhani',sans-serif;font-size:9px;letter-spacing:1.5px;color:rgba(245,158,11,.3);text-transform:uppercase">JPG or PNG</div>
     </div>
     <input type="file" id="map-file-input" accept="image/*" style="display:none" onchange="handleMapUpload(event)"/>
-    <!-- Map controls: only show when map exists -->
-    <div class="map-controls" id="map-controls-bar" style="display:none">
+    <div id="map-controls-bar" style="display:none;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
       <button class="tb-btn admin-only" id="upload-map-btn" onclick="document.getElementById('map-file-input').click()">&#8593; Replace Map</button>
-      <button class="tb-btn admin-only pin-mode-btn" id="pin-mode-btn" onclick="togglePinMode()" style="display:none">+ Add Pin</button>
+      <button class="tb-btn admin-only" id="pin-mode-btn" onclick="togglePinMode()" style="display:none">+ Add Pin</button>
       <button class="tb-btn admin-only" id="clear-pins-btn" onclick="clearAllPins()" style="display:none;border-color:rgba(239,68,68,.3);color:rgba(239,68,68,.6)">&#x2715; Clear Pins</button>
-      <span style="font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.35);text-transform:uppercase" id="pin-hint"></span>
+      <span id="pin-hint" style="font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.35);text-transform:uppercase"></span>
     </div>
-    <div id="map-container"></div>
+    <!-- PERSISTENT map — image src updated, overlay rebuilt separately (like fire extinguisher) -->
+    <div id="map-wrap" class="map-wrap" style="display:none">
+      <img id="map-img" class="map-img" draggable="false" style="display:block;max-width:100%;max-height:70vh;pointer-events:none;user-select:none;border-radius:8px"/>
+      <div id="map-pins-overlay" style="position:absolute;inset:0;pointer-events:none"></div>
+    </div>
   </div>
 
 
@@ -757,55 +758,56 @@ function renderZones(){
 // ═══ MAP VIEW ════════════════════════════════════════════════════════
 function renderMap(highlightRoom){
   if(highlightRoom===undefined)highlightRoom=curRoom;
-  var container=document.getElementById('map-container');
-  if(!container)return;
-  container.innerHTML='';
-  var mapB64=loadMap(curLevel);var pins=loadPins();var levelPins=pins[zoneKey()]||[];
-  var data=loadData();
+  var mapB64=loadMap(curLevel);
+  var uploadZone=document.getElementById('map-upload-zone');
+  var mapWrap=document.getElementById('map-wrap');
+  var controlsBar=document.getElementById('map-controls-bar');
 
-  // Always give the container a visible size
-  container.style.minHeight='150px';
-
-  var wrap=document.createElement('div');wrap.className='map-wrap'+(isAdmin?' admin-mode':'');wrap.id='map-wrap';
-  wrap.style.minHeight='150px';
-    if(!mapB64){
-    // Static upload zone in HTML handles the empty state — nothing to render
+  if(!mapB64){
+    if(uploadZone)uploadZone.style.display=isAdmin?'flex':'none';
+    if(mapWrap)mapWrap.style.display='none';
+    if(controlsBar)controlsBar.style.display='none';
     return;
-  } else {
-    var img=document.createElement('img');img.className='map-img';img.src=mapB64;img.id='map-img';img.draggable=false;wrap.appendChild(img);
-    // Pin overlay (same approach as fire extinguisher)
-    var overlay=document.createElement('div');overlay.id='map-pins-overlay';
-    overlay.style.cssText='position:absolute;inset:0;pointer-events:none';
-    wrap.appendChild(overlay);
-    levelPins.forEach(function(pin){renderPin(overlay,pin,data,curRoom);});
+  }
 
+  // Show map, hide upload zone
+  if(uploadZone)uploadZone.style.display='none';
+  if(mapWrap)mapWrap.style.display='';
+  if(controlsBar)controlsBar.style.display='flex';
 
-    // Click handler — YAH mode or pin mode
-    wrap.addEventListener('click',function(e){
-      if(e.target.closest('.map-pin'))return;
-      var rect=wrap.getBoundingClientRect();
+  // Update image src only if changed
+  var img=document.getElementById('map-img');
+  if(img&&img.src!==mapB64)img.src=mapB64;
+
+  // Show/hide admin buttons
+  var pmb=document.getElementById('pin-mode-btn');if(pmb)pmb.style.display=isAdmin?'flex':'none';
+  var cpb=document.getElementById('clear-pins-btn');if(cpb)cpb.style.display=isAdmin?'flex':'none';
+
+  // Add click handler for pin placement if needed
+  if(isAdmin&&!mapWrap._clickSet){
+    mapWrap._clickSet=true;
+    mapWrap.addEventListener('click',function(e){
+      if(e.target.closest('[data-room]'))return;
+      if(!isAdmin||!pinMode)return;
+      var rect=mapWrap.getBoundingClientRect();
       var x=(e.clientX-rect.left)/rect.width;
       var y=(e.clientY-rect.top)/rect.height;
-
-      if(!isAdmin||!pinMode)return;
       pendingPinPos={x:x,y:y};
       openPinModal();
     });
   }
-  container.appendChild(wrap);
-  // Show/hide map controls
-  var uploadZone=document.getElementById('map-upload-zone');
-  var controlsBar=document.getElementById('map-controls-bar');
-  var uploadMapBtn=document.getElementById('upload-map-btn');
-  var pinModeBtn=document.getElementById('pin-mode-btn');
-  // Upload zone: only shown for admin when no map loaded
-  if(uploadZone)uploadZone.style.display=(isAdmin&&!mapB64)?'flex':'none';
-  // Controls bar: always visible for admin, also visible for non-admin if map exists
-  if(controlsBar)controlsBar.style.display=(isAdmin&&mapB64)?'flex':'none';
-  // Replace map button: admin only, always shown so they can upload
-  if(uploadMapBtn)uploadMapBtn.style.display=isAdmin?'inline-flex':'none';
-  // Pin mode button: admin only, only useful when map exists
-  if(pinModeBtn)pinModeBtn.style.display=(isAdmin&&mapB64)?'flex':'none';
+
+  // Rebuild ONLY the pins overlay — image stays intact
+  buildRoomPins(highlightRoom);
+}
+
+function buildRoomPins(highlightRoom){
+  var overlay=document.getElementById('map-pins-overlay');
+  if(!overlay)return;
+  overlay.innerHTML='';
+  var pins=loadPins();var levelPins=pins[zoneKey()]||[];
+  var data=loadData();
+  levelPins.forEach(function(pin){renderPin(overlay,pin,data,highlightRoom);});
 }
 
 function renderPin(overlay,pin,data,highlightRoom){
