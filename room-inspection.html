@@ -813,78 +813,62 @@ function buildRoomPins(highlightRoom){
 function renderPin(overlay,pin,data,highlightRoom){
   var isHl=(pin.roomNum===highlightRoom);
   var shortNum=pin.roomNum.replace(/^\d[A-Z]-/,'');
-  var checks=loadChecks();
-  var allDone=roomIsComplete(pin.roomNum,data,checks);
-  var hasIssues=roomHasIssues(pin.roomNum,data);
 
-  // Colour: amber=selected, green=all done, red=issues, grey=pending
-  var gc  = isHl?'#f59e0b': hasIssues?'#ef4444': allDone?'#22c55e': '#888888';
-  var gc2 = isHl?'#fcd34d': hasIssues?'#fca5a5': allDone?'#4ade80': '#aaaaaa';
-
-  var pin_div=document.createElement('div');
-  pin_div.setAttribute('data-room',pin.roomNum);
-
-  // EXACT same style approach as fire extinguisher
-  pin_div.style.cssText=
+  var div=document.createElement('div');
+  div.setAttribute('data-room',pin.roomNum);
+  div.style.cssText=
     'position:absolute;'+
     'left:'+(pin.x*100).toFixed(2)+'%;'+
     'top:'+(pin.y*100).toFixed(2)+'%;'+
     'transform:translate(-50%,-50%);'+
-    'font-size:'+(isHl?30:22)+'px;'+
-    'line-height:1;'+
-    'filter:drop-shadow(0 0 5px '+gc+') drop-shadow(0 0 12px '+gc2+');'+
-    'pointer-events:all;cursor:pointer;user-select:none;z-index:'+(isHl?20:10)+';'+
-    (isHl?'animation:pinPulse 1.2s ease-in-out infinite;':'');
-
-  pin_div.textContent='\uD83D\uDCCD'; // 📍
-
-  // Room number label
-  var lbl=document.createElement('div');
-  lbl.style.cssText=
-    'position:absolute;top:100%;left:50%;transform:translateX(-50%);'+
+    'width:'+(isHl?36:28)+'px;height:'+(isHl?36:28)+'px;'+
+    'border-radius:50%;'+
+    'background:'+(isHl?'#f59e0b':'rgba(245,158,11,.35)')+';'+
+    'border:2px solid '+(isHl?'#fff':'rgba(245,158,11,.6)')+';'+
+    'display:flex;align-items:center;justify-content:center;'+
     'font-family:Rajdhani,sans-serif;font-size:'+(isHl?11:9)+'px;font-weight:700;'+
-    'color:'+(isHl?'#f59e0b':'#fff')+';text-shadow:0 1px 3px rgba(0,0,0,.9);'+
-    'white-space:nowrap;pointer-events:none;margin-top:1px;';
-  lbl.textContent=shortNum;
-  pin_div.appendChild(lbl);
+    'color:'+(isHl?'#000':'rgba(245,158,11,.9)')+';'+
+    'pointer-events:all;cursor:pointer;z-index:'+(isHl?20:10)+';'+
+    'box-shadow:'+(isHl?'0 0 0 3px rgba(245,158,11,.3),0 2px 8px rgba(0,0,0,.4)':'0 1px 4px rgba(0,0,0,.3)')+';';
+  div.textContent=shortNum;
 
-  // Delete button
+  // Delete btn (admin)
   if(isAdmin){
     var del=document.createElement('button');
-    del.style.cssText='position:absolute;top:-6px;right:-6px;width:16px;height:16px;background:#ef4444;border:none;border-radius:50%;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:30;';
+    del.style.cssText='position:absolute;top:-5px;right:-5px;width:15px;height:15px;background:#ef4444;border:none;border-radius:50%;color:#fff;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:30;line-height:1;';
     del.innerHTML='&#x2715;';
     del.addEventListener('click',function(e){e.stopPropagation();e.preventDefault();removePin(pin.roomNum);});
-    pin_div.appendChild(del);
+    div.appendChild(del);
   }
 
   // Tap to open room
   var _dm=false,_dx,_dy;
-  pin_div.addEventListener('click',function(e){if(_dm)return;e.stopPropagation();openRoom(pin.roomNum,null);});
-  pin_div.addEventListener('touchend',function(e){if(!_dm){e.stopPropagation();openRoom(pin.roomNum,null);}});
+  div.addEventListener('click',function(e){if(_dm)return;e.stopPropagation();openRoom(pin.roomNum,null);});
+  div.addEventListener('touchend',function(e){if(!_dm){e.stopPropagation();openRoom(pin.roomNum,null);}});
 
-  // Drag to reposition
-  pin_div.addEventListener('touchstart',function(e){_dx=e.touches[0].clientX;_dy=e.touches[0].clientY;_dm=false;},{passive:true});
-  pin_div.addEventListener('touchmove',function(e){
+  // Drag to move (admin)
+  div.addEventListener('touchstart',function(e){_dx=e.touches[0].clientX;_dy=e.touches[0].clientY;_dm=false;},{passive:true});
+  div.addEventListener('touchmove',function(e){
     if(!isAdmin)return;
     var dx=e.touches[0].clientX-_dx,dy=e.touches[0].clientY-_dy;
     if(Math.sqrt(dx*dx+dy*dy)>8){
       _dm=true;e.preventDefault();
       var mw=document.getElementById('map-wrap');if(!mw)return;
       var r=mw.getBoundingClientRect();
-      pin_div.style.left=(Math.max(.01,Math.min(.99,(e.touches[0].clientX-r.left)/r.width))*100)+'%';
-      pin_div.style.top=(Math.max(.01,Math.min(.99,(e.touches[0].clientY-r.top)/r.height))*100)+'%';
+      div.style.left=(Math.max(.01,Math.min(.99,(e.touches[0].clientX-r.left)/r.width))*100)+'%';
+      div.style.top=(Math.max(.01,Math.min(.99,(e.touches[0].clientY-r.top)/r.height))*100)+'%';
       _dx=e.touches[0].clientX;_dy=e.touches[0].clientY;
     }
   },{passive:false});
-  pin_div.addEventListener('touchend',function(){
+  div.addEventListener('touchend',function(){
     if(_dm&&isAdmin){
       var p2=loadPins();var zk=zoneKey();
       var p=(p2[zk]||[]).find(function(q){return q.roomNum===pin.roomNum;});
-      if(p){p.x=parseFloat(pin_div.style.left)/100;p.y=parseFloat(pin_div.style.top)/100;savePins(p2);showToast('Pin moved \u2713');}
+      if(p){p.x=parseFloat(div.style.left)/100;p.y=parseFloat(div.style.top)/100;savePins(p2);showToast('Pin moved \u2713');}
     }
   },{passive:true});
 
-  overlay.appendChild(pin_div);
+  overlay.appendChild(div);
 }
 
 function togglePinMode(){
