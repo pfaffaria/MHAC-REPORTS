@@ -690,13 +690,29 @@ function renderZones(){
   if(!zones.length){
     container.innerHTML='<div style="text-align:center;padding:40px;color:rgba(245,158,11,.3);font-size:11px;letter-spacing:2px;text-transform:uppercase">No rooms on this level</div>';
     if(isAdmin){
-      var azb=document.createElement('button');azb.className='tb-btn admin-only';azb.style.marginTop='10px';      var bab=document.createElement('button');bab.className='tb-btn admin-only';bab.style.cssText='margin-top:10px;margin-left:8px';bab.textContent='+ Bulk Add Rooms';bab.onclick=function(){openBulkAdd();};container.appendChild(bab);
+      var azb=document.createElement('button');azb.className='tb-btn admin-only';azb.style.marginTop='10px';
     }
     return;
   }
   zones.forEach(function(zone){
     var section=document.createElement('div');section.className='zone-section';
-    var hdr=document.createElement('div');hdr.className='zone-hdr';hdr.innerHTML='<div class="zone-name">'+zone+'</div>';section.appendChild(hdr);
+    var hdr=document.createElement('div');hdr.className='zone-hdr';
+    var znm=document.createElement('div');znm.className='zone-name';znm.textContent=zone;
+    hdr.appendChild(znm);
+    if(isAdmin){
+      var clrBtn=document.createElement('button');
+      clrBtn.className='tb-btn';
+      clrBtn.style.cssText='font-size:9px;padding:3px 8px;border-color:rgba(239,68,68,.3);color:rgba(239,68,68,.6)';
+      clrBtn.textContent='Clear Zone';
+      clrBtn.onclick=(function(z){return function(){
+        if(!confirm('Remove ALL rooms from '+z+'?'))return;
+        var rooms=loadRooms();
+        if(rooms[curLevel])delete rooms[curLevel][z];
+        saveRooms(rooms);renderZones();updateCycleBanner();showToast('Zone cleared');
+      };})(zone);
+      hdr.appendChild(clrBtn);
+    }
+    section.appendChild(hdr);
     var grid=document.createElement('div');grid.className='room-grid';
     (levelRooms[zone]||[]).forEach(function(r){
       var chip=document.createElement('div');
@@ -722,8 +738,7 @@ function renderZones(){
     section.appendChild(grid);container.appendChild(section);
   });
   if(isAdmin){
-    var bab=document.createElement('button');bab.className='tb-btn';bab.style.cssText='margin-top:10px';bab.textContent='+ Bulk Add Rooms';
-    bab.onclick=function(){openBulkAdd();};container.appendChild(bab);
+
   }
 }
 
@@ -969,28 +984,17 @@ function openRoom(roomNum,zone){
   renderChecklist('electrical',roomInfo);renderChecklist('plumbing',roomInfo);renderChecklist('building',roomInfo);renderPhotos();
   document.getElementById('room-panel').scrollIntoView({behavior:'smooth',block:'start'});
   renderMap(curRoom);
-  // Directly paint the selected pin amber — belt and suspenders
+  // Enlarge selected pin
   setTimeout(function(){
     document.querySelectorAll('[data-room]').forEach(function(wrap){
-      var path=wrap.querySelector('path');
-      var txt=wrap.querySelector('text');
-      if(!path||!txt)return;
+      var svg=wrap.querySelector('svg');if(!svg)return;
       if(wrap.getAttribute('data-room')===curRoom){
-        path.setAttribute('fill','#f59e0b');
-        path.setAttribute('stroke','#fff');
-        txt.setAttribute('fill','#000');
-        txt.setAttribute('font-size','13');
-        wrap.querySelector('svg').style.filter='drop-shadow(0 0 8px #f59e0b) drop-shadow(0 0 20px #f59e0b)';
-        wrap.querySelector('svg').setAttribute('width','52');
-        wrap.querySelector('svg').setAttribute('height','68');
+        wrap.style.zIndex='20';
+        wrap.style.transform='translate(-50%,-100%) scale(2)';
+        wrap.style.transformOrigin='bottom center';
       } else {
-        path.setAttribute('fill','#4a4a4a');
-        path.setAttribute('stroke','rgba(255,255,255,.4)');
-        txt.setAttribute('fill','#eee');
-        txt.setAttribute('font-size','9');
-        wrap.querySelector('svg').style.filter='drop-shadow(0 2px 4px rgba(0,0,0,.6))';
-        wrap.querySelector('svg').setAttribute('width','30');
-        wrap.querySelector('svg').setAttribute('height','39');
+        wrap.style.zIndex='10';
+        wrap.style.transform='translate(-50%,-100%) scale(1)';
       }
     });
   },50);
