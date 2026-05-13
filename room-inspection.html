@@ -1027,9 +1027,8 @@ function openRoom(roomNum,zone){
   renderChecklist('electrical',roomInfo);renderChecklist('plumbing',roomInfo);renderChecklist('building',roomInfo);renderPhotos();
   document.getElementById('room-panel').scrollIntoView({behavior:'smooth',block:'start'});
   renderMap(curRoom);
-
+  _applyPinHighlight(curRoom);
 }
-
 function closeRoom(){
   if(_highlightTimer){clearInterval(_highlightTimer);_highlightTimer=null;}
   curRoom=null;
