@@ -314,6 +314,7 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
         <button class="tb-btn" onclick="closeRoom()">&#x2715; Close</button>
         <button class="tb-btn" onclick="toggleHistory()">&#128336; History</button>
         <button class="tb-btn" onclick="saveRoomData()">&#10003; Save</button>
+        <button class="tb-btn admin-only" id="place-pin-btn" onclick="startPinPlacement()" style="border-color:rgba(245,158,11,.4)">&#128205; Pin</button>
       </div>
     </div>
     <div id="history-panel" style="display:none">
@@ -931,6 +932,23 @@ function togglePinMode(){
 }
 
 function openPinModal(){
+  // If called from startPinPlacement, auto-fill the room
+  if(window._pendingPinRoom){
+    var num=window._pendingPinRoom;
+    window._pendingPinRoom=null;
+    pinMode=false;
+    document.getElementById('pin-hint').textContent='';
+    document.getElementById('pin-mode-btn').classList.remove('active');
+    if(!pendingPinPos)return;
+    var pins=loadPins();var zk=zoneKey();
+    if(!pins[zk])pins[zk]=[];
+    pins[zk]=pins[zk].filter(function(p){return p.roomNum!==num;});
+    pins[zk].push({roomNum:num,x:pendingPinPos.x,y:pendingPinPos.y});
+    savePins(pins);pendingPinPos=null;
+    buildRoomPins(curRoom);_applyPinHighlight(curRoom);
+    showToast('Pin placed ✓');
+    return;
+  }
   // Show quick-pin modal — type room number to create room + pin together
   document.getElementById('quick-pin-num').value='';
   document.getElementById('quick-pin-label').value='';
@@ -1247,6 +1265,23 @@ function saveNewCheck(){var name=document.getElementById('new-check-name').value
 function deleteCheck(cat,id){if(!isAdmin)return;if(!confirm('Remove this check item?'))return;var checks=loadChecks();checks[cat]=checks[cat].filter(function(c){return c.id!==id;});saveChecks(checks);var rooms=loadRooms(),levelRooms=rooms[curLevel]||{},roomInfo=null;Object.values(levelRooms).forEach(function(z){var f=z.find(function(r){return r.num===curRoom;});if(f)roomInfo=f;});renderChecklist(cat,roomInfo);}
 function openAddRoom(level,zone){if(!isAdmin)return;pendingAddLevel=level;pendingAddZone=zone;document.getElementById('new-room-num').value='';document.getElementById('new-room-label').value='';document.getElementById('add-room-modal').classList.add('active');setTimeout(function(){document.getElementById('new-room-num').focus();},50);}
 function saveNewRoom(){var num=document.getElementById('new-room-num').value.trim(),label=document.getElementById('new-room-label').value.trim(),toilet=parseInt(document.getElementById('new-room-toilet').value),shower=parseInt(document.getElementById('new-room-shower').value),sink=parseInt(document.getElementById('new-room-sink').value);if(!num){showToast('Enter a room number');return;}var rooms=loadRooms();if(!rooms[pendingAddLevel])rooms[pendingAddLevel]={};if(!rooms[pendingAddLevel][pendingAddZone])rooms[pendingAddLevel][pendingAddZone]=[];rooms[pendingAddLevel][pendingAddZone].push({num:num,label:label,toilet:toilet,shower:shower,sink:sink});saveRooms(rooms);closeModal('add-room-modal');renderZones();showToast('Room added \u2713');}
+function startPinPlacement(){
+  if(!curRoom){showToast('No room selected');return;}
+  // Check if already pinned
+  var pins=loadPins()[zoneKey()]||[];
+  var rn=curRoom.replace(/^\d[A-Z]-/,'');
+  var already=pins.find(function(p){return p.roomNum===curRoom||p.roomNum.replace(/^\d[A-Z]-/,'')===rn;});
+  if(already){showToast('Already pinned — drag to reposition');return;}
+  // Enter pin mode and show instruction
+  pinMode=true;
+  document.getElementById('pin-mode-btn').classList.add('active');
+  document.getElementById('pin-hint').textContent='Tap map to place pin for '+curRoom;
+  showToast('Tap the map to place pin for '+curRoom);
+  // Scroll to map
+  document.getElementById('map-view').scrollIntoView({behavior:'smooth',block:'start'});
+  // Override pending pin to auto-fill room number
+  window._pendingPinRoom=curRoom;
+}
 function clearAllPins(){
   if(!confirm('Remove all pins for this zone?'))return;
   var pins=loadPins();
