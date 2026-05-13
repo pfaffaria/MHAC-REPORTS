@@ -298,7 +298,7 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
       </div>
       <div class="modal-actions">
         <button class="tb-btn" onclick="confirmQuickPin()">&#10003; Place Pin</button>
-        <button class="tb-btn" onclick="document.getElementById('quick-pin-modal').classList.remove('active');pendingPinPos=null;" style="border-color:rgba(239,68,68,.3);color:rgba(239,68,68,.6)">Cancel</button>
+        <button class="tb-btn" onclick="document.getElementById('quick-pin-modal').classList.remove('active');pendingPinPos=null;document.body.style.overflow='';document.body.style.position='';document.body.style.width='';" style="border-color:rgba(239,68,68,.3);color:rgba(239,68,68,.6)">Cancel</button>
       </div>
     </div>
   </div>
@@ -827,8 +827,17 @@ function renderMap(highlightRoom){
       openPinModal();
     }
     mapWrap.addEventListener('click',function(e){handleMapTap(e.clientX,e.clientY,e.target);});
+    var _touchCount=0;
+    mapWrap.addEventListener('touchstart',function(e){
+      _touchCount=e.touches.length;
+      if(pinMode&&e.touches.length===1)e.preventDefault(); // stop scroll, single touch only
+    },{passive:false});
     mapWrap.addEventListener('touchend',function(e){
-      if(e.changedTouches.length)handleMapTap(e.changedTouches[0].clientX,e.changedTouches[0].clientY,e.target);
+      // Only place pin on single-finger tap, not pinch/zoom
+      if(_touchCount===1&&e.changedTouches.length===1){
+        handleMapTap(e.changedTouches[0].clientX,e.changedTouches[0].clientY,e.target);
+      }
+      _touchCount=0;
     });
   }
 
@@ -864,7 +873,7 @@ function _applyPinHighlight(roomNum){
 
 function renderPin(overlay,pin,data,highlightRoom){
   var isHl=(pin.roomNum===highlightRoom);
-  var shortNum=pin.roomNum.replace(/^\d[A-Z]-/,'');
+  var shortNum=pin.roomNum.replace(/^.*-/,'');
 
   var div=document.createElement('div');
   div.setAttribute('data-room',pin.roomNum);
@@ -927,8 +936,11 @@ function togglePinMode(){
   pinMode=!pinMode;
   var btn=document.getElementById('pin-mode-btn');
   btn.classList.toggle('active',pinMode);
-  var wrap=document.getElementById('map-wrap');if(wrap)wrap.classList.toggle('no-pin-mode',!pinMode);
-  document.getElementById('pin-hint').textContent=pinMode?'Click map to place a pin':'';
+  document.getElementById('pin-hint').textContent=pinMode?'Tap map to place a pin':'';
+  // Lock/unlock body scroll
+  document.body.style.overflow=pinMode?'hidden':'';
+  document.body.style.position=pinMode?'fixed':'';
+  document.body.style.width=pinMode?'100%':'';
 }
 
 function openPinModal(){
@@ -1277,6 +1289,9 @@ function startPinPlacement(){
   document.getElementById('pin-mode-btn').classList.add('active');
   document.getElementById('pin-hint').textContent='Tap map to place pin for '+curRoom;
   showToast('Tap the map to place pin for '+curRoom);
+  document.body.style.overflow='hidden';
+  document.body.style.position='fixed';
+  document.body.style.width='100%';
   // Scroll to map
   document.getElementById('map-view').scrollIntoView({behavior:'smooth',block:'start'});
   // Override pending pin to auto-fill room number
