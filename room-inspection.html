@@ -558,13 +558,12 @@ function zoneKey(){return curLevel+(filterZone?'-'+filterZone.replace(/[^a-zA-Z0
 var _mapCache={};  // in-memory map cache — avoids localStorage size issues
 var yahMode=false,yahPos=null;
 var _highlightTimer=null;
+var _lastSpotlightRoom=null;
 var _spotlightKeeper=setInterval(function(){
-  var sp=document.getElementById('pin-spotlight');
-  if(!sp)return;
-  if(!curRoom){sp.style.display='none';return;}
-  // Always keep spotlight on current room
+  if(curRoom===_lastSpotlightRoom)return;
+  _lastSpotlightRoom=curRoom;
   _applyPinHighlight(curRoom);
-},300);
+},100);
 var pinMode=false,pendingPinPos=null,curView='rooms';
 var urlParams=new URLSearchParams(window.location.search);
 var filterLevel=urlParams.get('level')||null;
@@ -846,37 +845,20 @@ function buildRoomPins(highlightRoom){
 }
 
 function _applyPinHighlight(roomNum){
-  var spotlight=document.getElementById('pin-spotlight');
-  if(!spotlight)return;
-
-  if(!roomNum){spotlight.style.display='none';return;}
-
-  // Find this room's pin position
-  var pins=loadPins();
-  var levelPins=pins[zoneKey()]||[];
-  var match=null;
-  levelPins.forEach(function(p){
-    var dr=p.roomNum||'';
-    var rn=roomNum||'';
-    if(dr===rn||dr===rn.replace(/^\d[A-Z]-/,'')||rn===dr.replace(/^\d[A-Z]-/,''))match=p;
-  });
-
-  if(!match){spotlight.style.display='none';return;}
-
-  // Position spotlight over the pin
-  spotlight.style.left=(match.x*100).toFixed(2)+'%';
-  spotlight.style.top=(match.y*100).toFixed(2)+'%';
-  spotlight.style.display='block';
-
-  // Show room number in spotlight
-  spotlight.textContent=roomNum.replace(/^\d[A-Z]-/,'');
-  spotlight.style.display='flex';
-  spotlight.style.alignItems='center';
-  spotlight.style.justifyContent='center';
-  spotlight.style.fontFamily='Rajdhani,sans-serif';
-  spotlight.style.fontSize='11px';
-  spotlight.style.fontWeight='700';
-  spotlight.style.color='#000';
+  var sp=document.getElementById('pin-spotlight');
+  if(!sp)return;
+  if(!roomNum){sp.style.display='none';return;}
+  var pins=loadPins()[zoneKey()]||[];
+  var rn=roomNum.replace(/^\d[A-Z]-/,''); // short form e.g. "121"
+  var p=null;
+  for(var i=0;i<pins.length;i++){
+    var dr=pins[i].roomNum.replace(/^\d[A-Z]-/,'');
+    if(dr===rn||pins[i].roomNum===roomNum){p=pins[i];break;}
+  }
+  if(!p){sp.style.display='none';return;}
+  sp.style.left=(p.x*100).toFixed(2)+'%';
+  sp.style.top=(p.y*100).toFixed(2)+'%';
+  sp.style.display='flex';
 }
 
 function renderPin(overlay,pin,data,highlightRoom){
