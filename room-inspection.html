@@ -452,7 +452,7 @@ function sbGet(k){
     .then(function(d){return d.length?d[0].value:null;})
     .catch(function(){clearTimeout(timer);return null;});
 }
-function sbSet(k,v){fetch(SB_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SB_H,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({key:k,value:v,updated_at:new Date().toISOString()})}).catch(function(){});}
+function sbSet(k,v){fetch(SB_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SB_H,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({key:k,value:v,updated_at:new Date().toISOString()})}).then(function(r){if(!r.ok)r.text().then(function(t){showToast('Save error: '+r.status);console.error('sbSet error',k,r.status,t);});}).catch(function(e){showToast('Save failed - check connection');console.error('sbSet catch',e);});}
 
 // ═══ AUTH ════════════════════════════════════════════════════════════
 var CREDS={admin:{user:'admin',pass:'mhac2024',role:'admin'},user:{user:'staff',pass:'mhac1234',role:'user'}};
@@ -778,7 +778,7 @@ function renderMap(highlightRoom){
 
   // Update image src only if changed
   var img=document.getElementById('map-img');
-  if(img&&img.src!==mapB64)img.src=mapB64;
+  if(img)img.src=mapB64;
 
   // Show/hide admin buttons
   var pmb=document.getElementById('pin-mode-btn');if(pmb)pmb.style.display=isAdmin?'flex':'none';
@@ -787,14 +787,16 @@ function renderMap(highlightRoom){
   // Add click handler for pin placement if needed
   if(isAdmin&&!mapWrap._clickSet){
     mapWrap._clickSet=true;
-    mapWrap.addEventListener('click',function(e){
-      if(e.target.closest('[data-room]'))return;
+    function handleMapTap(clientX,clientY,target){
+      if(target.closest('[data-room]'))return;
       if(!isAdmin||!pinMode)return;
       var rect=mapWrap.getBoundingClientRect();
-      var x=(e.clientX-rect.left)/rect.width;
-      var y=(e.clientY-rect.top)/rect.height;
-      pendingPinPos={x:x,y:y};
+      pendingPinPos={x:(clientX-rect.left)/rect.width,y:(clientY-rect.top)/rect.height};
       openPinModal();
+    }
+    mapWrap.addEventListener('click',function(e){handleMapTap(e.clientX,e.clientY,e.target);});
+    mapWrap.addEventListener('touchend',function(e){
+      if(e.changedTouches.length)handleMapTap(e.changedTouches[0].clientX,e.changedTouches[0].clientY,e.target);
     });
   }
 
@@ -1410,7 +1412,8 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
   // Only fetch the keys needed for this level/zone — not maps
   var KEYS=[ROOMS_KEY,CHECKS_KEY,DATA_KEY,HISTORY_KEY,TEMPS_KEY,DATES_KEY,ARCHIVE_KEY,PINS_KEY];
   // Also fetch map for current level into memory cache
-  var mapKey='mhac-ri-map-'+(curLevel+(filterZone?'-'+filterZone.replace(/[^a-zA-Z0-9]/g,'-'):''));
+  var _initLevel=filterLevel||curLevel;
+  var mapKey='mhac-ri-map-'+(_initLevel+(filterZone?'-'+filterZone.replace(/[^a-zA-Z0-9]/g,'-'):''));
   var done=false;
   function finish(){
     if(done)return; done=true;
@@ -1442,7 +1445,7 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
   })).then(function(){
     // Fetch map separately into memory
     sbGet(mapKey).then(function(v){
-      if(v!==null){_mapCache[zoneKey()]=v;}
+      if(v!==null){var _ck=_initLevel+(filterZone?'-'+filterZone.replace(/[^a-zA-Z0-9]/g,'-'):'');_mapCache[_ck]=v;}
     }).catch(function(){}).then(finish);
   }).catch(finish);
 })();
