@@ -832,6 +832,27 @@ function buildRoomPins(highlightRoom){
   levelPins.forEach(function(pin){renderPin(overlay,pin,data,highlightRoom);});
 }
 
+function _applyPinHighlight(roomNum){
+  // First try direct style swap on existing pins (faster, no flicker)
+  var all=document.querySelectorAll('#map-pins-overlay [data-room]');
+  if(!all.length){
+    // Pins not built yet — build them
+    buildRoomPins(roomNum);
+    return;
+  }
+  all.forEach(function(div){
+    var isHl=(div.getAttribute('data-room')===roomNum);
+    div.style.background=isHl?'#f59e0b':'#fff';
+    div.style.border='2px solid '+(isHl?'#fff':'#f59e0b');
+    div.style.color=isHl?'#000':'#1a1000';
+    div.style.width=isHl?'36px':'28px';
+    div.style.height=isHl?'36px':'28px';
+    div.style.zIndex=isHl?'20':'10';
+    div.style.boxShadow=isHl?'0 0 0 3px rgba(245,158,11,.4),0 2px 8px rgba(0,0,0,.4)':'0 1px 4px rgba(0,0,0,.3)';
+    div.style.fontSize=isHl?'11px':'9px';
+  });
+}
+
 function renderPin(overlay,pin,data,highlightRoom){
   var isHl=(pin.roomNum===highlightRoom);
   var shortNum=pin.roomNum.replace(/^\d[A-Z]-/,'');
