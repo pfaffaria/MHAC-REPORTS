@@ -81,6 +81,8 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 .map-placeholder svg{width:40px;height:40px}
 /* PIN */
 .map-pin{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:10;transition:all .15s;pointer-events:all}
+#pin-spotlight{animation:spotPulse 1s ease-in-out infinite}
+@keyframes spotPulse{0%,100%{box-shadow:0 0 0 4px rgba(245,158,11,.4),0 0 16px rgba(245,158,11,.7)}50%{box-shadow:0 0 0 8px rgba(245,158,11,.2),0 0 28px rgba(245,158,11,1)}}
 [data-selected="true"]{background:#f59e0b !important;border-color:#fff !important;color:#000 !important;box-shadow:0 0 0 4px rgba(245,158,11,.4),0 0 14px rgba(245,158,11,.7) !important;width:36px !important;height:36px !important;font-size:12px !important;z-index:20 !important;}
 .map-pin:hover{transform:translate(-50%,-50%) scale(1.15)}
 .yah-pin{position:absolute;transform:translate(-50%,-100%);cursor:pointer;z-index:20;pointer-events:all;filter:drop-shadow(0 2px 6px rgba(59,130,246,.7))}
@@ -277,6 +279,7 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
     <div id="map-wrap" class="map-wrap" style="display:none">
       <img id="map-img" class="map-img" draggable="false" style="display:block;max-width:100%;max-height:70vh;pointer-events:none;user-select:none;border-radius:8px"/>
       <div id="map-pins-overlay" style="position:absolute;inset:0;pointer-events:none"></div>
+      <div id="pin-spotlight" style="display:none;position:absolute;width:36px;height:36px;border-radius:50%;background:#f59e0b;border:3px solid #fff;transform:translate(-50%,-50%);z-index:50;pointer-events:none;box-shadow:0 0 0 4px rgba(245,158,11,.4),0 0 16px rgba(245,158,11,.8)"></div>
     </div>
   </div>
 
@@ -836,20 +839,37 @@ function buildRoomPins(highlightRoom){
 }
 
 function _applyPinHighlight(roomNum){
-  var all=document.querySelectorAll('#map-pins-overlay [data-room]');
-  if(!all.length){buildRoomPins(roomNum);return;}
-  all.forEach(function(div){
-    var dr=div.getAttribute('data-room')||'';
+  var spotlight=document.getElementById('pin-spotlight');
+  if(!spotlight)return;
+
+  if(!roomNum){spotlight.style.display='none';return;}
+
+  // Find this room's pin position
+  var pins=loadPins();
+  var levelPins=pins[zoneKey()]||[];
+  var match=null;
+  levelPins.forEach(function(p){
+    var dr=p.roomNum||'';
     var rn=roomNum||'';
-    var isHl=(dr===rn)||(dr===rn.replace(/^\d[A-Z]-/,''))||(rn===dr.replace(/^\d[A-Z]-/,''));
-    div.setAttribute('data-selected', isHl?'true':'false');
-    // Also set inline styles as backup
-    div.style.setProperty('background', isHl?'#f59e0b':'#fff', 'important');
-    div.style.setProperty('border-color', isHl?'#fff':'#f59e0b', 'important');
-    div.style.setProperty('color', isHl?'#000':'#1a1000', 'important');
-    div.style.setProperty('width', isHl?'36px':'28px', 'important');
-    div.style.setProperty('height', isHl?'36px':'28px', 'important');
+    if(dr===rn||dr===rn.replace(/^\d[A-Z]-/,'')||rn===dr.replace(/^\d[A-Z]-/,''))match=p;
   });
+
+  if(!match){spotlight.style.display='none';return;}
+
+  // Position spotlight over the pin
+  spotlight.style.left=(match.x*100).toFixed(2)+'%';
+  spotlight.style.top=(match.y*100).toFixed(2)+'%';
+  spotlight.style.display='block';
+
+  // Show room number in spotlight
+  spotlight.textContent=roomNum.replace(/^\d[A-Z]-/,'');
+  spotlight.style.display='flex';
+  spotlight.style.alignItems='center';
+  spotlight.style.justifyContent='center';
+  spotlight.style.fontFamily='Rajdhani,sans-serif';
+  spotlight.style.fontSize='11px';
+  spotlight.style.fontWeight='700';
+  spotlight.style.color='#000';
 }
 
 function renderPin(overlay,pin,data,highlightRoom){
