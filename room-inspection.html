@@ -560,6 +560,7 @@ var _mapCache={};  // in-memory map cache — avoids localStorage size issues
 var yahMode=false,yahPos=null;
 var _highlightTimer=null;
 var _lastSpotlightRoom=null;
+var _pinDragInProgress=false;
 var _spotlightKeeper=setInterval(function(){
   if(curRoom===_lastSpotlightRoom)return;
   _lastSpotlightRoom=curRoom;
@@ -828,6 +829,9 @@ function renderMap(highlightRoom){
     }
     mapWrap.addEventListener('click',function(e){handleMapTap(e.clientX,e.clientY,e.target);});
     var _touchCount=0;
+    mapWrap.addEventListener('touchmove',function(e){
+      if(_pinDragInProgress)e.preventDefault();
+    },{passive:false});
     mapWrap.addEventListener('touchstart',function(e){
       _touchCount=e.touches.length;
       if(pinMode&&e.touches.length===1)e.preventDefault(); // stop scroll, single touch only
@@ -920,6 +924,7 @@ function renderPin(overlay,pin,data,highlightRoom){
     // Long press (400ms) to start drag
     _longPressTimer=setTimeout(function(){
       _dragActive=true;
+      _pinDragInProgress=true;
       div.style.transform='translate(-50%,-50%) scale(1.3)';
       div.style.opacity='0.85';
       showToast('Drag to reposition');
@@ -931,6 +936,7 @@ function renderPin(overlay,pin,data,highlightRoom){
     if(_longPressTimer){clearTimeout(_longPressTimer);_longPressTimer=null;}
     if(!_dragActive)return;
     e.preventDefault();e.stopPropagation();
+    document.body.style.overflow='hidden';
     _dm=true;
     var t=e.touches[0];
     var mw=document.getElementById('map-wrap');if(!mw)return;
@@ -950,7 +956,7 @@ function renderPin(overlay,pin,data,highlightRoom){
       var p=(p2[zk]||[]).find(function(q){return q.roomNum===pin.roomNum;});
       if(p){p.x=parseFloat(div.style.left)/100;p.y=parseFloat(div.style.top)/100;savePins(p2);showToast('Pin saved \u2713');}
     }
-    _dragActive=false;_dm=false;
+    _dragActive=false;_dm=false;_pinDragInProgress=false;
   },{passive:true});
 
   overlay.appendChild(div);
