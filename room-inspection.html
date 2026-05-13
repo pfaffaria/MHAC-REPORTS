@@ -561,14 +561,9 @@ var _highlightTimer=null;
 var _spotlightKeeper=setInterval(function(){
   var sp=document.getElementById('pin-spotlight');
   if(!sp)return;
-  if(!curRoom){
-    if(sp.style.display!=='none')sp.style.display='none';
-    return;
-  }
-  // Ensure spotlight is visible and positioned correctly
-  if(sp.style.display==='none'||!sp.style.left){
-    _applyPinHighlight(curRoom);
-  }
+  if(!curRoom){sp.style.display='none';return;}
+  // Always keep spotlight on current room
+  _applyPinHighlight(curRoom);
 },300);
 var pinMode=false,pendingPinPos=null,curView='rooms';
 var urlParams=new URLSearchParams(window.location.search);
