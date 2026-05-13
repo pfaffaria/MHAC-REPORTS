@@ -278,6 +278,25 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
   </div>
 
 
+  <!-- QUICK PIN MODAL -->
+  <div id="quick-pin-modal" class="modal-overlay">
+    <div class="modal" style="max-width:320px">
+      <div class="modal-title">Place Pin</div>
+      <div class="modal-field">
+        <label>Room Number</label>
+        <input id="quick-pin-num" type="text" placeholder="e.g. 2A-101" style="text-transform:uppercase"/>
+      </div>
+      <div class="modal-field">
+        <label>Label (optional)</label>
+        <input id="quick-pin-label" type="text" placeholder="e.g. Patient Room"/>
+      </div>
+      <div class="modal-actions">
+        <button class="tb-btn" onclick="confirmQuickPin()">&#10003; Place Pin</button>
+        <button class="tb-btn" onclick="document.getElementById('quick-pin-modal').classList.remove('active');pendingPinPos=null;" style="border-color:rgba(239,68,68,.3);color:rgba(239,68,68,.6)">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ROOM PANEL -->
   <div id="room-panel">
     <div class="room-panel-header">
@@ -883,18 +902,44 @@ function togglePinMode(){
 }
 
 function openPinModal(){
-  var rooms=loadRooms(),levelRooms=rooms[curLevel]||{};
-  var sel=document.getElementById('pin-room-select');sel.innerHTML='';
-  var pins=loadPins(),levelPins=pins[zoneKey()]||[];
-  var pinned=levelPins.map(function(p){return p.roomNum;});
-  Object.keys(levelRooms).forEach(function(zone){
-    (levelRooms[zone]||[]).forEach(function(r){
-      if(pinned.includes(r.num))return;
-      var opt=document.createElement('option');opt.value=r.num;opt.textContent=r.num+(r.label?' – '+r.label:'');sel.appendChild(opt);
-    });
-  });
-  if(!sel.options.length){showToast('All rooms already pinned');pendingPinPos=null;return;}
-  document.getElementById('pin-room-modal').classList.add('active');
+  // Show quick-pin modal — type room number to create room + pin together
+  document.getElementById('quick-pin-num').value='';
+  document.getElementById('quick-pin-label').value='';
+  document.getElementById('quick-pin-modal').classList.add('active');
+  setTimeout(function(){document.getElementById('quick-pin-num').focus();},50);
+}
+
+function confirmQuickPin(){
+  var num=document.getElementById('quick-pin-num').value.trim();
+  var label=document.getElementById('quick-pin-label').value.trim();
+  if(!num){showToast('Enter a room number');return;}
+  if(!pendingPinPos){showToast('No pin position');return;}
+
+  var zone=filterZone||'General';
+
+  // Add room if it doesn't exist
+  var rooms=loadRooms();
+  if(!rooms[curLevel])rooms[curLevel]={};
+  if(!rooms[curLevel][zone])rooms[curLevel][zone]=[];
+  var exists=rooms[curLevel][zone].find(function(r){return r.num===num;});
+  if(!exists){
+    rooms[curLevel][zone].push({num:num,label:label,toilet:false,shower:false,sink:false});
+    saveRooms(rooms);
+  }
+
+  // Add pin
+  var pins=loadPins();
+  if(!pins[zoneKey()])pins[zoneKey()]=[];
+  // Remove existing pin for this room if any
+  pins[zoneKey()]=pins[zoneKey()].filter(function(p){return p.roomNum!==num;});
+  pins[zoneKey()].push({roomNum:num,x:pendingPinPos.x,y:pendingPinPos.y});
+  savePins(pins);
+
+  pendingPinPos=null;
+  document.getElementById('quick-pin-modal').classList.remove('active');
+  renderZones();
+  buildRoomPins(curRoom);
+  showToast(num+' pinned ✓');
 }
 
 function confirmPin(){
