@@ -296,9 +296,18 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
         <label>Label (optional)</label>
         <input id="quick-pin-label" type="text" placeholder="e.g. Patient Room"/>
       </div>
+      <div class="modal-field">
+        <label>Room Features</label>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;cursor:pointer"><input type="checkbox" id="qp-toilet" style="width:16px;height:16px;accent-color:#f59e0b"/> 🚽 Toilet</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;cursor:pointer"><input type="checkbox" id="qp-shower" style="width:16px;height:16px;accent-color:#f59e0b"/> 🚿 Shower</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;cursor:pointer"><input type="checkbox" id="qp-sink" style="width:16px;height:16px;accent-color:#f59e0b"/> 🚰 Sink</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;cursor:pointer"><input type="checkbox" id="qp-tv" style="width:16px;height:16px;accent-color:#f59e0b"/> 📺 TV</label>
+        </div>
+      </div>
       <div class="modal-actions">
         <button class="tb-btn" onclick="confirmQuickPin()">&#10003; Place Pin</button>
-        <button class="tb-btn" onclick="document.getElementById('quick-pin-modal').classList.remove('active');pendingPinPos=null;document.body.style.overflow='';document.body.style.position='';document.body.style.width='';" style="border-color:rgba(239,68,68,.3);color:rgba(239,68,68,.6)">Cancel</button>
+        <button class="tb-btn" onclick="document.getElementById('quick-pin-modal').classList.remove('active');pendingPinPos=null;document.body.style.overflow='';document.body.style.position='';document.body.style.width='';['qp-toilet','qp-shower','qp-sink','qp-tv'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});" style="border-color:rgba(239,68,68,.3);color:rgba(239,68,68,.6)">Cancel</button>
       </div>
     </div>
   </div>
@@ -763,7 +772,8 @@ function renderZones(){
     }
     section.appendChild(hdr);
     var grid=document.createElement('div');grid.className='room-grid';
-    (levelRooms[zone]||[]).forEach(function(r){
+    var _sortedRooms=(levelRooms[zone]||[]).slice().sort(function(a,b){var na=parseInt(a.num.replace(/^.*-/,""))||0,nb=parseInt(b.num.replace(/^.*-/,""))||0;return na-nb;});
+    _sortedRooms.forEach(function(r){
       var chip=document.createElement('div');
       var hasIssues=roomHasIssues(r.num,data);
       var inspected=roomIsInspected(r.num,data);
@@ -983,13 +993,22 @@ function confirmQuickPin(){
 
   var zone=filterZone||'General';
 
-  // Add room if it doesn't exist
+  // Add room with features
+  var toilet=document.getElementById('qp-toilet').checked;
+  var shower=document.getElementById('qp-shower').checked;
+  var sink=document.getElementById('qp-sink').checked;
+  var tv=document.getElementById('qp-tv').checked;
   var rooms=loadRooms();
   if(!rooms[curLevel])rooms[curLevel]={};
   if(!rooms[curLevel][zone])rooms[curLevel][zone]=[];
   var exists=rooms[curLevel][zone].find(function(r){return r.num===num;});
   if(!exists){
-    rooms[curLevel][zone].push({num:num,label:label,toilet:false,shower:false,sink:false});
+    rooms[curLevel][zone].push({num:num,label:label,toilet:toilet,shower:shower,sink:sink,tv:tv});
+    rooms[curLevel][zone].sort(function(a,b){var na=parseInt(a.num.replace(/^.*-/,''))||0,nb=parseInt(b.num.replace(/^.*-/,''))||0;return na-nb;});
+    saveRooms(rooms);
+  } else {
+    // Update features on existing room
+    exists.toilet=toilet;exists.shower=shower;exists.sink=sink;exists.tv=tv;
     saveRooms(rooms);
   }
 
