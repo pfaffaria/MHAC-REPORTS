@@ -1389,10 +1389,7 @@ function deleteCheck(cat,id){
     saveData(data);
   } else {
     // Global check — ask if remove from all or just this room
-    var choice=confirm('Remove from ALL rooms?
-
-OK = Remove from all rooms
-Cancel = Hide from this room only');
+    var choice=confirm('Remove from ALL rooms? OK=all rooms, Cancel=this room only');
     if(choice){
       var checks=loadChecks();
       checks[cat]=checks[cat].filter(function(c){return c.id!==id;});
