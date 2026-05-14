@@ -193,14 +193,15 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 #lightbox-close{position:absolute;top:16px;right:16px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:var(--amber-light);border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 /* PRINT */
 @media print{
-  .topbar,.statusbar,#room-panel,.view-toggle,.map-controls,#map-view,.cycle-banner,.print-hide{display:none!important}
-  .print-summary{display:block!important}
-  body{background:white;color:#000}
-  .print-year{font-size:20px;font-weight:bold;border-bottom:2px solid #888;margin-bottom:12px;padding-bottom:6px}
-  .print-room{border:1px solid #ccc;border-radius:4px;padding:12px;margin-bottom:10px;break-inside:avoid}
-  .print-room-title{font-size:15px;font-weight:bold;margin-bottom:6px}
-  .print-issue{margin-left:12px;font-size:12px;margin-bottom:3px}
-  .print-photo{width:70px;height:70px;object-fit:cover;border-radius:4px;margin:3px}
+  /* Hide everything except print summary */
+  body > *{display:none!important}
+  #print-summary{display:block!important;position:static!important;width:100%!important}
+  body{background:white!important;color:#000!important;font-family:Arial,sans-serif!important;margin:0;padding:16px}
+  .print-year{font-size:18px;font-weight:bold;border-bottom:2px solid #333;margin-bottom:10px;padding-bottom:6px;color:#000}
+  .print-room{border:1px solid #ccc;border-radius:4px;padding:10px;margin-bottom:8px;page-break-inside:avoid}
+  .print-room-title{font-size:14px;font-weight:bold;margin-bottom:4px;color:#000}
+  .print-issue{margin-left:10px;font-size:12px;margin-bottom:3px;color:#222}
+  .print-photo{width:60px;height:60px;object-fit:cover;border-radius:3px;margin:2px}
 }
 .print-summary{display:none}
 .toast{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:rgba(10,5,0,.97);border:1px solid var(--amber);border-radius:6px;padding:10px 22px;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--amber-light);z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
@@ -361,7 +362,6 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
     </div>
   </div>
 </div>
-<div class="print-summary" id="print-summary"></div>
 </div>
 
 <!-- MODALS -->
@@ -1614,68 +1614,51 @@ function deleteRoom(){
 
 // ═══ PRINT ═══════════════════════════════════════════════════════════
 function printYearSummary(){
-  // Use fresh data from Supabase if possible, fallback to localStorage
-  var data=loadData(),rooms=loadRooms(),levelRooms=rooms[curLevel]||{};
-  var dates=loadDates(),checks=loadChecks();
-  var earliest=null;
-  var allRooms=[];
-  Object.values(levelRooms).forEach(function(z){allRooms=allRooms.concat(z);});
-  allRooms.forEach(function(r){var d=dates[r.num];if(d&&(!earliest||d<earliest))earliest=d;});
-  var yearLabel=earliest?cycleLabel(earliest):'Current Cycle';
+  var data=loadData();
+  var rooms=loadRooms();
+  var levelRooms=rooms[curLevel]||{};
+  var checks=loadChecks();
 
-  var html='<div class="print-year">MHAC Room Inspection Report &mdash; Level '+curLevel+'</div>';
-  html+='<div style="font-size:13px;color:#444;margin-bottom:4px">'+yearLabel+'</div>';
-  html+='<div style="font-size:11px;color:#666;margin-bottom:16px">Printed: '+new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'})+'</div>';
+  var lines='<h2 style="font-family:Arial;font-size:16px;margin-bottom:4px">MHAC Inspection Report — Level '+curLevel+(filterZone?' · '+filterZone:'')+'</h2>';
+  lines+='<p style="font-family:Arial;font-size:11px;color:#555;margin-bottom:16px">Printed: '+new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'})+'</p>';
 
   var hasAny=false;
 
-  // Group by zone
   Object.keys(levelRooms).forEach(function(zone){
-    var zoneRooms=levelRooms[zone]||[];
-    var zoneHtml='';
-    zoneRooms.forEach(function(r){
+    (levelRooms[zone]||[]).forEach(function(r){
       var d=data[r.num];if(!d)return;
-      var roomHtml='';
+      var roomLines='';
       ['electrical','plumbing','building'].forEach(function(cat){
         var catData=d[cat]||{};
         var notes=catData.notes||{};
-        var extras=catData.extras||{};
         Object.entries(notes).forEach(function(kv){
           if(!kv[1]||!kv[1].trim())return;
-          var cn='';
-          (checks[cat]||[]).forEach(function(c){if(c.id===kv[0])cn=c.name;});
-          roomHtml+='<div class="print-issue">&#9679; <strong>['+cat.charAt(0).toUpperCase()+cat.slice(1)+']</strong> '+cn+': '+kv[1]+'</div>';
-        });
-        // Also include leak notes
-        Object.keys(extras).forEach(function(k){
-          if(k.endsWith('_leakdesc')&&extras[k]&&extras[k].trim()){
-            roomHtml+='<div class="print-issue">&#9679; <strong>[Plumbing]</strong> Leak: '+extras[k]+'</div>';
-          }
+          var checkName='';
+          (checks[cat]||[]).forEach(function(c){if(c.id===kv[0])checkName=c.name;});
+          roomLines+='<li style="font-family:Arial;font-size:12px;margin-bottom:4px"><strong>'+cat.charAt(0).toUpperCase()+cat.slice(1)+'</strong> — '+checkName+': '+kv[1]+'</li>';
         });
       });
-      if(roomHtml){
+      if(roomLines){
         hasAny=true;
-        zoneHtml+='<div class="print-room">';
-        zoneHtml+='<div class="print-room-title">'+r.num+(r.label?' &mdash; '+r.label:'')+'</div>';
-        zoneHtml+=roomHtml;
-        zoneHtml+='</div>';
+        lines+='<div style="margin-bottom:12px;padding:8px;border:1px solid #ccc;border-radius:4px;page-break-inside:avoid">';
+        lines+='<div style="font-family:Arial;font-size:13px;font-weight:bold;margin-bottom:6px">'+r.num+(r.label?' — '+r.label:'')+'</div>';
+        lines+='<ul style="margin:0;padding-left:18px">'+roomLines+'</ul>';
+        lines+='</div>';
       }
     });
-    if(zoneHtml){
-      html+='<div style="font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:#888;margin:16px 0 6px;border-bottom:1px solid #ddd;padding-bottom:4px">'+zone+'</div>';
-      html+=zoneHtml;
-    }
   });
 
   if(!hasAny){
-    html+='<p style="color:#888;margin-top:16px">No issues recorded on Level '+curLevel+' for this cycle.</p>';
+    lines+='<p style="font-family:Arial;font-size:12px;color:#888">No issues recorded for this level.</p>';
   }
 
-  document.getElementById('print-summary').innerHTML=html;
+  var el=document.getElementById('print-summary');
+  el.innerHTML=lines;
+  el.style.display='block';
   window.print();
+  el.style.display='none';
 }
 
-// ═══ HELPERS ═════════════════════════════════════════════════════════
 function closeModal(id){document.getElementById(id).classList.remove('active');}
 function fmtDate(d){if(!d)return'—';var p=d.split('-');return parseInt(p[2])+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(p[1])-1]+' '+p[0];}
 function updateStatus(){var data=loadData(),rooms=loadRooms(),levelRooms=rooms[curLevel]||{},total=0,done=0,issues=0;Object.values(levelRooms).forEach(function(z){z.forEach(function(r){total++;if(roomHasIssues(r.num,data))issues++;else if(roomIsInspected(r.num,data))done++;});});document.getElementById('status-lbl').textContent='· Level '+curLevel+' · '+total+' rooms · '+done+' done'+(issues?' · '+issues+' with issues':'');}
@@ -1734,5 +1717,6 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
   }).catch(finish);
 })();
 </script>
+<div id="print-summary" style="display:none"></div>
 </body>
 </html>
