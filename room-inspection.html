@@ -444,6 +444,12 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
     <div class="modal-title">Add Check Item</div>
     <div class="modal-field"><label>Task Name</label><input id="new-check-name" placeholder="e.g. HVAC Filter Check" autocomplete="off"/></div>
     <div class="modal-field"><label>Description</label><textarea id="new-check-desc" placeholder="Describe what needs to be done..." rows="3"></textarea></div>
+    <div class="modal-field" style="margin-top:4px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:12px">
+        <input type="checkbox" id="check-room-only" style="width:16px;height:16px;accent-color:#f59e0b"/>
+        <span id="check-room-only-label">This room only</span>
+      </label>
+    </div>
     <div class="modal-btns">
       <button class="modal-btn primary" onclick="saveNewCheck()">Add</button>
       <button class="modal-btn secondary" onclick="closeModal('add-check-modal')">Cancel</button>
@@ -550,23 +556,44 @@ function loadChecks(){return ls_get(CHECKS_KEY)||JSON.parse(JSON.stringify(DEFAU
 
 function getChecksForRoom(cat,roomInfo){
   var all=loadChecks()[cat]||[];
-  if(!roomInfo)return all;
-  if(cat==='electrical'){
-    return all.filter(function(item){
-      // TV Test only if room has TV
-      if(item.id==='tv1')return roomInfo.tv;
-      return true;
-    });
+  var filtered=all;
+  if(roomInfo){
+    if(cat==='electrical'){
+      filtered=all.filter(function(item){
+        if(item.id==='tv1')return roomInfo.tv;
+        return true;
+      });
+    }
+    if(cat==='plumbing'){
+      filtered=all.filter(function(item){
+        if(item.id==='p1')return roomInfo.sink;
+        if(item.id==='p2')return roomInfo.toilet;
+        if(item.id==='p3')return roomInfo.shower;
+        return true;
+      });
+      // Multiple sinks
+      if(roomInfo.sinkCount&&roomInfo.sinkCount>1){
+        var sinkIdx=filtered.findIndex(function(i){return i.id==='p1';});
+        if(sinkIdx>=0){
+          var sinks=[];
+          for(var s=1;s<=roomInfo.sinkCount;s++){
+            sinks.push({id:'p1-'+s,name:'Sink '+s+' Check',desc:'Check sink '+s+' for leaks. Record temperature.',hasTemp:true,tempKey:'sink'+s});
+          }
+          filtered=filtered.slice(0,sinkIdx).concat(sinks).concat(filtered.slice(sinkIdx+1));
+        }
+      }
+    }
   }
-  if(cat==='plumbing'){
-    return all.filter(function(item){
-      if(item.id==='p1')return roomInfo.sink;   // Sink Check
-      if(item.id==='p2')return roomInfo.toilet; // Toilet Check
-      if(item.id==='p3')return roomInfo.shower; // Shower Check
-      return true;
-    });
+  // Filter out checks hidden for this room
+  if(curRoom){
+    var data=loadData();
+    var hidden=(data[curRoom]&&data[curRoom][cat]&&data[curRoom][cat].hiddenChecks)||[];
+    if(hidden.length)filtered=filtered.filter(function(c){return!hidden.includes(c.id);});
+    // Add room-specific custom checks
+    var roomCustom=(data[curRoom]&&data[curRoom][cat]&&data[curRoom][cat].customChecks)||[];
+    filtered=filtered.concat(roomCustom);
   }
-  return all;
+  return filtered;
 }
 function saveChecks(d){ls_set(CHECKS_KEY,d);sbSet(CHECKS_KEY,d);}
 function loadData(){return ls_get(DATA_KEY)||{};}
@@ -1320,9 +1347,69 @@ function renderHistory(){
 }
 
 // ═══ ADMIN — ADD/DELETE ═══════════════════════════════════════════════
-function addCheck(cat){if(!isAdmin)return;addCheckCategory=cat;document.getElementById('new-check-name').value='';document.getElementById('new-check-desc').value='';document.getElementById('add-check-modal').classList.add('active');setTimeout(function(){document.getElementById('new-check-name').focus();},50);}
-function saveNewCheck(){var name=document.getElementById('new-check-name').value.trim(),desc=document.getElementById('new-check-desc').value.trim();if(!name){showToast('Enter a name');return;}var checks=loadChecks();checks[addCheckCategory].push({id:addCheckCategory[0]+Date.now(),name:name,desc:desc});saveChecks(checks);closeModal('add-check-modal');var rooms=loadRooms(),levelRooms=rooms[curLevel]||{},roomInfo=null;Object.values(levelRooms).forEach(function(z){var f=z.find(function(r){return r.num===curRoom;});if(f)roomInfo=f;});renderChecklist(addCheckCategory,roomInfo);showToast('Check item added \u2713');}
-function deleteCheck(cat,id){if(!isAdmin)return;if(!confirm('Remove this check item?'))return;var checks=loadChecks();checks[cat]=checks[cat].filter(function(c){return c.id!==id;});saveChecks(checks);var rooms=loadRooms(),levelRooms=rooms[curLevel]||{},roomInfo=null;Object.values(levelRooms).forEach(function(z){var f=z.find(function(r){return r.num===curRoom;});if(f)roomInfo=f;});renderChecklist(cat,roomInfo);}
+function addCheck(cat){if(!isAdmin)return;addCheckCategory=cat;document.getElementById('new-check-name').value='';document.getElementById('new-check-desc').value='';document.getElementById('check-room-only').checked=false;var lbl=document.getElementById('check-room-only-label');if(lbl)lbl.textContent=curRoom?'This room only ('+curRoom+')':'This room only';document.getElementById('add-check-modal').classList.add('active');setTimeout(function(){document.getElementById('new-check-name').focus();},50);}
+function saveNewCheck(){
+  var name=document.getElementById('new-check-name').value.trim();
+  var desc=document.getElementById('new-check-desc').value.trim();
+  if(!name){showToast('Enter a name');return;}
+  var roomOnly=document.getElementById('check-room-only').checked;
+  var newId=addCheckCategory[0]+Date.now();
+
+  if(roomOnly&&curRoom){
+    // Store as room-specific check in room data
+    var data=loadData();
+    if(!data[curRoom])data[curRoom]={};
+    if(!data[curRoom][addCheckCategory])data[curRoom][addCheckCategory]={};
+    if(!data[curRoom][addCheckCategory].customChecks)data[curRoom][addCheckCategory].customChecks=[];
+    data[curRoom][addCheckCategory].customChecks.push({id:newId,name:name,desc:desc});
+    saveData(data);
+    showToast('Check added to '+curRoom+' only ✓');
+  } else {
+    // Add to global checks
+    var checks=loadChecks();
+    checks[addCheckCategory].push({id:newId,name:name,desc:desc});
+    saveChecks(checks);
+    showToast('Check item added to all rooms ✓');
+  }
+  closeModal('add-check-modal');
+  var rooms=loadRooms(),levelRooms=rooms[curLevel]||{},roomInfo=null;
+  Object.values(levelRooms).forEach(function(z){var f=z.find(function(r){return r.num===curRoom;});if(f)roomInfo=f;});
+  renderChecklist(addCheckCategory,roomInfo);
+}
+function deleteCheck(cat,id){
+  if(!isAdmin)return;
+  // Check if this is a room-specific check
+  var data=loadData();
+  var roomCustom=(data[curRoom]&&data[curRoom][cat]&&data[curRoom][cat].customChecks)||[];
+  var isRoomOnly=roomCustom.some(function(c){return c.id===id;});
+
+  if(isRoomOnly){
+    // Just remove from this room's custom checks
+    data[curRoom][cat].customChecks=roomCustom.filter(function(c){return c.id!==id;});
+    saveData(data);
+  } else {
+    // Global check — ask if remove from all or just this room
+    var choice=confirm('Remove from ALL rooms?
+
+OK = Remove from all rooms
+Cancel = Hide from this room only');
+    if(choice){
+      var checks=loadChecks();
+      checks[cat]=checks[cat].filter(function(c){return c.id!==id;});
+      saveChecks(checks);
+    } else {
+      // Hide from just this room by storing in room's hidden list
+      if(!data[curRoom])data[curRoom]={};
+      if(!data[curRoom][cat])data[curRoom][cat]={};
+      if(!data[curRoom][cat].hiddenChecks)data[curRoom][cat].hiddenChecks=[];
+      if(!data[curRoom][cat].hiddenChecks.includes(id))data[curRoom][cat].hiddenChecks.push(id);
+      saveData(data);
+    }
+  }
+  var rooms=loadRooms(),levelRooms=rooms[curLevel]||{},roomInfo=null;
+  Object.values(levelRooms).forEach(function(z){var f=z.find(function(r){return r.num===curRoom;});if(f)roomInfo=f;});
+  renderChecklist(cat,roomInfo);
+}
 function openAddRoom(level,zone){if(!isAdmin)return;pendingAddLevel=level;pendingAddZone=zone;document.getElementById('new-room-num').value='';document.getElementById('new-room-label').value='';document.getElementById('add-room-modal').classList.add('active');setTimeout(function(){document.getElementById('new-room-num').focus();},50);}
 function saveNewRoom(){var num=document.getElementById('new-room-num').value.trim(),label=document.getElementById('new-room-label').value.trim(),toilet=parseInt(document.getElementById('new-room-toilet').value),shower=parseInt(document.getElementById('new-room-shower').value),sink=parseInt(document.getElementById('new-room-sink').value);if(!num){showToast('Enter a room number');return;}var rooms=loadRooms();if(!rooms[pendingAddLevel])rooms[pendingAddLevel]={};if(!rooms[pendingAddLevel][pendingAddZone])rooms[pendingAddLevel][pendingAddZone]=[];rooms[pendingAddLevel][pendingAddZone].push({num:num,label:label,toilet:toilet,shower:shower,sink:sink});saveRooms(rooms);closeModal('add-room-modal');renderZones();showToast('Room added \u2713');}
 function startPinPlacement(){
@@ -1474,6 +1561,9 @@ function openEditRoom(roomNum, zone){
   document.getElementById('edit-room-toilet').value=roomInfo.toilet||0;
   document.getElementById('edit-room-shower').value=roomInfo.shower||0;
   document.getElementById('edit-room-sink').value=roomInfo.sink!==undefined?roomInfo.sink:1;
+  document.getElementById('edit-room-sink-count').value=roomInfo.sinkCount||1;
+  document.getElementById('sink-count-field').style.display=roomInfo.sink?'block':'none';
+  document.getElementById('edit-room-sink').onchange=function(){document.getElementById('sink-count-field').style.display=this.value==='1'?'block':'none';};
   document.getElementById('edit-room-modal').classList.add('active');
   setTimeout(function(){document.getElementById('edit-room-num').focus();},50);
 }
@@ -1498,7 +1588,8 @@ function saveEditRoom(){
     if(dates[editingRoom]){dates[newNum]=dates[editingRoom];delete dates[editingRoom];saveDates(dates);}
     if(hist[editingRoom]){hist[newNum]=hist[editingRoom];delete hist[editingRoom];saveHistory(hist);}
   }
-  zoneRooms[idx]={num:newNum,label:newLabel,toilet:toilet,shower:shower,sink:sink,tv:tv};
+  var sinkCount=parseInt(document.getElementById('edit-room-sink-count').value)||1;
+  zoneRooms[idx]={num:newNum,label:newLabel,toilet:toilet,shower:shower,sink:sink,tv:tv,sinkCount:sink?sinkCount:1};
   rooms[curLevel][editingZone]=zoneRooms;
   saveRooms(rooms);
   closeModal('edit-room-modal');
