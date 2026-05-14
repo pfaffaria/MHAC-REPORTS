@@ -202,7 +202,7 @@ tbody td:first-child{padding-left:14px}
 </div>
 
 <div id="save-btn-wrap">
-  <button class="save-btn" onclick="savePage()">Save As File</button>
+  <button class="save-btn" onclick="window.print()">&#128438; Save / Print PDF</button>
 </div>
 
 <div class="statusbar">
@@ -280,7 +280,9 @@ function savePage(){
   if(!reportId){document.getElementById('cloud-overlay').style.display='none';return;}
   var _initDone=false;
   function initReport(cloud){
-    if(_initDone)return; _initDone=true;
+    // If cloud data arrives after null fallback, apply it anyway
+    if(_initDone&&cloud===null)return;
+    _initDone=true;
     if(cloud!==null) localStorage.setItem('mhac-report-data-'+reportId,JSON.stringify(cloud));
     document.getElementById('cloud-overlay').style.display='none';
   var saved=null;
@@ -319,7 +321,7 @@ function savePage(){
   var origSwap=window.swapPhoto;
   window.swapPhoto=function(e){origSwap(e);setTimeout(doSave,200);};
   }
-  setTimeout(function(){initReport(null);},5000);
+  setTimeout(function(){initReport(null);},12000);
   sbGet('mhac-report-data-'+reportId).then(initReport).catch(function(){initReport(null);});
 })();
 </script>

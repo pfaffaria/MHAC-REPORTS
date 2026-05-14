@@ -235,12 +235,13 @@ document.getElementById('modal-bg').addEventListener('click',function(e){if(e.ta
 (function(){
   var done=false;
   function finish(v){
-    if(done)return;done=true;
+    if(done&&v===null)return;
+    done=true;
     if(v!==null)localStorage.setItem(storageKey,JSON.stringify(v));
     document.getElementById('cloud-overlay').style.display='none';
     renderGrid();
   }
-  setTimeout(function(){finish(null);},5000);
+  setTimeout(function(){finish(null);},12000);
   sbGet(storageKey).then(finish).catch(function(){finish(null);});
 })();
 </script>
