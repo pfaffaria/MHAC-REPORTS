@@ -241,8 +241,21 @@ document.getElementById('modal-bg').addEventListener('click',function(e){if(e.ta
     document.getElementById('cloud-overlay').style.display='none';
     renderGrid();
   }
-  setTimeout(function(){finish(null);},12000);
-  sbGet(storageKey).then(finish).catch(function(){finish(null);});
+  // Try up to 3 times with increasing delays
+  var _attempts=0;
+  function tryFetch(){
+    _attempts++;
+    sbGet(storageKey).then(function(v){
+      if(v!==null){finish(v);}
+      else if(_attempts<3){setTimeout(tryFetch,2000);}
+      else{finish(null);}
+    }).catch(function(){
+      if(_attempts<3){setTimeout(tryFetch,2000);}
+      else{finish(null);}
+    });
+  }
+  setTimeout(function(){if(!done)finish(null);},20000);
+  tryFetch();
 })();
 </script>
 </body>

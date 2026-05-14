@@ -327,8 +327,20 @@ function savePage(){
   var origSwap=window.swapPhoto;
   window.swapPhoto=function(e){origSwap(e);setTimeout(doSave,200);};
   }
-  setTimeout(function(){initReport(null);},12000);
-  sbGet('mhac-report-data-'+reportId).then(initReport).catch(function(){initReport(null);});
+  var _rattempts=0;
+  function tryFetchReport(){
+    _rattempts++;
+    sbGet('mhac-report-data-'+reportId).then(function(v){
+      if(v!==null){initReport(v);}
+      else if(_rattempts<3){setTimeout(tryFetchReport,2000);}
+      else{initReport(null);}
+    }).catch(function(){
+      if(_rattempts<3){setTimeout(tryFetchReport,2000);}
+      else{initReport(null);}
+    });
+  }
+  setTimeout(function(){initReport(null);},20000);
+  tryFetchReport();
 })();
 </script>
 </body>
