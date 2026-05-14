@@ -1626,9 +1626,19 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
     }).catch(function(){});
   })).then(function(){
     // Fetch map separately into memory
+    var _ck=_initLevel+(filterZone?'-'+filterZone.replace(/[^a-zA-Z0-9]/g,'-'):'');
     sbGet(mapKey).then(function(v){
-      if(v!==null){var _ck=_initLevel+(filterZone?'-'+filterZone.replace(/[^a-zA-Z0-9]/g,'-'):'');_mapCache[_ck]=v;}
-    }).catch(function(){}).then(finish);
+      if(v!==null){_mapCache[_ck]=v;}
+    }).catch(function(){}).then(finish).then(function(){
+      // Retry map fetch after 2s in case of timeout
+      setTimeout(function(){
+        if(!_mapCache[_ck]){
+          sbGet(mapKey).then(function(v){
+            if(v!==null){_mapCache[_ck]=v;renderMap(curRoom);}
+          }).catch(function(){});
+        }
+      },2000);
+    });
   }).catch(finish);
 })();
 </script>
