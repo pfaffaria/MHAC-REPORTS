@@ -1462,6 +1462,7 @@ function saveEditRoom(){
   var toilet=parseInt(document.getElementById('edit-room-toilet').value);
   var shower=parseInt(document.getElementById('edit-room-shower').value);
   var sink=parseInt(document.getElementById('edit-room-sink').value);
+  var tv=parseInt(document.getElementById('edit-room-tv').value);
   if(!newNum){showToast('Room number required');return;}
   var rooms=loadRooms();
   var levelRooms=rooms[curLevel]||{};
@@ -1475,7 +1476,7 @@ function saveEditRoom(){
     if(dates[editingRoom]){dates[newNum]=dates[editingRoom];delete dates[editingRoom];saveDates(dates);}
     if(hist[editingRoom]){hist[newNum]=hist[editingRoom];delete hist[editingRoom];saveHistory(hist);}
   }
-  zoneRooms[idx]={num:newNum,label:newLabel,toilet:toilet,shower:shower,sink:sink};
+  zoneRooms[idx]={num:newNum,label:newLabel,toilet:toilet,shower:shower,sink:sink,tv:tv};
   rooms[curLevel][editingZone]=zoneRooms;
   saveRooms(rooms);
   closeModal('edit-room-modal');
