@@ -315,9 +315,15 @@ function savePage(){
     sbSet('mhac-report-data-'+reportId,payload);
   }
   var saveTimer;
-  function debounceSave(){clearTimeout(saveTimer);saveTimer=setTimeout(doSave,800);}
+  var _lastSaved=null;
+  function debounceSave(){clearTimeout(saveTimer);saveTimer=setTimeout(function(){doSave();showSaveStatus();},800);}
+  function showSaveStatus(){var s=document.querySelector('.statusbar span');if(s){s.textContent='SAVED ✓';setTimeout(function(){s.textContent='SYSTEM ONLINE';},2000);}}
   document.addEventListener('input',debounceSave);
   document.addEventListener('change',debounceSave);
+  // Force save on page unload
+  window.addEventListener('beforeunload',function(){doSave();});
+  // Also save every 30s automatically
+  setInterval(function(){doSave();},30000);
   var origSwap=window.swapPhoto;
   window.swapPhoto=function(e){origSwap(e);setTimeout(doSave,200);};
   }
