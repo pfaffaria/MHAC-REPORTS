@@ -535,7 +535,7 @@ var DEFAULT_ROOMS={'1':{'South East':[
   {num:'1A-152A',label:'Client Washroom',toilet:1,shower:0,sink:1},{num:'1A-NS',label:'Nurse Station',toilet:0,shower:0,sink:0}]}};
 
 var DEFAULT_CHECKS={
-  electrical:[{id:'e1',name:'Light Switch Test',desc:'Test all light switches to ensure lights are functional.'},{id:'e2',name:'Receptacle Test',desc:'Using a receptacle tester ensure all receptacles are functional.'},{id:'e3',name:'Card Reader Test',desc:'Tap card on card readers to ensure they are reading appropriately.'},{id:'e4',name:'Temperature Test',desc:'Use Temperature Gun to compare temperatures from the plate to the BAS reading.'}],
+  electrical:[{id:'e1',name:'Light Switch Test',desc:'Test all light switches to ensure lights are functional.'},{id:'e2',name:'Receptacle Test',desc:'Using a receptacle tester ensure all receptacles are functional.'},{id:'e3',name:'Card Reader Test',desc:'Tap card on card readers to ensure they are reading appropriately.'},{id:'e4',name:'Temperature Test',desc:'Use Temperature Gun to compare temperatures from the plate to the BAS reading.'},{id:'tv1',name:'TV Test',desc:'Ensure TV is powering on and functioning correctly.'}],
   plumbing:[{id:'p1',name:'Sink Check',desc:'Check if there are any leaks. Record temperature reading.',hasTemp:true,tempKey:'sink'},{id:'p2',name:'Toilet Check',desc:'Ensure toilet is flushing properly. Use borescope to check for leaks.',hasLeak:true},{id:'p3',name:'Shower Check',desc:'Record temperature, ensure unit is turning on and off properly.',hasTemp:true,tempKey:'shower'},{id:'p4',name:'Other',desc:'Anything else noticed during inspection.'}],
   building:[{id:'b1',name:'Wall Damage Check',desc:'Is there any damage to walls requiring paint and plaster?',hasPaint:true},{id:'b2',name:'Door Hardware Check',desc:'Check if door hardware is functioning properly.'},{id:'b3',name:'Clean Exhaust Vent',desc:'Vacuum exhaust vent to prevent dust build up.'}]
 };
@@ -546,6 +546,27 @@ function ls_set(k,v){localStorage.setItem(k,JSON.stringify(v));}
 function loadRooms(){return ls_get(ROOMS_KEY)||JSON.parse(JSON.stringify(DEFAULT_ROOMS));}
 function saveRooms(d){ls_set(ROOMS_KEY,d);sbSet(ROOMS_KEY,d);}
 function loadChecks(){return ls_get(CHECKS_KEY)||JSON.parse(JSON.stringify(DEFAULT_CHECKS));}
+
+function getChecksForRoom(cat,roomInfo){
+  var all=loadChecks()[cat]||[];
+  if(!roomInfo)return all;
+  if(cat==='electrical'){
+    return all.filter(function(item){
+      // TV Test only if room has TV
+      if(item.id==='tv1')return roomInfo.tv;
+      return true;
+    });
+  }
+  if(cat==='plumbing'){
+    return all.filter(function(item){
+      if(item.id==='p1')return roomInfo.sink;   // Sink Check
+      if(item.id==='p2')return roomInfo.toilet; // Toilet Check
+      if(item.id==='p3')return roomInfo.shower; // Shower Check
+      return true;
+    });
+  }
+  return all;
+}
 function saveChecks(d){ls_set(CHECKS_KEY,d);sbSet(CHECKS_KEY,d);}
 function loadData(){return ls_get(DATA_KEY)||{};}
 function saveData(d){ls_set(DATA_KEY,d);sbSet(DATA_KEY,d);}
@@ -1114,7 +1135,7 @@ function switchCheckTab(cat,btn){
 
 // ═══ CHECKLISTS ══════════════════════════════════════════════════════
 function renderChecklist(cat,roomInfo){
-  var checks=loadChecks()[cat]||[],data=loadData();
+  var checks=getChecksForRoom(cat,roomInfo),data=loadData();
   var roomData=(data[curRoom]&&data[curRoom][cat])||{};
   var checked=roomData.checked||{},notes=roomData.notes||{},extras=roomData.extras||{};
   var container=document.getElementById(cat+'-checks');container.innerHTML='';
