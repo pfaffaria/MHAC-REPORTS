@@ -822,6 +822,21 @@ function renderMap(highlightRoom){
     mapWrap._clickSet=true;
     function handleMapTap(clientX,clientY,target){
       if(target.closest('[data-room]'))return;
+      // Move pin mode
+      if(window._movingPin){
+        var rect=mapWrap.getBoundingClientRect();
+        var nx=Math.max(0.01,Math.min(0.99,(clientX-rect.left)/rect.width));
+        var ny=Math.max(0.01,Math.min(0.99,(clientY-rect.top)/rect.height));
+        var p2=loadPins();var zk=zoneKey();
+        var p=(p2[zk]||[]).find(function(q){return q.roomNum===window._movingPin;});
+        if(p){p.x=nx;p.y=ny;savePins(p2);}
+        document.body.style.overflow='';document.body.style.position='';document.body.style.width='';
+        document.getElementById('pin-hint').textContent='';
+        window._movingPin=null;
+        buildRoomPins(curRoom);_applyPinHighlight(curRoom);
+        showToast('Pin moved ✓');
+        return;
+      }
       if(!isAdmin||!pinMode)return;
       var rect=mapWrap.getBoundingClientRect();
       pendingPinPos={x:(clientX-rect.left)/rect.width,y:(clientY-rect.top)/rect.height};
@@ -911,53 +926,15 @@ function renderPin(overlay,pin,data,highlightRoom){
   div.addEventListener('click',function(e){if(_dm)return;e.stopPropagation();openRoom(pin.roomNum,null);});
   div.addEventListener('touchend',function(e){if(!_dm){e.stopPropagation();openRoom(pin.roomNum,null);}});
 
-  // Drag to move (admin) — long press to enter drag mode
-  var _dragActive=false,_offsetX=0,_offsetY=0,_longPressTimer=null;
-  div.addEventListener('touchstart',function(e){
-    if(!isAdmin)return;
-    _dm=false;_dragActive=false;
-    var t=e.touches[0];
-    var mw=document.getElementById('map-wrap');if(!mw)return;
-    var r=mw.getBoundingClientRect();
-    // Store offset from pin center to finger
-    _offsetX=0;_offsetY=0;
-    // Long press (400ms) to start drag
-    _longPressTimer=setTimeout(function(){
-      _dragActive=true;
-      _pinDragInProgress=true;
-      div.style.transform='translate(-50%,-50%) scale(1.3)';
-      div.style.opacity='0.85';
-      showToast('Drag to reposition');
-    },400);
-  },{passive:true});
-
-  div.addEventListener('touchmove',function(e){
-    if(!isAdmin)return;
-    if(_longPressTimer){clearTimeout(_longPressTimer);_longPressTimer=null;}
-    if(!_dragActive)return;
-    e.preventDefault();e.stopPropagation();
-    document.body.style.overflow='hidden';
-    _dm=true;
-    var t=e.touches[0];
-    var mw=document.getElementById('map-wrap');if(!mw)return;
-    var r=mw.getBoundingClientRect();
-    var nx=Math.max(0.01,Math.min(0.99,(t.clientX-r.left)/r.width));
-    var ny=Math.max(0.01,Math.min(0.99,(t.clientY-r.top)/r.height));
-    div.style.left=(nx*100)+'%';
-    div.style.top=(ny*100)+'%';
-  },{passive:false});
-
-  div.addEventListener('touchend',function(){
-    if(_longPressTimer){clearTimeout(_longPressTimer);_longPressTimer=null;}
-    div.style.transform='translate(-50%,-50%) scale(1)';
-    div.style.opacity='1';
-    if(_dm&&_dragActive&&isAdmin){
-      var p2=loadPins();var zk=zoneKey();
-      var p=(p2[zk]||[]).find(function(q){return q.roomNum===pin.roomNum;});
-      if(p){p.x=parseFloat(div.style.left)/100;p.y=parseFloat(div.style.top)/100;savePins(p2);showToast('Pin saved \u2713');}
-    }
-    _dragActive=false;_dm=false;_pinDragInProgress=false;
-  },{passive:true});
+  // Move button — tap to enter move mode for this pin
+  if(isAdmin){
+    var moveBtn=document.createElement('button');
+    moveBtn.style.cssText='position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);background:#1a1000;border:1px solid rgba(245,158,11,.5);border-radius:3px;color:rgba(245,158,11,.8);font-size:7px;font-family:Rajdhani,sans-serif;font-weight:700;letter-spacing:1px;padding:1px 4px;cursor:pointer;white-space:nowrap;z-index:30;';
+    moveBtn.textContent='MOVE';
+    moveBtn.addEventListener('click',function(e){e.stopPropagation();startMovePin(pin.roomNum);});
+    moveBtn.addEventListener('touchend',function(e){e.stopPropagation();e.preventDefault();startMovePin(pin.roomNum);});
+    div.appendChild(moveBtn);
+  }
 
   overlay.appendChild(div);
 }
@@ -1327,6 +1304,17 @@ function startPinPlacement(){
   // Override pending pin to auto-fill room number
   window._pendingPinRoom=curRoom;
 }
+function startMovePin(roomNum){
+  window._movingPin=roomNum;
+  document.body.style.overflow='hidden';
+  document.body.style.position='fixed';
+  document.body.style.width='100%';
+  showToast('Tap map to move '+roomNum.replace(/^.*-/,''));
+  document.getElementById('map-view').scrollIntoView({behavior:'smooth',block:'start'});
+  // Change hint
+  document.getElementById('pin-hint').textContent='Tap to move '+roomNum.replace(/^.*-/,'');
+}
+
 function clearAllPins(){
   if(!confirm('Remove all pins for this zone?'))return;
   var pins=loadPins();
