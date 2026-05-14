@@ -1578,6 +1578,7 @@ function openEditRoom(roomNum, zone){
   if(scc)scc.value=roomInfo.sinkCount||1;
   if(scf)scf.style.display=roomInfo.sink?'block':'none';
   document.getElementById('edit-room-sink').onchange=function(){if(scf)scf.style.display=this.value==='1'?'block':'none';};
+  var tvEl=document.getElementById('edit-room-tv');if(tvEl)tvEl.value=roomInfo.tv?1:0;
   document.getElementById('edit-room-modal').classList.add('active');
   setTimeout(function(){document.getElementById('edit-room-num').focus();},50);
 }
