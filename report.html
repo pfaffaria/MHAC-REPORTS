@@ -117,7 +117,7 @@ tbody td:first-child{padding-left:14px}
 <nav class="topbar">
   <div class="tb-left">
     <div class="tb-badge">Building Reports</div>
-    <div class="tb-title">MHAC</div>
+    <div class="tb-title">MHAC</div><span id="save-indicator" style="font-family:Rajdhani,sans-serif;font-size:11px;letter-spacing:1px;margin-left:12px;color:#22c55e"></span>
     <div class="tb-line"></div>
   </div>
   <div class="tb-right">
@@ -223,7 +223,7 @@ async function sbGet(k){
     .then(function(d){return d.length?d[0].value:null;})
     .catch(function(){clearTimeout(timer);return null;});
 }
-function sbSet(k,v){fetch(SB_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SB_H,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({key:k,value:v,updated_at:new Date().toISOString()})}).catch(function(){});}
+function sbSet(k,v){return fetch(SB_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SB_H,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({key:k,value:v,updated_at:new Date().toISOString()})});}
 function swapPhoto(event){
   var file=event.target.files[0];if(!file)return;
   var reader=new FileReader();
@@ -313,7 +313,13 @@ function savePage(){
     if(imgEl&&imgEl.src&&imgEl.src.startsWith('data:'))imgSrc=imgEl.src;
     var payload={inputs:inputs,tableInputs:tableInputs,extraRows:Math.max(0,getRowCount()-8),extraCols:Math.max(0,getColCount()-5),imgSrc:imgSrc};
     localStorage.setItem('mhac-report-data-'+reportId,JSON.stringify(payload));
-    sbSet('mhac-report-data-'+reportId,payload);
+    sbSet('mhac-report-data-'+reportId,payload).then(function(){
+      var s=document.getElementById('save-indicator');
+      if(s){s.textContent='☁ Saved';s.style.color='#22c55e';setTimeout(function(){s.textContent='';},3000);}
+    }).catch(function(){
+      var s=document.getElementById('save-indicator');
+      if(s){s.textContent='⚠ Save failed';s.style.color='#ef4444';}
+    });
   }
   var saveTimer;
   var _lastSaved=null;
