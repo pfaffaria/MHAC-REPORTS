@@ -216,7 +216,7 @@ const SB_PUB='sb_publishable_Ug-6aCZ-InZVnrCTqcLv2w_BheY4Kj5';
 const SB_H={'apikey':SB_PUB,'Authorization':'Bearer '+SB_PUB,'Content-Type':'application/json'};
 async function sbGet(k){
   var controller=typeof AbortController!=='undefined'?new AbortController():null;
-  var timer=controller?setTimeout(function(){controller.abort();},5000):null;
+  var timer=controller?setTimeout(function(){controller.abort();},15000):null;
   var opts={headers:SB_H};if(controller)opts.signal=controller.signal;
   return fetch(SB_URL+'/rest/v1/app_data?key=eq.'+encodeURIComponent(k)+'&select=value',opts)
     .then(function(r){clearTimeout(timer);return r.json();})
@@ -338,7 +338,7 @@ function savePage(){
     _rattempts++;
     sbGet('mhac-report-data-'+reportId).then(function(v){
       if(v!==null){initReport(v);}
-      else if(_rattempts<3){setTimeout(tryFetchReport,2000);}
+      else if(_rattempts<5){setTimeout(tryFetchReport,3000);}
       else{initReport(null);}
     }).catch(function(e){
       console.error('Report fetch failed:',e);
@@ -346,7 +346,7 @@ function savePage(){
       else{initReport(null);}
     });
   }
-  setTimeout(function(){initReport(null);},20000);
+  setTimeout(function(){initReport(null);},30000);
   tryFetchReport();
 })();
 </script>
