@@ -327,6 +327,8 @@ function savePage(){
   var origSwap=window.swapPhoto;
   window.swapPhoto=function(e){origSwap(e);setTimeout(doSave,200);};
   }
+  // Clear stale local data
+  localStorage.removeItem('mhac-report-data-'+reportId);
   var _rattempts=0;
   function tryFetchReport(){
     _rattempts++;

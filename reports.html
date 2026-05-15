@@ -237,11 +237,16 @@ document.getElementById('modal-bg').addEventListener('click',function(e){if(e.ta
   function finish(v){
     if(done&&v===null)return;
     done=true;
-    if(v!==null)localStorage.setItem(storageKey,JSON.stringify(v));
+    // Always use cloud data if available, clear stale local data
+    if(v!==null){
+      localStorage.setItem(storageKey,JSON.stringify(v));
+    }
     document.getElementById('cloud-overlay').style.display='none';
     renderGrid();
   }
   // Try up to 3 times with increasing delays
+  // Clear stale local data so cloud is always authoritative
+  localStorage.removeItem(storageKey);
   var _attempts=0;
   function tryFetch(){
     _attempts++;
