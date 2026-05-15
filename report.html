@@ -280,10 +280,11 @@ function savePage(){
   if(!reportId){document.getElementById('cloud-overlay').style.display='none';return;}
   var _initDone=false;
   function initReport(cloud){
-    // If cloud data arrives after null fallback, apply it anyway
     if(_initDone&&cloud===null)return;
     _initDone=true;
-    if(cloud!==null) localStorage.setItem('mhac-report-data-'+reportId,JSON.stringify(cloud));
+    _dataReady=true;
+    // Always save fresh cloud data
+    if(cloud!==null){localStorage.setItem('mhac-report-data-'+reportId,JSON.stringify(cloud));}
     document.getElementById('cloud-overlay').style.display='none';
   var saved=null;
   try{saved=JSON.parse(localStorage.getItem('mhac-report-data-'+reportId));}catch(e){}
@@ -302,7 +303,7 @@ function savePage(){
     if(fl&&!fl.value)fl.value=(zone?zone+' — ':'')+' Level '+level;
     if(fr&&!fr.value)fr.value=reportName;
   }
-  function doSave(){
+  function doSave(){if(!_dataReady)return;
     var inputs={};
     ['hl','t1','ml2','mv2','img-label','table-label','fl','fr'].forEach(function(id){var el=document.getElementById(id);if(el)inputs[id]=el.value;});
     var tableInputs=[];
@@ -320,15 +321,12 @@ function savePage(){
   function showSaveStatus(){var s=document.querySelector('.statusbar span');if(s){s.textContent='SAVED ✓';setTimeout(function(){s.textContent='SYSTEM ONLINE';},2000);}}
   document.addEventListener('input',debounceSave);
   document.addEventListener('change',debounceSave);
-  // Force save on page unload
-  window.addEventListener('beforeunload',function(){doSave();});
-  // Also save every 30s automatically
-  setInterval(function(){doSave();},30000);
+  // Save on page unload only after data is ready
+  window.addEventListener('beforeunload',function(){if(_dataReady)doSave();});
   var origSwap=window.swapPhoto;
   window.swapPhoto=function(e){origSwap(e);setTimeout(doSave,200);};
   }
-  // Clear stale local data
-  localStorage.removeItem('mhac-report-data-'+reportId);
+  var _dataReady=false;
   var _rattempts=0;
   function tryFetchReport(){
     _rattempts++;
@@ -336,7 +334,8 @@ function savePage(){
       if(v!==null){initReport(v);}
       else if(_rattempts<3){setTimeout(tryFetchReport,2000);}
       else{initReport(null);}
-    }).catch(function(){
+    }).catch(function(e){
+      console.error('Report fetch failed:',e);
       if(_rattempts<3){setTimeout(tryFetchReport,2000);}
       else{initReport(null);}
     });

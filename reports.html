@@ -245,8 +245,6 @@ document.getElementById('modal-bg').addEventListener('click',function(e){if(e.ta
     renderGrid();
   }
   // Try up to 3 times with increasing delays
-  // Clear stale local data so cloud is always authoritative
-  localStorage.removeItem(storageKey);
   var _attempts=0;
   function tryFetch(){
     _attempts++;
