@@ -274,80 +274,114 @@ function savePage(){
   var level=params.get('level')||'1';
   var zone=params.get('zone')||'';
   document.getElementById('back-btn').href='reports.html?level='+level+(zone?'&zone='+encodeURIComponent(zone):'');
-  if(!reportId){document.getElementById('cloud-overlay').style.display='none';return;}
+  var KEY='mhac-report-data-'+reportId;
+  if(!reportId){var o0=document.getElementById('cloud-overlay');if(o0)o0.style.display='none';return;}
+
+  var _dataReady=false;    // form populated; safe to read values
+  var _saveBlocked=false;  // true ONLY when cloud state is unknown (fetch failed) so we don't clobber it
   var _initDone=false;
-  function initReport(cloud){
-    if(_initDone&&cloud===null)return;
-    _initDone=true;
-    _dataReady=true;
-    // Always save fresh cloud data
-    if(cloud!==null){localStorage.setItem('mhac-report-data-'+reportId,JSON.stringify(cloud));}
-    document.getElementById('cloud-overlay').style.display='none';
-  var saved=null;
-  try{saved=JSON.parse(localStorage.getItem('mhac-report-data-'+reportId));}catch(e){}
-  if(saved){
-    _loadedEmpty=false;
+  var _wired=false;
+  var saveTimer;
+
+  function getLocal(){try{return JSON.parse(localStorage.getItem(KEY));}catch(e){return null;}}
+
+  function applyData(saved){
+    if(!saved)return;
     if(saved.inputs){Object.keys(saved.inputs).forEach(function(id){var el=document.getElementById(id);if(el)el.value=saved.inputs[id];});}
     if(saved.extraCols){for(var c=0;c<saved.extraCols;c++)addCol();}
     if(saved.extraRows){for(var r=0;r<saved.extraRows;r++)addRow();}
     if(saved.tableInputs){var all=document.querySelectorAll('#data-table input');saved.tableInputs.forEach(function(v,i){if(all[i])all[i].value=v;});}
     if(saved.imgSrc){var img=document.getElementById('main-img');var ph=document.getElementById('placeholder');img.src=saved.imgSrc;img.style.display='block';ph.style.display='none';document.getElementById('lightbox-img').src=saved.imgSrc;}
-  } else {
-    _loadedEmpty=true; // No data found - block saves to prevent overwriting
+  }
+
+  function prefillNew(){
     var t1=document.getElementById('t1');var hl=document.getElementById('hl');
     if(t1&&!t1.value)t1.value=reportName;
     if(hl&&!hl.value)hl.value=(zone?zone+' — ':'')+' Level '+level;
-    // Pre-fill footer with header details
     var fl=document.getElementById('fl');var fr=document.getElementById('fr');
     if(fl&&!fl.value)fl.value=(zone?zone+' — ':'')+' Level '+level;
     if(fr&&!fr.value)fr.value=reportName;
   }
-  function doSave(){if(!_dataReady)return;if(_loadedEmpty)return; // Don't save if we never loaded real data
+
+  function setIndicator(text,color){var s=document.getElementById('save-indicator');if(s){s.textContent=text;s.style.color=color;}}
+
+  function doSave(force){
+    if(!_dataReady)return;
+    if(_saveBlocked&&!force)return;
     var inputs={};
     ['hl','t1','ml2','mv2','img-label','table-label','fl','fr'].forEach(function(id){var el=document.getElementById(id);if(el)inputs[id]=el.value;});
     var tableInputs=[];
     document.querySelectorAll('#data-table input').forEach(function(el){tableInputs.push(el.value);});
     var imgSrc='';
     var imgEl=document.getElementById('main-img');
-    if(imgEl&&imgEl.src&&imgEl.src.startsWith('data:'))imgSrc=imgEl.src;
+    if(imgEl&&imgEl.src&&imgEl.src.indexOf('data:')===0)imgSrc=imgEl.src;
     var payload={inputs:inputs,tableInputs:tableInputs,extraRows:Math.max(0,getRowCount()-8),extraCols:Math.max(0,getColCount()-5),imgSrc:imgSrc};
-    localStorage.setItem('mhac-report-data-'+reportId,JSON.stringify(payload));
-    sbSet('mhac-report-data-'+reportId,payload).then(function(){
-      var s=document.getElementById('save-indicator');
-      if(s){s.textContent='☁ Saved';s.style.color='#22c55e';setTimeout(function(){s.textContent='';},3000);}
+    localStorage.setItem(KEY,JSON.stringify(payload)); // device copy always
+    setIndicator('☁ Saving…','#fcd34d');
+    sbSet(KEY,payload).then(function(r){
+      if(!r||!r.ok)throw new Error('HTTP '+(r&&r.status));
+      setIndicator('☁ Saved','#22c55e');setTimeout(function(){setIndicator('','');},3000);
     }).catch(function(){
-      var s=document.getElementById('save-indicator');
-      if(s){s.textContent='⚠ Save failed';s.style.color='#ef4444';}
+      setIndicator('⚠ Cloud save failed — saved on this device only','#ef4444');
     });
   }
-  var saveTimer;
-  var _lastSaved=null;
-  function debounceSave(){clearTimeout(saveTimer);saveTimer=setTimeout(function(){doSave();showSaveStatus();},800);}
-  function showSaveStatus(){var s=document.querySelector('.statusbar span');if(s){s.textContent='SAVED ✓';setTimeout(function(){s.textContent='SYSTEM ONLINE';},2000);}}
-  document.addEventListener('input',debounceSave);
-  document.addEventListener('change',debounceSave);
-  // Save on page unload only after data is ready
-  window.addEventListener('beforeunload',function(){if(_dataReady)doSave();});
-  var origSwap=window.swapPhoto;
-  window.swapPhoto=function(e){origSwap(e);setTimeout(doSave,200);};
+
+  function debounceSave(){clearTimeout(saveTimer);saveTimer=setTimeout(function(){doSave(false);},800);}
+
+  function wireSaving(){
+    if(_wired)return;_wired=true;
+    document.addEventListener('input',debounceSave);
+    document.addEventListener('change',debounceSave);
+    window.addEventListener('beforeunload',function(){if(_dataReady&&!_saveBlocked)doSave(false);});
+    var origSwap=window.swapPhoto;
+    window.swapPhoto=function(e){origSwap(e);setTimeout(function(){doSave(false);},200);};
   }
-  var _dataReady=false;
-  var _loadedEmpty=false;
-  var _rattempts=0;
-  function tryFetchReport(){
-    _rattempts++;
-    sbGet('mhac-report-data-'+reportId).then(function(v){
-      if(v!==null){initReport(v);}
-      else if(_rattempts<5){setTimeout(tryFetchReport,3000);}
-      else{initReport(null);}
-    }).catch(function(e){
-      console.error('Report fetch failed:',e);
-      if(_rattempts<3){setTimeout(tryFetchReport,2000);}
-      else{initReport(null);}
+
+  // outcome: 'cloud' (row found), 'empty' (fetch ok, no row), 'fail' (network/timeout)
+  function init(outcome,cloudValue){
+    if(_initDone)return;_initDone=true;
+    var o=document.getElementById('cloud-overlay');if(o)o.style.display='none';
+    _dataReady=true;
+    var local=getLocal();
+    if(outcome==='cloud'){
+      localStorage.setItem(KEY,JSON.stringify(cloudValue));
+      applyData(cloudValue);
+      _saveBlocked=false;
+    } else if(outcome==='empty'){
+      // No cloud row yet. If this device has data, it's an orphaned report -> recover it to the cloud.
+      if(local){applyData(local);_saveBlocked=false;doSave(true);}
+      else{prefillNew();_saveBlocked=false;}
+    } else { // 'fail' -> cloud state unknown; show whatever we have but DON'T overwrite the cloud
+      if(local)applyData(local);else prefillNew();
+      _saveBlocked=true;
+      setIndicator('⚠ Offline — editing locally','#f59e0b');
+    }
+    wireSaving();
+  }
+
+  // cloud read: timeout + retries, distinguishing "no row" from "request failed"
+  function fetchOnce(){
+    var controller=typeof AbortController!=='undefined'?new AbortController():null;
+    var timer=controller?setTimeout(function(){controller.abort();},6000):null;
+    var opts={headers:SB_H};if(controller)opts.signal=controller.signal;
+    return fetch(SB_URL+'/rest/v1/app_data?key=eq.'+encodeURIComponent(KEY)+'&select=value',opts)
+      .then(function(r){if(timer)clearTimeout(timer);if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+      .then(function(d){return {ok:true,value:d.length?d[0].value:null};})
+      .catch(function(){if(timer)clearTimeout(timer);return {ok:false};});
+  }
+
+  var attempts=0;
+  function load(){
+    attempts++;
+    fetchOnce().then(function(res){
+      if(res.ok){ init(res.value!==null?'cloud':'empty',res.value); }
+      else if(attempts<3){ setTimeout(load,2000); }
+      else { init('fail',null); }
     });
   }
-  setTimeout(function(){initReport(null);},30000);
-  tryFetchReport();
+
+  setTimeout(function(){init('fail',null);},20000); // absolute safety net
+  load();
 })();
 </script>
 </body>
