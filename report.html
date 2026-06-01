@@ -221,14 +221,51 @@ function sbGet(k){
     .catch(function(){return null;});
 }
 function sbSet(k,v){return fetch(SB_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SB_H,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({key:k,value:v,updated_at:new Date().toISOString()})});}
+
+// --- Supabase Storage (matches room-inspection.html) ---
+var BUCKET='room-photos';
+var SB_STORAGE=SB_URL+'/storage/v1/object';
+var SB_STORAGE_PUB=SB_URL+'/storage/v1/object/public';
+function uploadImageToStorage(file,tag,callback){
+  var ext=(file.name&&file.name.split('.').pop())||'jpg';
+  var filename='report-'+String(tag).replace(/[^a-zA-Z0-9]/g,'-')+'-'+Date.now()+'.'+ext;
+  var path=BUCKET+'/'+filename;
+  fetch(SB_STORAGE+'/'+path,{
+    method:'POST',
+    headers:{'apikey':SB_PUB,'Authorization':'Bearer '+SB_PUB,'Content-Type':file.type||'image/jpeg','x-upsert':'true'},
+    body:file
+  }).then(function(r){
+    if(r.ok){callback(null,SB_STORAGE_PUB+'/'+path+'?t='+Date.now());}
+    else{r.text().then(function(t){callback('Upload failed: '+t,null);});}
+  }).catch(function(e){callback(e.message,null);});
+}
+// Convert a data: URL to a Blob so we can migrate an old embedded image up to Storage
+function dataUrlToFile(dataUrl){
+  try{
+    var parts=dataUrl.split(',');var mime=(parts[0].match(/:(.*?);/)||[])[1]||'image/jpeg';
+    var bin=atob(parts[1]);var n=bin.length;var u8=new Uint8Array(n);
+    while(n--){u8[n]=bin.charCodeAt(n);}
+    var ext=mime.split('/')[1]||'jpg';
+    return new File([u8],'migrated.'+ext,{type:mime});
+  }catch(e){return null;}
+}
+
 function swapPhoto(event){
   var file=event.target.files[0];if(!file)return;
+  var img=document.getElementById('main-img'),ph=document.getElementById('placeholder');
+  // Show a local preview immediately for responsiveness
   var reader=new FileReader();
-  reader.onload=function(e){
-    var img=document.getElementById('main-img'),ph=document.getElementById('placeholder');
-    img.src=e.target.result;img.style.display='block';ph.style.display='none';
-    document.getElementById('lightbox-img').src=e.target.result;
-  };reader.readAsDataURL(file);
+  reader.onload=function(e){img.src=e.target.result;img.style.display='block';ph.style.display='none';document.getElementById('lightbox-img').src=e.target.result;};
+  reader.readAsDataURL(file);
+  // Upload to Storage; once we have a URL, swap the img to point at it (keeps the data row tiny)
+  if(typeof setImgIndicator==='function')setImgIndicator('↑ Uploading image…','#fcd34d');
+  uploadImageToStorage(file,(window._reportId||'img'),function(err,url){
+    if(err||!url){if(typeof setImgIndicator==='function')setImgIndicator('⚠ Image upload failed','#ef4444');return;}
+    window._imgUrl=url;
+    img.src=url;document.getElementById('lightbox-img').src=url;
+    if(typeof setImgIndicator==='function')setImgIndicator('','');
+    if(typeof window._afterImg==='function')window._afterImg();
+  });
 }
 function openLightbox(){var img=document.getElementById('main-img');if(!img.src||img.style.display==='none')return;document.getElementById('lightbox').classList.add('active');}
 function closeLightbox(){document.getElementById('lightbox').classList.remove('active')}
@@ -260,7 +297,7 @@ function savePage(){
   var liveInputs=document.querySelectorAll('input,textarea'),cloneInputs=docCopy.querySelectorAll('input,textarea');
   liveInputs.forEach(function(input,i){if(!cloneInputs[i])return;cloneInputs[i].setAttribute('value',input.value);});
   var img=document.getElementById('main-img'),cloneImg=docCopy.getElementById('main-img');
-  if(img&&img.src&&img.src.startsWith('data:')&&cloneImg){cloneImg.setAttribute('src',img.src);cloneImg.style.display='block';var ph=docCopy.getElementById('placeholder');if(ph)ph.style.display='none';}
+  if(img&&img.src&&img.style.display!=='none'&&cloneImg){cloneImg.setAttribute('src',img.src);cloneImg.style.display='block';var ph=docCopy.getElementById('placeholder');if(ph)ph.style.display='none';}
   var blob=new Blob([docCopy.outerHTML],{type:'text/html'});
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mhac-report.html';a.click();
 }
@@ -291,7 +328,8 @@ function savePage(){
     if(saved.extraCols){for(var c=0;c<saved.extraCols;c++)addCol();}
     if(saved.extraRows){for(var r=0;r<saved.extraRows;r++)addRow();}
     if(saved.tableInputs){var all=document.querySelectorAll('#data-table input');saved.tableInputs.forEach(function(v,i){if(all[i])all[i].value=v;});}
-    if(saved.imgSrc){var img=document.getElementById('main-img');var ph=document.getElementById('placeholder');img.src=saved.imgSrc;img.style.display='block';ph.style.display='none';document.getElementById('lightbox-img').src=saved.imgSrc;}
+    if(saved.imgUrl){var img=document.getElementById('main-img');var ph=document.getElementById('placeholder');img.src=saved.imgUrl;img.style.display='block';ph.style.display='none';document.getElementById('lightbox-img').src=saved.imgUrl;window._imgUrl=saved.imgUrl;}
+    else if(saved.imgSrc){var im2=document.getElementById('main-img');var ph2=document.getElementById('placeholder');im2.src=saved.imgSrc;im2.style.display='block';ph2.style.display='none';document.getElementById('lightbox-img').src=saved.imgSrc;window._legacyImg=saved.imgSrc;}
   }
 
   function prefillNew(){
@@ -304,6 +342,7 @@ function savePage(){
   }
 
   function setIndicator(text,color){var s=document.getElementById('save-indicator');if(s){s.textContent=text;s.style.color=color;}}
+  window.setImgIndicator=setIndicator;
 
   function doSave(force){
     if(!_dataReady)return;
@@ -312,10 +351,7 @@ function savePage(){
     ['hl','t1','ml2','mv2','img-label','table-label','fl','fr'].forEach(function(id){var el=document.getElementById(id);if(el)inputs[id]=el.value;});
     var tableInputs=[];
     document.querySelectorAll('#data-table input').forEach(function(el){tableInputs.push(el.value);});
-    var imgSrc='';
-    var imgEl=document.getElementById('main-img');
-    if(imgEl&&imgEl.src&&imgEl.src.indexOf('data:')===0)imgSrc=imgEl.src;
-    var payload={inputs:inputs,tableInputs:tableInputs,extraRows:Math.max(0,getRowCount()-8),extraCols:Math.max(0,getColCount()-5),imgSrc:imgSrc};
+    var payload={inputs:inputs,tableInputs:tableInputs,extraRows:Math.max(0,getRowCount()-8),extraCols:Math.max(0,getColCount()-5),imgUrl:(window._imgUrl||'')};
     localStorage.setItem(KEY,JSON.stringify(payload)); // device copy always
     setIndicator('☁ Saving…','#fcd34d');
     sbSet(KEY,payload).then(function(r){
@@ -333,13 +369,14 @@ function savePage(){
     document.addEventListener('input',debounceSave);
     document.addEventListener('change',debounceSave);
     window.addEventListener('beforeunload',function(){if(_dataReady&&!_saveBlocked)doSave(false);});
-    var origSwap=window.swapPhoto;
-    window.swapPhoto=function(e){origSwap(e);setTimeout(function(){doSave(false);},200);};
+    // When an image finishes uploading to Storage, persist the new URL
+    window._afterImg=function(){doSave(false);};
   }
 
   // outcome: 'cloud' (row found), 'empty' (fetch ok, no row), 'fail' (network/timeout)
   function init(outcome,cloudValue){
     if(_initDone)return;_initDone=true;
+    window._reportId=reportId;
     var o=document.getElementById('cloud-overlay');if(o)o.style.display='none';
     _dataReady=true;
     var local=getLocal();
@@ -357,6 +394,24 @@ function savePage(){
       setIndicator('⚠ Offline — editing locally','#f59e0b');
     }
     wireSaving();
+    migrateLegacyImage();
+  }
+
+  // One-time: if this report still has an embedded base64 image (old format) and no Storage URL,
+  // push the image up to Storage, replace it with a URL, and re-save. Shrinks the row from ~MBs to bytes.
+  function migrateLegacyImage(){
+    if(_saveBlocked)return;                 // don't touch cloud if its state is unknown
+    if(window._imgUrl||!window._legacyImg)return;
+    var file=dataUrlToFile(window._legacyImg);
+    if(!file)return;
+    setIndicator('☁ Optimizing image for mobile…','#fcd34d');
+    uploadImageToStorage(file,reportId,function(err,url){
+      if(err||!url){setIndicator('⚠ Image migration failed (still works on desktop)','#ef4444');return;}
+      window._imgUrl=url;window._legacyImg=null;
+      var img=document.getElementById('main-img');if(img){img.src=url;}
+      var lb=document.getElementById('lightbox-img');if(lb)lb.src=url;
+      doSave(true); // rewrite row with tiny URL instead of 3MB base64
+    });
   }
 
   // cloud read: timeout + retries, distinguishing "no row" from "request failed"
