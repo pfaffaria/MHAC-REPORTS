@@ -321,6 +321,7 @@ function savePage(){
   var saveTimer;
 
   function getLocal(){try{return JSON.parse(localStorage.getItem(KEY));}catch(e){return null;}}
+  function setLocal(obj){try{localStorage.setItem(KEY,JSON.stringify(obj));}catch(e){/* quota exceeded (big legacy image) — ignore; cloud is source of truth */}}
 
   function applyData(saved){
     if(!saved)return;
@@ -352,7 +353,7 @@ function savePage(){
     var tableInputs=[];
     document.querySelectorAll('#data-table input').forEach(function(el){tableInputs.push(el.value);});
     var payload={inputs:inputs,tableInputs:tableInputs,extraRows:Math.max(0,getRowCount()-8),extraCols:Math.max(0,getColCount()-5),imgUrl:(window._imgUrl||'')};
-    localStorage.setItem(KEY,JSON.stringify(payload)); // device copy always
+    setLocal(payload); // device copy always (safe: won't throw on quota)
     setIndicator('☁ Saving…','#fcd34d');
     sbSet(KEY,payload).then(function(r){
       if(!r||!r.ok)throw new Error('HTTP '+(r&&r.status));
@@ -381,7 +382,7 @@ function savePage(){
     _dataReady=true;
     var local=getLocal();
     if(outcome==='cloud'){
-      localStorage.setItem(KEY,JSON.stringify(cloudValue));
+      setLocal(cloudValue);
       applyData(cloudValue);
       _saveBlocked=false;
     } else if(outcome==='empty'){
