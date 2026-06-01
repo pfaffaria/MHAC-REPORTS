@@ -226,42 +226,59 @@ function sbSet(k,v){return fetch(SB_URL+'/rest/v1/app_data',{method:'POST',heade
 var BUCKET='room-photos';
 var SB_STORAGE=SB_URL+'/storage/v1/object';
 var SB_STORAGE_PUB=SB_URL+'/storage/v1/object/public';
-function uploadImageToStorage(file,tag,callback){
-  var ext=(file.name&&file.name.split('.').pop())||'jpg';
-  var filename='report-'+String(tag).replace(/[^a-zA-Z0-9]/g,'-')+'-'+Date.now()+'.'+ext;
+
+// Shrink an image (data URL OR File) to a small JPEG blob before upload — like room-inspection's canvas resize.
+function compressImage(src,callback){
+  var im=new Image();
+  im.onload=function(){
+    var maxDim=1800;
+    var scale=Math.min(1,maxDim/Math.max(im.naturalWidth||1,im.naturalHeight||1));
+    var w=Math.max(1,Math.round((im.naturalWidth||im.width)*scale));
+    var h=Math.max(1,Math.round((im.naturalHeight||im.height)*scale));
+    var c=document.createElement('canvas');c.width=w;c.height=h;
+    try{c.getContext('2d').drawImage(im,0,0,w,h);}catch(e){callback(null);return;}
+    if(c.toBlob){c.toBlob(function(b){callback(b);},'image/jpeg',0.85);}
+    else{ // very old fallback
+      try{var d=c.toDataURL('image/jpeg',0.85);var bin=atob(d.split(',')[1]);var u8=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);callback(new Blob([u8],{type:'image/jpeg'}));}catch(e2){callback(null);}
+    }
+  };
+  im.onerror=function(){callback(null);};
+  if(typeof src==='string'){im.src=src;}
+  else{var rd=new FileReader();rd.onload=function(e){im.src=e.target.result;};rd.onerror=function(){callback(null);};rd.readAsDataURL(src);}
+}
+
+// Upload a Blob to Storage. callback(errorString|null, publicUrl|null)
+function uploadBlobToStorage(blob,tag,callback){
+  var filename='report-'+String(tag).replace(/[^a-zA-Z0-9]/g,'-')+'-'+Date.now()+'.jpg';
   var path=BUCKET+'/'+filename;
   fetch(SB_STORAGE+'/'+path,{
     method:'POST',
-    headers:{'apikey':SB_PUB,'Authorization':'Bearer '+SB_PUB,'Content-Type':file.type||'image/jpeg','x-upsert':'true'},
-    body:file
+    headers:{'apikey':SB_PUB,'Authorization':'Bearer '+SB_PUB,'Content-Type':'image/jpeg','x-upsert':'true'},
+    body:blob
   }).then(function(r){
     if(r.ok){callback(null,SB_STORAGE_PUB+'/'+path+'?t='+Date.now());}
-    else{r.text().then(function(t){callback('Upload failed: '+t,null);});}
-  }).catch(function(e){callback(e.message,null);});
+    else{r.text().then(function(t){callback('HTTP '+r.status+': '+(t||'').slice(0,120),null);}).catch(function(){callback('HTTP '+r.status,null);});}
+  }).catch(function(e){callback((e&&e.message)||'network error',null);});
 }
-// Convert a data: URL to a Blob so we can migrate an old embedded image up to Storage
-function dataUrlToFile(dataUrl){
-  try{
-    var parts=dataUrl.split(',');var mime=(parts[0].match(/:(.*?);/)||[])[1]||'image/jpeg';
-    var bin=atob(parts[1]);var n=bin.length;var u8=new Uint8Array(n);
-    while(n--){u8[n]=bin.charCodeAt(n);}
-    var ext=mime.split('/')[1]||'jpg';
-    return new File([u8],'migrated.'+ext,{type:mime});
-  }catch(e){return null;}
+
+// Compress then upload, from a data URL or File.
+function compressAndUpload(src,tag,callback){
+  compressImage(src,function(blob){
+    if(!blob){callback('could not read image',null);return;}
+    uploadBlobToStorage(blob,tag,callback);
+  });
 }
 
 function swapPhoto(event){
   var file=event.target.files[0];if(!file)return;
   var img=document.getElementById('main-img'),ph=document.getElementById('placeholder');
-  // Show a local preview immediately for responsiveness
   var reader=new FileReader();
   reader.onload=function(e){img.src=e.target.result;img.style.display='block';ph.style.display='none';document.getElementById('lightbox-img').src=e.target.result;};
   reader.readAsDataURL(file);
-  // Upload to Storage; once we have a URL, swap the img to point at it (keeps the data row tiny)
   if(typeof setImgIndicator==='function')setImgIndicator('↑ Uploading image…','#fcd34d');
-  uploadImageToStorage(file,(window._reportId||'img'),function(err,url){
-    if(err||!url){if(typeof setImgIndicator==='function')setImgIndicator('⚠ Image upload failed','#ef4444');return;}
-    window._imgUrl=url;
+  compressAndUpload(file,(window._reportId||'img'),function(err,url){
+    if(err||!url){if(typeof setImgIndicator==='function')setImgIndicator('⚠ Image upload failed — '+err,'#ef4444');return;}
+    window._imgUrl=url;window._legacyImg=null;
     img.src=url;document.getElementById('lightbox-img').src=url;
     if(typeof setImgIndicator==='function')setImgIndicator('','');
     if(typeof window._afterImg==='function')window._afterImg();
@@ -403,15 +420,13 @@ function savePage(){
   function migrateLegacyImage(){
     if(_saveBlocked)return;                 // don't touch cloud if its state is unknown
     if(window._imgUrl||!window._legacyImg)return;
-    var file=dataUrlToFile(window._legacyImg);
-    if(!file)return;
     setIndicator('☁ Optimizing image for mobile…','#fcd34d');
-    uploadImageToStorage(file,reportId,function(err,url){
-      if(err||!url){setIndicator('⚠ Image migration failed (still works on desktop)','#ef4444');return;}
+    compressAndUpload(window._legacyImg,reportId,function(err,url){
+      if(err||!url){setIndicator('⚠ Image migration failed — '+err,'#ef4444');return;}
       window._imgUrl=url;window._legacyImg=null;
       var img=document.getElementById('main-img');if(img){img.src=url;}
       var lb=document.getElementById('lightbox-img');if(lb)lb.src=url;
-      doSave(true); // rewrite row with tiny URL instead of 3MB base64
+      doSave(true); // rewrite row with tiny URL instead of big base64
     });
   }
 
