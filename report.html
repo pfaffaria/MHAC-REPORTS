@@ -277,10 +277,10 @@ function swapPhoto(event){
   reader.readAsDataURL(file);
   if(typeof setImgIndicator==='function')setImgIndicator('↑ Uploading image…','#fcd34d');
   compressAndUpload(file,(window._reportId||'img'),function(err,url){
-    if(err||!url){if(typeof setImgIndicator==='function')setImgIndicator('⚠ Image upload failed — '+err,'#ef4444');return;}
-    window._imgUrl=url;window._legacyImg=null;
+    if(err||!url){if(typeof setImgIndicator==='function')setImgIndicator('⚠ Image upload failed — '+err,'#ef4444',true);return;}
+    window._imgUrl=url;window._legacyImg=null;window._imgCleared=false;
     img.src=url;document.getElementById('lightbox-img').src=url;
-    if(typeof setImgIndicator==='function')setImgIndicator('','');
+    if(typeof setImgIndicator==='function'){window._stickyUntil=0;setImgIndicator('☁ Image saved','#22c55e');}
     if(typeof window._afterImg==='function')window._afterImg();
   });
 }
@@ -359,7 +359,13 @@ function savePage(){
     if(fr&&!fr.value)fr.value=reportName;
   }
 
-  function setIndicator(text,color){var s=document.getElementById('save-indicator');if(s){s.textContent=text;s.style.color=color;}}
+  window._stickyUntil=0;
+  function setIndicator(text,color,sticky){
+    var s=document.getElementById('save-indicator');if(!s)return;
+    if(sticky){window._stickyUntil=Date.now()+20000;}      // hold this message ~20s so it can be read
+    else if(Date.now()<window._stickyUntil){return;}       // a sticky error is showing; don't overwrite
+    s.textContent=text;s.style.color=color;
+  }
   window.setImgIndicator=setIndicator;
 
   function doSave(force){
@@ -369,7 +375,8 @@ function savePage(){
     ['hl','t1','ml2','mv2','img-label','table-label','fl','fr'].forEach(function(id){var el=document.getElementById(id);if(el)inputs[id]=el.value;});
     var tableInputs=[];
     document.querySelectorAll('#data-table input').forEach(function(el){tableInputs.push(el.value);});
-    var payload={inputs:inputs,tableInputs:tableInputs,extraRows:Math.max(0,getRowCount()-8),extraCols:Math.max(0,getColCount()-5),imgUrl:(window._imgUrl||'')};
+    var imgField = window._imgCleared ? '' : (window._imgUrl||'');
+    var payload={inputs:inputs,tableInputs:tableInputs,extraRows:Math.max(0,getRowCount()-8),extraCols:Math.max(0,getColCount()-5),imgUrl:imgField};
     setLocal(payload); // device copy always (safe: won't throw on quota)
     setIndicator('☁ Saving…','#fcd34d');
     sbSet(KEY,payload).then(function(r){
@@ -422,7 +429,7 @@ function savePage(){
     if(window._imgUrl||!window._legacyImg)return;
     setIndicator('☁ Optimizing image for mobile…','#fcd34d');
     compressAndUpload(window._legacyImg,reportId,function(err,url){
-      if(err||!url){setIndicator('⚠ Image migration failed — '+err,'#ef4444');return;}
+      if(err||!url){setIndicator('⚠ Image migration failed — '+err,'#ef4444',true);return;}
       window._imgUrl=url;window._legacyImg=null;
       var img=document.getElementById('main-img');if(img){img.src=url;}
       var lb=document.getElementById('lightbox-img');if(lb)lb.src=url;
