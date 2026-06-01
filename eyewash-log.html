@@ -89,6 +89,49 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 .es-add{padding:7px 16px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:5px;color:#4ade80;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer}
 .es-add:hover{background:rgba(34,197,94,.18)}
 .indi{font-size:10px;letter-spacing:1.5px;font-weight:600}
+/* ── Map view ── */
+.map-upload-area{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px 20px;border:1px dashed rgba(245,158,11,.2);border-radius:10px;background:rgba(245,158,11,.02);text-align:center}
+.map-upload-area.drag-over{border-color:var(--amber);background:rgba(245,158,11,.06)}
+.map-upload-icon{font-size:32px;opacity:.4}
+.map-upload-text{font-size:11px;letter-spacing:2px;color:rgba(245,158,11,.35);text-transform:uppercase;line-height:1.8}
+.btn-upload{padding:8px 20px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);border-radius:5px;color:var(--amber-light);font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer}
+.btn-upload:hover{background:rgba(245,158,11,.22)}
+.map-container{position:relative;border-radius:10px;overflow:hidden;border:1px solid rgba(245,158,11,.15);background:#000;user-select:none;touch-action:none;cursor:grab}
+.map-container.panning{cursor:grabbing}
+.map-zoom-layer{position:absolute;inset:0;transform-origin:0 0;will-change:transform}
+.map-zoom-layer img{display:block;width:100%;height:100%;pointer-events:none}
+.map-pins-overlay{position:absolute;inset:0;pointer-events:none}
+.map-controls{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center}
+.map-legend{display:flex;gap:12px;align-items:center;margin-left:auto;font-size:10px;letter-spacing:1px;color:rgba(245,158,11,.4);text-transform:uppercase}
+.map-legend span{display:flex;align-items:center;gap:4px}
+.legend-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+#map-tooltip{position:absolute;pointer-events:none;z-index:50;background:rgba(10,5,0,.95);border:1px solid var(--amber);border-radius:6px;padding:6px 12px;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#fff;text-transform:uppercase;display:none;white-space:nowrap;transform:translate(-50%,-115%)}
+#map-tooltip .tt-sub{display:block;font-size:9px;letter-spacing:1px;color:rgba(245,158,11,.5);font-weight:600;margin-top:1px}
+.map-pin-marker{position:absolute;transform:translate(-50%,-100%);pointer-events:all;cursor:pointer;z-index:10;width:30px;height:38px}
+.map-pin-marker.hl{animation:pinPulse 1.2s ease-in-out infinite;z-index:20}
+@keyframes pinPulse{0%,100%{transform:translate(-50%,-100%) scale(1)}50%{transform:translate(-50%,-100%) scale(1.18)}}
+.btn-secondary{padding:8px 14px;background:transparent;border:1px solid rgba(245,158,11,.15);border-radius:5px;color:rgba(245,158,11,.5);font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.btn-secondary:hover{border-color:rgba(245,158,11,.3);color:rgba(245,158,11,.75)}
+.btn-primary{padding:8px 16px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);border-radius:5px;color:var(--amber-light);font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:6px}
+.btn-primary:hover{background:rgba(245,158,11,.22)}
+/* pin info panel */
+@keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+#pin-info-panel{position:fixed;bottom:36px;left:50%;transform:translateX(-50%);z-index:400;width:calc(100% - 32px);max-width:420px;background:rgba(10,5,0,.97);border:1px solid rgba(245,158,11,.35);border-radius:14px;padding:16px 18px;display:none;animation:slideUp .2s ease-out}
+#pin-info-panel.show{display:block}
+.pip-id{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:var(--amber-light)}
+.pip-loc{font-size:11px;letter-spacing:1px;color:rgba(245,158,11,.5);text-transform:uppercase;margin-bottom:8px}
+.pip-status{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px}
+.pip-close{position:absolute;top:12px;right:14px;background:none;border:none;color:rgba(245,158,11,.5);font-size:18px;cursor:pointer}
+/* placement modal */
+#placement-modal{position:fixed;inset:0;z-index:500;background:rgba(8,4,0,.92);display:none;align-items:center;justify-content:center;padding:16px}
+#placement-modal.active{display:flex}
+.placement-box{width:100%;max-width:520px;background:rgba(15,10,3,.98);border:1px solid rgba(245,158,11,.3);border-radius:14px;padding:16px}
+.placement-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:var(--amber-light)}
+.placement-sub{font-size:10px;letter-spacing:1.5px;color:rgba(245,158,11,.4);text-transform:uppercase;margin-bottom:12px}
+.placement-map-wrap{position:relative;border-radius:8px;overflow:hidden;border:1px solid rgba(245,158,11,.2);cursor:crosshair;background:#000}
+.placement-map-wrap img{display:block;width:100%;height:auto;pointer-events:none}
+.placement-map-wrap svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.placement-hint{font-size:10px;letter-spacing:1.5px;color:rgba(245,158,11,.4);text-transform:uppercase;text-align:center;margin-top:10px}
 </style>
 <script>
 function getSession(){try{return JSON.parse(sessionStorage.getItem('mhac-session'))||null;}catch(e){return null;}}
@@ -127,6 +170,7 @@ function clearSession(){sessionStorage.removeItem('mhac-session');}
   <div class="tabs">
     <button class="tab active" onclick="showView('entry',this)">Monthly Entry</button>
     <button class="tab" onclick="showView('trends',this)">Trend Log</button>
+    <button class="tab" onclick="showView('map',this)">Map</button>
     <button class="tab" onclick="showView('edit',this)">Edit Stations</button>
   </div>
 
@@ -168,6 +212,43 @@ function clearSession(){sessionStorage.removeItem('mhac-session');}
     <div id="es-list" style="margin-top:12px"></div>
     <button class="es-add" style="margin-top:10px" onclick="addStation()">+ Add Station</button>
   </div>
+
+  <!-- MAP -->
+  <input type="file" id="map-upload-input" accept="image/*" style="display:none" onchange="uploadMap(event)">
+  <input type="file" id="map-replace-input" accept="image/*" style="display:none" onchange="uploadMap(event)">
+  <div class="view" id="view-map">
+    <div class="lvl-tabs" id="map-lvl-tabs"></div>
+    <div id="map-title" style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:4px;background:linear-gradient(130deg,#fff8dc,#ffb700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px">Level 1 &mdash; Floor Plan</div>
+    <div id="map-content"></div>
+  </div>
+</div>
+
+<!-- PIN INFO PANEL -->
+<div id="pin-info-panel">
+  <button class="pip-close" onclick="closePinInfo()">&#x2715;</button>
+  <div class="pip-id" id="pip-id"></div>
+  <div class="pip-loc" id="pip-loc"></div>
+  <div class="pip-status" id="pip-status"><span id="pip-dot"></span><span id="pip-status-text"></span></div>
+  <div style="display:flex;gap:8px">
+    <button class="btn-primary" id="pip-go-btn" onclick="pinGoEntry()" style="flex:1;justify-content:center">Go to Entry</button>
+  </div>
+</div>
+
+<!-- PLACEMENT MODAL -->
+<div id="placement-modal">
+  <div class="placement-box">
+    <div class="placement-title" id="pm-title">Place on Map</div>
+    <div class="placement-sub" id="pm-sub"></div>
+    <div class="placement-map-wrap" id="placement-map-wrap">
+      <img id="placement-img" src="" alt="Floor plan">
+      <svg id="placement-svg" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="placement-hint">Tap anywhere on the map to place the pin</div>
+    <div class="map-controls" style="justify-content:flex-end">
+      <button class="btn-secondary" onclick="closePlacement()">Cancel</button>
+      <button class="btn-primary" id="pm-confirm" style="display:none" onclick="confirmPlacement()">&#10003; Confirm</button>
+    </div>
+  </div>
 </div>
 
 <div class="statusbar">
@@ -205,6 +286,61 @@ function sbSet(k,v){
 // ═══ KEYS ════════════════════════════════════════════════════════════
 const LOG_KEY='mhac-eyewash-log';        // reading history (unchanged from before)
 const STATIONS_KEY='mhac-eyewash-stations'; // editable station roster (new, cloud-synced)
+const PINS_KEY='mhac-eyewash-pins';      // {level:{room:{x,y}}} pin coords (small, in app_data)
+const MAPS_KEY='mhac-eyewash-maps';      // {level: storageUrl} map image URLs (small, in app_data)
+
+// ── Supabase Storage (room-photos bucket; insert policy already in place) ──
+var BUCKET='room-photos';
+var SB_STORAGE=SB_URL+'/storage/v1/object';
+var SB_STORAGE_PUB=SB_URL+'/storage/v1/object/public';
+function compressImage(file,callback){
+  var rd=new FileReader();
+  rd.onload=function(e){
+    var im=new Image();
+    im.onload=function(){
+      var maxDim=2200,scale=Math.min(1,maxDim/Math.max(im.naturalWidth,im.naturalHeight));
+      var w=Math.max(1,Math.round(im.naturalWidth*scale)),h=Math.max(1,Math.round(im.naturalHeight*scale));
+      var c=document.createElement('canvas');c.width=w;c.height=h;
+      try{c.getContext('2d').drawImage(im,0,0,w,h);}catch(err){callback(null);return;}
+      c.toBlob(function(b){callback(b);},'image/jpeg',0.85);
+    };
+    im.onerror=function(){callback(null);};
+    im.src=e.target.result;
+  };
+  rd.onerror=function(){callback(null);};
+  rd.readAsDataURL(file);
+}
+function uploadMapToStorage(file,level,callback){
+  compressImage(file,function(blob){
+    if(!blob){callback('could not read image',null);return;}
+    var filename='eyewash-map-'+String(level).replace(/[^a-zA-Z0-9]/g,'')+'-'+Date.now()+'.jpg';
+    var path=BUCKET+'/'+filename;
+    fetch(SB_STORAGE+'/'+path,{method:'POST',headers:{'apikey':SB_PUB,'Authorization':'Bearer '+SB_PUB,'Content-Type':'image/jpeg','x-upsert':'true'},body:blob})
+      .then(function(r){if(r.ok){callback(null,SB_STORAGE_PUB+'/'+path+'?t='+Date.now());}else{r.text().then(function(t){callback('HTTP '+r.status+': '+(t||'').slice(0,100),null);});}})
+      .catch(function(e){callback((e&&e.message)||'network error',null);});
+  });
+}
+
+// In-memory caches for map data
+var _maps={};   // {level:url}
+var _pins={};   // {level:{room:{x,y}}}
+
+// Has a station been logged in the current calendar month?
+function loggedThisMonth(level,room){
+  var now=new Date(), ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  var log=loadLog();
+  return log.some(function(e){
+    return e.level===level && e.date && e.date.indexOf(ym)===0 &&
+      e.readings && e.readings[room] && e.readings[room].temp!=='' && e.readings[room].temp!=null;
+  });
+}
+function latestReading(level,room){
+  var entries=loadLog().filter(function(e){return e.level===level && e.readings && e.readings[room] && e.readings[room].temp!=='';});
+  if(!entries.length)return null;
+  entries.sort(function(a,b){return a.date.localeCompare(b.date);});
+  var last=entries[entries.length-1];
+  return {temp:last.readings[room].temp, date:last.date};
+}
 
 // ═══ DEFAULT STATION ROSTER (first digit = floor; PH = penthouse) ═════
 // 41 stations transcribed from the Emergency Shower Checklist.
@@ -298,6 +434,17 @@ function saveStationsToCloud(){
 
 function setIndicator(text,color){ var s=document.getElementById('sync-indi'); if(s){ s.textContent=text?('· '+text):''; s.style.color=color||''; } }
 
+// ═══ STATION ORDERING ════════════════════════════════════════════════
+// Natural sort by room number so 1A.100A comes before 1A.185, etc.
+function natKey(str){
+  return String(str||'').toLowerCase().replace(/(\d+)/g, function(n){ return n.padStart(8,'0'); });
+}
+function getStations(lv){
+  var arr = (STATIONS[lv] || []).slice();
+  arr.sort(function(a,b){ return natKey(a.room) < natKey(b.room) ? -1 : (natKey(a.room) > natKey(b.room) ? 1 : 0); });
+  return arr;
+}
+
 // ═══ LEVEL TABS ══════════════════════════════════════════════════════
 function mkTabs(containerId, activeLevel, onSelect){
   var c = document.getElementById(containerId);
@@ -316,15 +463,22 @@ function mkTabs(containerId, activeLevel, onSelect){
 }
 
 // ═══ ENTRY GRID ══════════════════════════════════════════════════════
+function currentEntryFor(date, level){
+  // Find an already-saved entry for this date+level, or null.
+  var log = loadLog();
+  return log.find(function(e){ return e.date === date && e.level === level; }) || null;
+}
 function renderGrid(){
-  var stations = STATIONS[entryLevel] || [];
+  var stations = getStations(entryLevel);
   document.getElementById('entry-lvl-lbl').textContent = lvlLabel(entryLevel);
   document.getElementById('status-lbl').textContent = '· ' + lvlLabel(entryLevel) + ' · ' + stations.length + ' stations';
   var grid = document.getElementById('ew-grid');
   grid.innerHTML = '';
   if(!stations.length){ grid.innerHTML = '<div class="no-data">No stations on this level<br>Add some in Edit Stations</div>'; return; }
+  var date = document.getElementById('entry-date').value;
+  var existing = currentEntryFor(date, entryLevel);
   stations.forEach(function(s, i){
-    var key = entryLevel + '|' + i; // stable per-position id
+    var prev = existing && existing.readings && existing.readings[s.room] ? existing.readings[s.room] : null;
     var card = document.createElement('div');
     card.className = 'ew-card';
     card.innerHTML =
@@ -337,11 +491,17 @@ function renderGrid(){
       '</div>' +
       '<div class="flush-row">' +
         '<span class="flush-lbl">Flushed</span>' +
-        '<select class="flush-sel" id="fl_' + i + '">' +
+        '<select class="flush-sel" id="fl_' + i + '" onchange="autoSaveEntry()">' +
           '<option value="">&mdash;</option><option value="Yes">Yes</option><option value="No">No</option>' +
         '</select>' +
       '</div>';
     grid.appendChild(card);
+    // Prefill from saved data so leaving and returning keeps your numbers
+    if(prev){
+      var t = card.querySelector('#t_'+i), f = card.querySelector('#fl_'+i);
+      if(t && prev.temp!=null){ t.value = prev.temp; onTemp(t, i); }
+      if(f && prev.flush!=null){ f.value = prev.flush; }
+    }
   });
 }
 
@@ -349,49 +509,72 @@ function onTemp(el, i){
   var v = parseFloat(el.value);
   el.classList.remove('cold','hot','ok');
   var pf = document.getElementById('pf_' + i);
-  if (isNaN(v) || el.value === '') { pf.innerHTML = ''; return; }
-  if (v < 16) { el.classList.add('cold'); pf.innerHTML = '<span class="pf-fail">&#x2717;</span><span class="pf-fail">FAIL</span>'; }
+  if (isNaN(v) || el.value === '') { pf.innerHTML = ''; }
+  else if (v < 16) { el.classList.add('cold'); pf.innerHTML = '<span class="pf-fail">&#x2717;</span><span class="pf-fail">FAIL</span>'; }
   else if (v > 38) { el.classList.add('hot'); pf.innerHTML = '<span class="pf-fail">&#x2717;</span><span class="pf-fail">FAIL</span>'; }
   else { el.classList.add('ok'); pf.innerHTML = '<span class="pf-pass">&#x2713;</span><span class="pf-pass">PASS</span>'; }
+  autoSaveEntry();
+}
+
+// Auto-save the current grid to the log as you type (debounced), so navigating away never loses data.
+var _autoTimer;
+function autoSaveEntry(){
+  clearTimeout(_autoTimer);
+  _autoTimer = setTimeout(function(){ writeEntry(true); }, 600);
 }
 
 function clearTemps(){
-  var stations = STATIONS[entryLevel] || [];
+  var stations = getStations(entryLevel);
   stations.forEach(function(s,i){
     var t = document.getElementById('t_' + i), f = document.getElementById('fl_' + i), p = document.getElementById('pf_' + i);
     if (t) { t.value = ''; t.classList.remove('cold','hot','ok'); }
     if (f) f.value = '';
     if (p) p.innerHTML = '';
   });
+  // Also drop any saved entry for this date+level so cleared really means cleared
+  var date = document.getElementById('entry-date').value;
+  var log = loadLog().filter(function(e){ return !(e.date === date && e.level === entryLevel); });
+  saveLog(log);
 }
 
-function saveEntry(){
+// Shared writer. silent=true for autosave (no prompts/toasts); false for the explicit Save button.
+function writeEntry(silent){
   var date = document.getElementById('entry-date').value;
+  if (!date) { if(!silent) showToast('Select a date'); return false; }
   var tech = document.getElementById('entry-tech').value.trim();
-  if (!date) { showToast('Select a date'); return; }
-  var stations = STATIONS[entryLevel] || [];
+  var stations = getStations(entryLevel);
   var readings = {};
+  var anyValue = false;
   stations.forEach(function(s,i){
     var t = document.getElementById('t_' + i), f = document.getElementById('fl_' + i);
-    readings[s.room] = { temp: t ? t.value : '', flush: f ? f.value : '' };
+    var temp = t ? t.value : '', flush = f ? f.value : '';
+    readings[s.room] = { temp: temp, flush: flush };
+    if(temp!=='' || flush!=='') anyValue = true;
   });
-  var missing = stations.filter(function(s){ return !readings[s.room] || !readings[s.room].temp; });
-  if (missing.length) {
-    var names = missing.map(function(s){ return s.room; }).join(', ');
-    if (!confirm(missing.length + ' station(s) have no temperature:\n\n' + names + '\n\nSave anyway?')) return;
+  if(silent && !anyValue) return false; // nothing typed yet; don't create empty rows
+  if(!silent){
+    var missing = stations.filter(function(s){ return !readings[s.room] || !readings[s.room].temp; });
+    if (missing.length) {
+      var names = missing.map(function(s){ return s.room; }).join(', ');
+      if (!confirm(missing.length + ' station(s) have no temperature:\n\n' + names + '\n\nSave anyway?')) return false;
+    }
   }
   var log = loadLog();
   log = log.filter(function(e){ return !(e.date === date && e.level === entryLevel); });
   log.push({ date: date, level: entryLevel, tech: tech, readings: readings });
   log.sort(function(a,b){ return a.date.localeCompare(b.date); });
   saveLog(log);
-  showToast('Saved \u2713');
+  return true;
+}
+
+function saveEntry(){
+  if(writeEntry(false)) showToast('Saved \u2713');
 }
 
 // ═══ TREND LOG ═══════════════════════════════════════════════════════
 function renderTrend(){
   var out = document.getElementById('trend-out');
-  var stations = STATIONS[trendLevel] || [];
+  var stations = getStations(trendLevel);
   var log = loadLog().filter(function(e){ return e.level === trendLevel; });
   out.innerHTML = '';
   if (!stations.length) { out.innerHTML = '<div class="no-data">No stations on ' + lvlLabel(trendLevel) + '</div>'; return; }
@@ -437,17 +620,24 @@ function renderEdit(){
   var stations = STATIONS[editLevel] || (STATIONS[editLevel] = []);
   list.innerHTML = '';
   stations.forEach(function(s,i){
+    var placed = (_pins[editLevel]||{})[s.room];
     var row = document.createElement('div');
     row.className = 'es-row';
     row.innerHTML =
       '<input class="es-in es-room" value="' + esc(s.room) + '" placeholder="Room #" oninput="editField(' + i + ',\'room\',this.value)"/>' +
       '<input class="es-in es-loc" value="' + esc(s.loc||'') + '" placeholder="Description" oninput="editField(' + i + ',\'loc\',this.value)"/>' +
+      '<button class="es-del" title="Place on map" style="border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.06);color:'+(placed?'#fcd34d':'rgba(245,158,11,.5)')+'" onclick="placeFromEdit('+i+')">&#x1F4CD;</button>' +
       '<button class="es-del" title="Remove" onclick="removeStation(' + i + ')">&times;</button>';
     list.appendChild(row);
   });
   if(!stations.length){ list.innerHTML = '<div class="no-data" style="padding:18px">No stations on this level yet</div>'; }
 }
 function editField(i, field, val){ STATIONS[editLevel][i][field] = val; }
+function placeFromEdit(i){
+  var s=STATIONS[editLevel][i];
+  if(!s||!s.room||!s.room.trim()){showToast('Give the station a room number first');return;}
+  openPlacement(editLevel, s.room);
+}
 function addStation(){ STATIONS[editLevel] = STATIONS[editLevel]||[]; STATIONS[editLevel].push({room:'', loc:''}); renderEdit(); }
 function removeStation(i){
   if(!confirm('Remove this station?')) return;
@@ -468,6 +658,201 @@ function resetStationsToDefault(){
   saveStationsToCloud();
   renderEdit(); renderGrid();
   showToast('Roster reset \u2713');
+}
+
+// ═══ MAP VIEW ════════════════════════════════════════════════════════
+var mapLevel = entryLevel;
+var _pipRoom = null;
+var _pendingPlace = null, _placeX = null, _placeY = null;
+
+// SVG teardrop pin with eyewash bowl inside; color reflects logged-this-month
+function pinSVG(color, glow){
+  return '<svg viewBox="0 0 30 38" width="30" height="38" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 0 4px '+glow+')">'+
+    '<path d="M15 37 C15 37 27 22 27 13 A12 12 0 1 0 3 13 C3 22 15 37 15 37 Z" fill="'+color+'" stroke="#0f0a03" stroke-width="1.2"/>'+
+    '<circle cx="15" cy="13" r="9" fill="#0f0a03" opacity="0.92"/>'+
+    // mini eyewash bowl
+    '<ellipse cx="15" cy="15" rx="7" ry="3" fill="#d7dade"/>'+
+    '<ellipse cx="15" cy="14.4" rx="5" ry="2" fill="#aeb2b8"/>'+
+    '<path d="M11 14 q-1 -4 1 -6" fill="none" stroke="#c7cace" stroke-width="1.2" stroke-linecap="round"/>'+
+    '<path d="M19 14 q1 -4 -1 -5.5" fill="none" stroke="#c7cace" stroke-width="1.2" stroke-linecap="round"/>'+
+    '<circle cx="12" cy="7.6" r="1.9" fill="#f59e0b"/>'+
+    '<circle cx="18.2" cy="8.4" r="1.9" fill="#f59e0b"/>'+
+    '</svg>';
+}
+
+function renderMap(highlightRoom){
+  document.getElementById('map-title').textContent = lvlLabel(mapLevel) + ' \u2014 Floor Plan';
+  var content = document.getElementById('map-content');
+  if(!_maps[mapLevel]){
+    var dz = document.createElement('div');
+    dz.className='map-upload-area'; dz.id='drop-zone';
+    dz.innerHTML='<div class="map-upload-icon">&#x1F5FA;</div>'+
+      '<div class="map-upload-text">No floor plan for '+lvlLabel(mapLevel)+'<br>Upload one to place eyewash pins</div>'+
+      '<button class="btn-upload" onclick="document.getElementById(\'map-upload-input\').click()">&#8593; Upload Floor Plan</button>'+
+      '<div style="font-size:9px;letter-spacing:1px;color:rgba(245,158,11,.2);text-transform:uppercase">JPG &middot; PNG &middot; Drag &amp; drop</div>';
+    content.innerHTML=''; content.appendChild(dz);
+    dz.addEventListener('dragover',function(e){e.preventDefault();dz.classList.add('drag-over');});
+    dz.addEventListener('dragleave',function(){dz.classList.remove('drag-over');});
+    dz.addEventListener('drop',function(e){e.preventDefault();dz.classList.remove('drag-over');var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];if(!f||!f.type.match(/image/)){showToast('Drop an image file');return;}doMapUpload(f);});
+    return;
+  }
+  content.innerHTML=
+    '<div class="map-container" id="map-container" style="height:260px">'+
+      '<div class="map-zoom-layer" id="map-zoom-layer">'+
+        '<img id="map-img" src="'+_maps[mapLevel]+'" alt="Floor Plan">'+
+        '<div class="map-pins-overlay" id="map-pins-overlay"></div>'+
+      '</div>'+
+      '<div id="map-tooltip"></div>'+
+    '</div>'+
+    '<div class="map-controls">'+
+      '<button class="btn-secondary" onclick="document.getElementById(\'map-replace-input\').click()">\u2191 Replace Map</button>'+
+      '<button class="btn-secondary" onclick="clearMap()" style="color:rgba(239,68,68,.5);border-color:rgba(239,68,68,.2)">\u2715 Clear Map</button>'+
+      '<div class="map-legend">'+
+        '<span><span class="legend-dot" style="background:#22c55e;box-shadow:0 0 6px #4ade8099"></span>Logged this month</span>'+
+        '<span><span class="legend-dot" style="background:#f59e0b;box-shadow:0 0 6px #f59e0b99"></span>Not yet</span>'+
+      '</div>'+
+    '</div>';
+  buildMapPins(highlightRoom);
+  setupMapZoom();
+}
+
+function buildMapPins(highlightRoom){
+  var overlay=document.getElementById('map-pins-overlay'); if(!overlay)return; overlay.innerHTML='';
+  var pins=_pins[mapLevel]||{};
+  getStations(mapLevel).forEach(function(s){
+    var p=pins[s.room]; if(!p)return;
+    var logged=loggedThisMonth(mapLevel,s.room);
+    var color=logged?'#22c55e':'#f59e0b', glow=logged?'#4ade80':'#f59e0b';
+    var isHl=(s.room===highlightRoom);
+    var marker=document.createElement('div');
+    marker.className='map-pin-marker'+(isHl?' hl':'');
+    marker.style.left=(p.x*100).toFixed(2)+'%';
+    marker.style.top=(p.y*100).toFixed(2)+'%';
+    marker.innerHTML=pinSVG(color,glow);
+    marker._room=s.room;
+    marker.addEventListener('mouseenter',function(e){mapPinEnter(s.room);});
+    marker.addEventListener('mouseleave',mapPinLeave);
+    overlay.appendChild(marker);
+  });
+}
+
+function mapPinEnter(room){
+  var tt=document.getElementById('map-tooltip'); if(!tt)return;
+  var p=(_pins[mapLevel]||{})[room]; if(!p)return;
+  var st=getStations(mapLevel).find(function(s){return s.room===room;})||{};
+  var lr=latestReading(mapLevel,room);
+  tt.innerHTML=esc(room)+(st.loc?'<span class="tt-sub">'+esc(st.loc)+'</span>':'')+
+    (lr?'<span class="tt-sub" style="color:'+(parseFloat(lr.temp)>=16&&parseFloat(lr.temp)<=38?'#4ade80':'#f87171')+'">'+lr.temp+'\u00b0C \u00b7 '+fmtShort(lr.date)+'</span>':'<span class="tt-sub">No readings</span>');
+  var ov=document.getElementById('map-pins-overlay'),W=ov?ov.clientWidth:300,H=ov?ov.clientHeight:300;
+  tt.style.left=(p.x*W)+'px'; tt.style.top=(p.y*H)+'px'; tt.style.display='block';
+}
+function mapPinLeave(){var tt=document.getElementById('map-tooltip');if(tt)tt.style.display='none';}
+
+function mapPinClick(room){
+  var st=getStations(mapLevel).find(function(s){return s.room===room;})||{};
+  var lr=latestReading(mapLevel,room), logged=loggedThisMonth(mapLevel,room);
+  _pipRoom=room;
+  document.getElementById('pip-id').textContent=room;
+  document.getElementById('pip-loc').textContent=st.loc||'No description';
+  var dot=document.getElementById('pip-dot'), txt=document.getElementById('pip-status-text');
+  dot.style.cssText='width:8px;height:8px;border-radius:50%;flex-shrink:0;background:'+(logged?'#4ade80':'#f59e0b')+';box-shadow:0 0 6px '+(logged?'#4ade80':'#f59e0b');
+  txt.textContent=logged?('\u2713 Logged this month'+(lr?' \u2014 '+lr.temp+'\u00b0C':'')):(lr?('Last: '+lr.temp+'\u00b0C on '+fmtShort(lr.date)):'Not logged yet');
+  txt.style.color=logged?'#4ade80':'rgba(245,158,11,.7)';
+  document.getElementById('pin-info-panel').classList.add('show');
+}
+function closePinInfo(){document.getElementById('pin-info-panel').classList.remove('show');_pipRoom=null;}
+function pinGoEntry(){
+  if(!_pipRoom)return;
+  closePinInfo();
+  entryLevel=mapLevel;
+  // sync entry level tabs highlight
+  var c=document.getElementById('entry-lvl-tabs');
+  if(c){c.querySelectorAll('.lvl-tab').forEach(function(t){t.classList.toggle('active',t.textContent===lvlLabel(mapLevel));});}
+  renderGrid();
+  document.querySelector('.tab').click(); // first tab = Monthly Entry
+}
+
+// ── pan / zoom / pinch / tap (ported from fire-extinguisher) ──
+function setupMapZoom(){
+  var con=document.getElementById('map-container'),layer=document.getElementById('map-zoom-layer'),img=document.getElementById('map-img');
+  if(!con||!layer||!img)return;
+  function setH(){if(img.naturalWidth&&img.naturalHeight){var r=img.naturalHeight/img.naturalWidth;con.style.height=Math.round((con.clientWidth||360)*r)+'px';layer.style.width='100%';layer.style.height='100%';}}
+  if(img.complete&&img.naturalWidth)setH();else img.onload=setH;
+  var sc=1,tx=0,ty=0;
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+  function clT(s,x,y){var w=con.clientWidth,h=con.clientHeight;return{x:clamp(x,w-w*s,0),y:clamp(y,h-h*s,0)};}
+  function apT(){layer.style.transform='translate('+tx+'px,'+ty+'px) scale('+sc+')';}
+  con.addEventListener('wheel',function(e){e.preventDefault();var r=con.getBoundingClientRect(),ox=e.clientX-r.left,oy=e.clientY-r.top;var ns=clamp(sc*(e.deltaY<0?1.15:0.87),1,6),ratio=ns/sc;tx=ox-(ox-tx)*ratio;ty=oy-(oy-ty)*ratio;sc=ns;var t=clT(sc,tx,ty);tx=t.x;ty=t.y;apT();},{passive:false});
+  var touches={},lDist=null,lMid=null,tapStart=null,tapMoved=false;
+  function findPin(cx,cy){var r=con.getBoundingClientRect();var px=(cx-r.left-tx)/sc,py=(cy-r.top-ty)/sc;var ov=document.getElementById('map-pins-overlay');if(!ov)return null;var W=ov.clientWidth,H=ov.clientHeight;var pins=ov.children,best=null,bestD=9999;for(var i=0;i<pins.length;i++){var p=pins[i];if(!p._room)continue;var pinX=parseFloat(p.style.left)/100*W;var pinY=parseFloat(p.style.top)/100*H;var d=Math.sqrt((px-pinX)*(px-pinX)+(py-pinY)*(py-pinY));if(d<22&&d<bestD){best=p._room;bestD=d;}}return best;}
+  con.addEventListener('touchstart',function(e){e.preventDefault();Array.from(e.changedTouches).forEach(function(t){touches[t.identifier]=t;});if(Object.keys(touches).length===1){var t0=e.changedTouches[0];tapStart={x:t0.clientX,y:t0.clientY,time:Date.now()};tapMoved=false;}else{tapStart=null;}lDist=null;lMid=null;},{passive:false});
+  con.addEventListener('touchmove',function(e){e.preventDefault();Array.from(e.changedTouches).forEach(function(t){touches[t.identifier]=t;});if(tapStart){var t0=e.changedTouches[0];var dx=t0.clientX-tapStart.x,dy=t0.clientY-tapStart.y;if(Math.sqrt(dx*dx+dy*dy)>10)tapMoved=true;}var ids=Object.keys(touches),r=con.getBoundingClientRect();if(ids.length===2){var t1=touches[ids[0]],t2=touches[ids[1]];var dx2=t1.clientX-t2.clientX,dy2=t1.clientY-t2.clientY;var dist=Math.sqrt(dx2*dx2+dy2*dy2);var mid={x:((t1.clientX+t2.clientX)/2)-r.left,y:((t1.clientY+t2.clientY)/2)-r.top};if(lDist!==null){var ns=clamp(sc*(dist/lDist),1,6),ratio=ns/sc;tx=mid.x-(mid.x-tx)*ratio;ty=mid.y-(mid.y-ty)*ratio;sc=ns;}if(lMid!==null){tx+=mid.x-lMid.x;ty+=mid.y-lMid.y;}lDist=dist;lMid=mid;}else if(ids.length===1){var t=touches[ids[0]];if(lMid!==null){tx+=t.clientX-r.left-lMid.x;ty+=t.clientY-r.top-lMid.y;}lMid={x:t.clientX-r.left,y:t.clientY-r.top};}var cl=clT(sc,tx,ty);tx=cl.x;ty=cl.y;apT();},{passive:false});
+  con.addEventListener('touchend',function(e){var t0=e.changedTouches[0];var wasTap=tapStart&&!tapMoved&&(Date.now()-tapStart.time)<400&&Object.keys(touches).length===1;if(wasTap){var hitId=findPin(t0.clientX,t0.clientY);if(hitId)mapPinClick(hitId);else closePinInfo();}Array.from(e.changedTouches).forEach(function(t){delete touches[t.identifier];});if(Object.keys(touches).length<2)lDist=null;if(Object.keys(touches).length===0){lMid=null;tapStart=null;}},{passive:false});
+  var drag=false,ds=null;
+  con.addEventListener('mousedown',function(e){drag=true;ds={x:e.clientX-tx,y:e.clientY-ty};con.classList.add('panning');});
+  window.addEventListener('mousemove',function(e){if(!drag||!ds)return;tx=e.clientX-ds.x;ty=e.clientY-ds.y;var cl=clT(sc,tx,ty);tx=cl.x;ty=cl.y;apT();});
+  window.addEventListener('mouseup',function(){drag=false;ds=null;con.classList.remove('panning');});
+  con.addEventListener('click',function(e){if(e.target===con||e.target===layer||e.target.tagName==='IMG'){var hit=findPin(e.clientX,e.clientY);if(hit)mapPinClick(hit);else closePinInfo();}});
+}
+
+// ── map upload (Storage) ──
+function doMapUpload(file){
+  setIndicator('Uploading map…','#fcd34d');
+  uploadMapToStorage(file,mapLevel,function(err,url){
+    if(err||!url){setIndicator('Map upload failed — '+err,'#ef4444');showToast('Map upload failed');return;}
+    _maps[mapLevel]=url;
+    sbSet(MAPS_KEY,_maps).then(function(){setIndicator('Map saved','#22c55e');setTimeout(function(){setIndicator('','');},2500);}).catch(function(){});
+    showToast('Map uploaded \u2713');
+    renderMap();
+  });
+}
+function uploadMap(event){var f=event.target.files[0];if(!f)return;doMapUpload(f);event.target.value='';}
+function clearMap(){
+  if(!confirm('Remove floor plan for '+lvlLabel(mapLevel)+'?'))return;
+  delete _maps[mapLevel]; sbSet(MAPS_KEY,_maps); renderMap(); showToast('Map removed');
+}
+
+// ── placement modal (called from Edit Stations "Place" button) ──
+function openPlacement(level, room){
+  if(!_maps[level]){showToast('Upload a floor plan for '+lvlLabel(level)+' first');mapLevel=level;syncMapTabs();showView('map');return;}
+  _pendingPlace={level:level,room:room};_placeX=null;_placeY=null;
+  document.getElementById('pm-title').textContent='Set Location \u2014 '+room;
+  document.getElementById('pm-sub').textContent=lvlLabel(level)+' \u00b7 Tap map to place pin';
+  document.getElementById('pm-confirm').style.display='none';
+  document.getElementById('placement-img').src=_maps[level];
+  renderPlaceSVG(null,null);
+  var existing=(_pins[level]||{})[room];
+  if(existing){_placeX=existing.x;_placeY=existing.y;renderPlaceSVG(existing.x,existing.y);document.getElementById('pm-confirm').style.display='flex';}
+  document.getElementById('placement-modal').classList.add('active');
+  var wrap=document.getElementById('placement-map-wrap');
+  wrap._ch=function(e){var imgEl=document.getElementById('placement-img');var rect=imgEl.getBoundingClientRect();_placeX=Math.max(0.01,Math.min(0.99,(e.clientX-rect.left)/rect.width));_placeY=Math.max(0.01,Math.min(0.99,(e.clientY-rect.top)/rect.height));renderPlaceSVG(_placeX,_placeY);document.getElementById('pm-confirm').style.display='flex';};
+  wrap.addEventListener('click',wrap._ch);
+}
+function renderPlaceSVG(px,py){
+  var svg=document.getElementById('placement-svg');if(px===null){svg.innerHTML='';return;}
+  var x=(px*100).toFixed(2),y=(py*100).toFixed(2);
+  svg.innerHTML='<circle cx="'+x+'" cy="'+y+'" r="3" fill="rgba(245,158,11,.3)" stroke="#f59e0b" stroke-width="0.8"/><circle cx="'+x+'" cy="'+y+'" r="1.1" fill="#f59e0b"/><line x1="'+x+'" y1="0" x2="'+x+'" y2="100" stroke="rgba(245,158,11,.25)" stroke-width="0.4" stroke-dasharray="2 2"/><line x1="0" y1="'+y+'" x2="100" y2="'+y+'" stroke="rgba(245,158,11,.25)" stroke-width="0.4" stroke-dasharray="2 2"/>';
+}
+function confirmPlacement(){
+  if(!_pendingPlace||_placeX===null)return;
+  var lv=_pendingPlace.level, room=_pendingPlace.room;
+  if(!_pins[lv])_pins[lv]={};
+  _pins[lv][room]={x:_placeX,y:_placeY};
+  try{localStorage.setItem(PINS_KEY,JSON.stringify(_pins));}catch(e){}
+  sbSet(PINS_KEY,_pins).then(function(){setIndicator('Pin saved','#22c55e');setTimeout(function(){setIndicator('','');},2000);}).catch(function(){});
+  showToast('Location saved \u2713');
+  closePlacement();
+  if(document.getElementById('view-edit').classList.contains('active'))renderEdit();
+  if(document.getElementById('view-map').classList.contains('active'))renderMap();
+}
+function closePlacement(){
+  document.getElementById('placement-modal').classList.remove('active');
+  var wrap=document.getElementById('placement-map-wrap');if(wrap._ch){wrap.removeEventListener('click',wrap._ch);wrap._ch=null;}
+  _pendingPlace=null;_placeX=null;_placeY=null;
+}
+function syncMapTabs(){
+  var c=document.getElementById('map-lvl-tabs');
+  if(c)c.querySelectorAll('.lvl-tab').forEach(function(t){t.classList.toggle('active',t.textContent===lvlLabel(mapLevel));});
 }
 
 // ═══ CSV EXPORT ══════════════════════════════════════════════════════
@@ -497,6 +882,7 @@ function showView(name, btn){
   if (btn) btn.classList.add('active');
   if (name === 'trends') renderTrend();
   if (name === 'edit') renderEdit();
+  if (name === 'map') { syncMapTabs(); renderMap(); }
 }
 function fmtShort(d){
   if (!d) return '';
@@ -511,14 +897,17 @@ function showToast(msg){
 
 // ═══ INIT ════════════════════════════════════════════════════════════
 var urlLvl = new URLSearchParams(window.location.search).get('level');
-if(urlLvl && (LEVEL_ORDER.indexOf(urlLvl) !== -1)){ entryLevel = urlLvl; trendLevel = urlLvl; editLevel = urlLvl; }
+if(urlLvl && (LEVEL_ORDER.indexOf(urlLvl) !== -1)){ entryLevel = urlLvl; trendLevel = urlLvl; editLevel = urlLvl; mapLevel = urlLvl; }
 var ewBb = document.getElementById('ew-back-btn');
 if(ewBb && urlLvl) ewBb.href = 'level-reports.html?level=' + urlLvl;
 
 mkTabs('entry-lvl-tabs', entryLevel, function(l){ entryLevel = l; renderGrid(); });
 mkTabs('trend-lvl-tabs', trendLevel, function(l){ trendLevel = l; renderTrend(); });
 mkTabs('edit-lvl-tabs',  editLevel,  function(l){ editLevel = l;  renderEdit(); });
+mkTabs('map-lvl-tabs',   mapLevel,   function(l){ mapLevel = l;   closePinInfo(); renderMap(); });
 document.getElementById('entry-date').value = new Date().toISOString().split('T')[0];
+document.getElementById('entry-date').addEventListener('change', function(){ renderGrid(); });
+document.getElementById('entry-tech').addEventListener('input', function(){ autoSaveEntry(); });
 
 // CLOUD INIT — load the reading log AND the station roster, then render.
 (function(){
@@ -528,7 +917,7 @@ document.getElementById('entry-date').value = new Date().toISOString().split('T'
     document.getElementById('cloud-overlay').style.display='none';
     renderGrid();
   }
-  var pending=2;
+  var pending=4;
   function step(){ if(--pending<=0) finish(); }
 
   // 1) Station roster
@@ -557,6 +946,19 @@ document.getElementById('entry-date').value = new Date().toISOString().split('T'
     if(res.ok && res.value!==null){
       try{ localStorage.setItem(LOG_KEY, JSON.stringify(res.value)); }catch(e){}
     }
+    step();
+  });
+
+  // 3) Map image URLs
+  sbGet(MAPS_KEY).then(function(res){
+    if(res.ok && res.value && typeof res.value==='object') _maps=res.value;
+    step();
+  });
+
+  // 4) Pin coordinates
+  sbGet(PINS_KEY).then(function(res){
+    if(res.ok && res.value && typeof res.value==='object') _pins=res.value;
+    else { try{ var lp=JSON.parse(localStorage.getItem(PINS_KEY)); if(lp) _pins=lp; }catch(e){} }
     step();
   });
 
