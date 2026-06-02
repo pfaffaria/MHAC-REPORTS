@@ -352,15 +352,24 @@ function saveShared(k,d){save(k,d);sbSet(k,d);}
 function loadArr(k){try{return JSON.parse(localStorage.getItem(k))||[];}catch(e){return[];}}
 
 // ── Month-scoped checks ──────────────────────────────────────────────
-// Live inspection checks auto-start fresh each calendar month but are never deleted;
-// each month lives under its own key, all autosaved to the cloud.
+// Live inspection checks auto-start fresh each calendar month and old months
+// are auto-discarded (we keep only the current month + the previous one as a
+// safety buffer). The Save Month history archive is separate and untouched.
 function curMonth(){var n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');}
+function prevMonth(){var n=new Date();n.setMonth(n.getMonth()-1);return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');}
 // One-time migration: if old flat checks exist ({level:{id}}), move them under the current month.
 function migrateChks(all){
   var keys=Object.keys(all);
   var looksMonthly=keys.length===0||keys.every(function(k){return /^\d{4}-\d{2}$/.test(k);});
   if(looksMonthly)return all;
   var migrated={};migrated[curMonth()]=all;return migrated;
+}
+// Drop any month except the current and previous one.
+function pruneChks(all){
+  var keep={}, c=curMonth(), p=prevMonth();
+  if(all[c])keep[c]=all[c];
+  if(all[p])keep[p]=all[p];
+  return keep;
 }
 function loadChks(){
   var all=migrateChks(load(CHKS_KEY));
@@ -369,6 +378,7 @@ function loadChks(){
 function saveChks(monthObj){
   var all=migrateChks(load(CHKS_KEY));
   all[curMonth()]=monthObj;
+  all=pruneChks(all);            // discard older months so storage stays small
   saveShared(CHKS_KEY,all);
 }
 
