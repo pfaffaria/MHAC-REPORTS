@@ -197,7 +197,7 @@ function isAdmin(){var s=getSession();return s&&s.role==='admin';}
   <div class="report-header">
     <div class="rh-eyebrow">Monthly Inspection Record</div>
     <div class="rh-title">Fire Extinguisher Inspection</div>
-    <div class="rh-sub">MHAC &middot; All Levels</div>
+    <div class="rh-sub" id="rh-sub">MHAC &middot; All Levels</div>
     <div class="rh-rule"></div>
   </div>
 
@@ -343,13 +343,34 @@ function sbSet(k,v){fetch(SB_URL+'/rest/v1/app_data',{method:'POST',headers:Obje
 var LOCS_KEY='mhac-fe-locs';   // {level: [{id, barcode, location, mapX, mapY}]}
 var MAPS_KEY='mhac-fe-maps';   // Supabase only (no localStorage — too large)
 var _mapsCache={};  // in-memory map cache
-var CHKS_KEY='mhac-fe-chks';   // localStorage only
+var CHKS_KEY='mhac-fe-chks';   // {"YYYY-MM": {level: {id: time}}} — month-scoped, cloud-synced
 var HIST_KEY='mhac-fe-hist';   // localStorage only
 
 function load(k){try{return JSON.parse(localStorage.getItem(k))||{};}catch(e){return{};}}
 function save(k,d){localStorage.setItem(k,JSON.stringify(d));}
 function saveShared(k,d){save(k,d);sbSet(k,d);}
 function loadArr(k){try{return JSON.parse(localStorage.getItem(k))||[];}catch(e){return[];}}
+
+// ── Month-scoped checks ──────────────────────────────────────────────
+// Live inspection checks auto-start fresh each calendar month but are never deleted;
+// each month lives under its own key, all autosaved to the cloud.
+function curMonth(){var n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');}
+// One-time migration: if old flat checks exist ({level:{id}}), move them under the current month.
+function migrateChks(all){
+  var keys=Object.keys(all);
+  var looksMonthly=keys.length===0||keys.every(function(k){return /^\d{4}-\d{2}$/.test(k);});
+  if(looksMonthly)return all;
+  var migrated={};migrated[curMonth()]=all;return migrated;
+}
+function loadChks(){
+  var all=migrateChks(load(CHKS_KEY));
+  return all[curMonth()]||{};
+}
+function saveChks(monthObj){
+  var all=migrateChks(load(CHKS_KEY));
+  all[curMonth()]=monthObj;
+  saveShared(CHKS_KEY,all);
+}
 
 // ═══ AUTO-LABELLING ═══════════════════════════════════════════════════
 function nextFriendlyId(level){
@@ -421,7 +442,7 @@ function showFeedback(msg,type){
 // ═══ RENDER CHECKLIST ════════════════════════════════════════════════
 function render(){
   var locs=load(LOCS_KEY)[curLevel]||[];
-  var chks=load(CHKS_KEY)[curLevel]||{};
+  var chks=loadChks()[curLevel]||{};
   var done=Object.values(chks).filter(Boolean).length;
   document.getElementById('cl-title').textContent=lvlLabel(curLevel);
   var pill=document.getElementById('cl-progress');
@@ -499,13 +520,13 @@ function saveInlineEdit(oldId,newId,newLoc,newBarcode){
   if(newBarcode)lvlLocs[idx].barcode=newBarcode;
   if(existing.mapX!==undefined){lvlLocs[idx].mapX=existing.mapX;lvlLocs[idx].mapY=existing.mapY;}
   locs[curLevel]=lvlLocs;saveShared(LOCS_KEY,locs);
-  if(newId!==oldId){var chks=load(CHKS_KEY);if(chks[curLevel]&&chks[curLevel][oldId]!==undefined){chks[curLevel][newId]=chks[curLevel][oldId];delete chks[curLevel][oldId];save(CHKS_KEY,chks);}}
+  if(newId!==oldId){var chks=loadChks();if(chks[curLevel]&&chks[curLevel][oldId]!==undefined){chks[curLevel][newId]=chks[curLevel][oldId];delete chks[curLevel][oldId];saveChks(chks);}}
   render();showToast('Saved \u2713');
 }
 
 // ═══ TOGGLE CHECK ════════════════════════════════════════════════════
 function toggleChk(id){
-  var chks=load(CHKS_KEY);
+  var chks=loadChks();
   if(!chks[curLevel])chks[curLevel]={};
   if(chks[curLevel][id]){delete chks[curLevel][id];}
   else{
@@ -513,7 +534,7 @@ function toggleChk(id){
     var loc=findById(curLevel,id);
     if(loc&&loc.mapX===undefined&&_mapsCache[curLevel])setTimeout(function(){openPlacement(id);},300);
   }
-  save(CHKS_KEY,chks);render();
+  saveChks(chks);render();
 }
 
 // ═══ SCAN ════════════════════════════════════════════════════════════
@@ -548,7 +569,7 @@ function stopScanner(){
 
 function onScan(code){
   code=code.trim();
-  var chks=load(CHKS_KEY);if(!chks[curLevel])chks[curLevel]={};
+  var chks=loadChks();if(!chks[curLevel])chks[curLevel]={};
 
   // Already registered on this level?
   var existing=findByBarcode(curLevel,code);
@@ -559,7 +580,7 @@ function onScan(code){
     } else {
       // Check it off
       var n=new Date();chks[curLevel][existing.id]=n.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
-      save(CHKS_KEY,chks);render();
+      saveChks(chks);render();
       showFeedback('\u2713 '+existing.id+' checked','checked');
       if(navigator.vibrate)navigator.vibrate(100);
       if(existing.mapX===undefined&&_mapsCache[curLevel])setTimeout(function(){openPlacement(existing.id);},800);
@@ -574,7 +595,7 @@ function onScan(code){
   saveShared(LOCS_KEY,locs);
   // Auto-check it
   var n2=new Date();chks[curLevel][friendlyId]=n2.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
-  save(CHKS_KEY,chks);
+  saveChks(chks);
   render();
   showFeedback('New: '+friendlyId+' \u2014 tap to add location','new');
   if(navigator.vibrate)navigator.vibrate([50,50,50]);
@@ -619,19 +640,19 @@ function delExt(id){
     if(!ok)return;
     var locs=load(LOCS_KEY);locs[curLevel]=(locs[curLevel]||[]).filter(function(l){return l.id!==id;});
     saveShared(LOCS_KEY,locs);
-    var chks=load(CHKS_KEY);if(chks[curLevel])delete chks[curLevel][id];save(CHKS_KEY,chks);
+    var chks=loadChks();if(chks[curLevel])delete chks[curLevel][id];saveChks(chks);
     render();showToast('Removed');
   });
 }
 function resetChecks(){
   customConfirm('Reset all checks for '+lvlLabel(curLevel)+'?').then(function(ok){
-    if(!ok)return;var chks=load(CHKS_KEY);chks[curLevel]={};save(CHKS_KEY,chks);render();showToast('Reset \u2713');
+    if(!ok)return;var chks=loadChks();chks[curLevel]={};saveChks(chks);render();showToast('Reset \u2713');
   });
 }
 function saveMonth(){
   var locs=load(LOCS_KEY)[curLevel]||[];
   if(!locs.length){showToast('No extinguishers on this level');return;}
-  var chks=load(CHKS_KEY)[curLevel]||{};
+  var chks=loadChks()[curLevel]||{};
   var missed=locs.filter(function(l){return !chks[l.id];});
   function doSave(){
     var hist=loadArr(HIST_KEY);
@@ -646,7 +667,7 @@ function saveMonth(){
 
 // ═══ MAP ══════════════════════════════════════════════════════════════
 function renderMap(highlightId){
-  var maps=_mapsCache;var locs=load(LOCS_KEY)[mapLevel]||[];var chks=load(CHKS_KEY)[mapLevel]||{};
+  var maps=_mapsCache;var locs=load(LOCS_KEY)[mapLevel]||[];var chks=loadChks()[mapLevel]||{};
   document.getElementById('map-title').textContent=lvlLabel(mapLevel)+' \u2014 Floor Plan';
   var content=document.getElementById('map-content');
   if(!maps[mapLevel]){
@@ -698,7 +719,7 @@ function buildMapPins(locs,chks,highlightId){
 
 function mapPinEnter(e,id){
   var loc=(load(LOCS_KEY)[mapLevel]||[]).find(function(l){return l.id===id;});
-  var chks=load(CHKS_KEY)[mapLevel]||{};if(!loc)return;
+  var chks=loadChks()[mapLevel]||{};if(!loc)return;
   var tt=document.getElementById('map-tooltip');if(!tt)return;
   tt.innerHTML=id+(loc.location?'<span class="tt-sub">'+loc.location+'</span>':'')+(chks[id]?'<span class="tt-sub" style="color:#4ade80">\u2713 '+chks[id]+'</span>':'<span class="tt-sub">Not checked</span>');
   var ov=document.getElementById('map-pins-overlay'),W=ov?ov.clientWidth:300,H=ov?ov.clientHeight:300;
@@ -708,7 +729,7 @@ function mapPinLeave(){var tt=document.getElementById('map-tooltip');if(tt)tt.st
 
 function mapPinClick(id){
   var loc=(load(LOCS_KEY)[mapLevel]||[]).find(function(l){return l.id===id;});
-  var chks=load(CHKS_KEY)[mapLevel]||{};if(!loc)return;
+  var chks=loadChks()[mapLevel]||{};if(!loc)return;
   _pipId=id;var checked=!!chks[id];
   document.getElementById('pip-id').textContent=id;
   document.getElementById('pip-barcode').textContent=loc.barcode?'Tag: '+loc.barcode:'';
@@ -727,9 +748,9 @@ function mapPinClick(id){
 }
 function closePinInfo(){document.getElementById('pin-info-panel').classList.remove('show');_pipId=null;}
 function pinInfoToggleChk(){
-  if(!_pipId)return;var chks=load(CHKS_KEY);if(!chks[mapLevel])chks[mapLevel]={};
+  if(!_pipId)return;var chks=loadChks();if(!chks[mapLevel])chks[mapLevel]={};
   if(chks[mapLevel][_pipId]){delete chks[mapLevel][_pipId];}else{var n=new Date();chks[mapLevel][_pipId]=n.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});}
-  save(CHKS_KEY,chks);var locs=load(LOCS_KEY)[mapLevel]||[];buildMapPins(locs,load(CHKS_KEY)[mapLevel]||{},null);mapPinClick(_pipId);if(curLevel===mapLevel)render();
+  saveChks(chks);var locs=load(LOCS_KEY)[mapLevel]||[];buildMapPins(locs,loadChks()[mapLevel]||{},null);mapPinClick(_pipId);if(curLevel===mapLevel)render();
 }
 function pinInfoGoChecklist(){if(!_pipId)return;closePinInfo();curLevel=mapLevel;mkLevelTabs('cl-level-tabs',curLevel,function(l){curLevel=l;render();});render();showView('checklist');}
 function pinAction(id){if(!_mapsCache[curLevel]){showToast('Upload a map for '+lvlLabel(curLevel)+' first');showView('map');return;}openPlacement(id);}
@@ -876,6 +897,8 @@ document.getElementById('map-replace-input').addEventListener('change',function(
 (function(){
   function initUI(){
     document.getElementById('cloud-overlay').style.display='none';
+    var sub=document.getElementById('rh-sub');
+    if(sub){var d=new Date();var mn=['January','February','March','April','May','June','July','August','September','October','November','December'][d.getMonth()];sub.innerHTML='MHAC &middot; '+mn+' '+d.getFullYear();}
     mkLevelTabs('cl-level-tabs',curLevel,function(l){curLevel=l;if(scanning)stopScanner();render();});
     mkLevelTabs('map-level-tabs',mapLevel,function(l){mapLevel=l;renderMap();});
     mkLevelTabs('hist-level-tabs',histLevel,function(l){histLevel=l;renderHistory();});
@@ -883,10 +906,11 @@ document.getElementById('map-replace-input').addEventListener('change',function(
   }
   // Timeout fallback — show UI after 4s even if Supabase is slow
   var timeout=setTimeout(initUI,4000);
-  Promise.all([sbGet(LOCS_KEY),sbGet(MAPS_KEY)]).then(function(results){
+  Promise.all([sbGet(LOCS_KEY),sbGet(MAPS_KEY),sbGet(CHKS_KEY)]).then(function(results){
     clearTimeout(timeout);
     if(results[0]!==null)localStorage.setItem(LOCS_KEY,JSON.stringify(results[0]));
     if(results[1]!==null)_mapsCache=results[1];
+    if(results[2]!==null)localStorage.setItem(CHKS_KEY,JSON.stringify(results[2]));
     initUI();
   }).catch(function(){
     clearTimeout(timeout);
