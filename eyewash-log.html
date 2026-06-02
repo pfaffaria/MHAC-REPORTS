@@ -778,11 +778,58 @@ function setupMapZoom(){
   function clT(s,x,y){var w=con.clientWidth,h=con.clientHeight;return{x:clamp(x,w-w*s,0),y:clamp(y,h-h*s,0)};}
   function apT(){layer.style.transform='translate('+tx+'px,'+ty+'px) scale('+sc+')';}
   con.addEventListener('wheel',function(e){e.preventDefault();var r=con.getBoundingClientRect(),ox=e.clientX-r.left,oy=e.clientY-r.top;var ns=clamp(sc*(e.deltaY<0?1.15:0.87),1,6),ratio=ns/sc;tx=ox-(ox-tx)*ratio;ty=oy-(oy-ty)*ratio;sc=ns;var t=clT(sc,tx,ty);tx=t.x;ty=t.y;apT();},{passive:false});
-  var touches={},lDist=null,lMid=null,tapStart=null,tapMoved=false;
+  var touches={},tapStart=null,tapMoved=false;
+  // Gesture baseline captured when a 1- or 2-finger gesture begins; transform derived from it each frame.
+  var gesture=null; // {startSc,startTx,startTy,startDist,startMidX,startMidY}
   function findPin(cx,cy){var r=con.getBoundingClientRect();var px=(cx-r.left-tx)/sc,py=(cy-r.top-ty)/sc;var ov=document.getElementById('map-pins-overlay');if(!ov)return null;var W=ov.clientWidth,H=ov.clientHeight;var pins=ov.children,best=null,bestD=9999;for(var i=0;i<pins.length;i++){var p=pins[i];if(!p._room)continue;var pinX=parseFloat(p.style.left)/100*W;var pinY=parseFloat(p.style.top)/100*H;var d=Math.sqrt((px-pinX)*(px-pinX)+(py-pinY)*(py-pinY));if(d<20&&d<bestD){best=p._room;bestD=d;}}return best;}
-  con.addEventListener('touchstart',function(e){e.preventDefault();Array.from(e.changedTouches).forEach(function(t){touches[t.identifier]=t;});if(Object.keys(touches).length===1){var t0=e.changedTouches[0];tapStart={x:t0.clientX,y:t0.clientY,time:Date.now()};tapMoved=false;}else{tapStart=null;}lDist=null;lMid=null;},{passive:false});
-  con.addEventListener('touchmove',function(e){e.preventDefault();Array.from(e.changedTouches).forEach(function(t){touches[t.identifier]=t;});if(tapStart){var t0=e.changedTouches[0];var dx=t0.clientX-tapStart.x,dy=t0.clientY-tapStart.y;if(Math.sqrt(dx*dx+dy*dy)>10)tapMoved=true;}var ids=Object.keys(touches),r=con.getBoundingClientRect();if(ids.length===2){var t1=touches[ids[0]],t2=touches[ids[1]];var dx2=t1.clientX-t2.clientX,dy2=t1.clientY-t2.clientY;var dist=Math.sqrt(dx2*dx2+dy2*dy2);var mid={x:((t1.clientX+t2.clientX)/2)-r.left,y:((t1.clientY+t2.clientY)/2)-r.top};if(lDist!==null){var ns=clamp(sc*(dist/lDist),1,6),ratio=ns/sc;tx=mid.x-(mid.x-tx)*ratio;ty=mid.y-(mid.y-ty)*ratio;sc=ns;}if(lMid!==null){tx+=mid.x-lMid.x;ty+=mid.y-lMid.y;}lDist=dist;lMid=mid;}else if(ids.length===1){var t=touches[ids[0]];if(lMid!==null){tx+=t.clientX-r.left-lMid.x;ty+=t.clientY-r.top-lMid.y;}lMid={x:t.clientX-r.left,y:t.clientY-r.top};}var cl=clT(sc,tx,ty);tx=cl.x;ty=cl.y;apT();},{passive:false});
-  con.addEventListener('touchend',function(e){var t0=e.changedTouches[0];var wasTap=tapStart&&!tapMoved&&(Date.now()-tapStart.time)<400&&Object.keys(touches).length===1;if(wasTap){var hitId=findPin(t0.clientX,t0.clientY);if(hitId)mapPinClick(hitId);else closePinInfo();}Array.from(e.changedTouches).forEach(function(t){delete touches[t.identifier];});if(Object.keys(touches).length<2)lDist=null;if(Object.keys(touches).length===0){lMid=null;tapStart=null;}},{passive:false});
+  function touchInfo(){
+    var ids=Object.keys(touches), r=con.getBoundingClientRect();
+    if(ids.length>=2){
+      var a=touches[ids[0]], b=touches[ids[1]];
+      var dx=a.clientX-b.clientX, dy=a.clientY-b.clientY;
+      return {n:2, dist:Math.max(1,Math.sqrt(dx*dx+dy*dy)),
+              mx:((a.clientX+b.clientX)/2)-r.left, my:((a.clientY+b.clientY)/2)-r.top};
+    } else if(ids.length===1){
+      var t=touches[ids[0]];
+      return {n:1, dist:0, mx:t.clientX-r.left, my:t.clientY-r.top};
+    }
+    return {n:0};
+  }
+  function beginGesture(){
+    var info=touchInfo(); if(info.n===0){gesture=null;return;}
+    gesture={startSc:sc,startTx:tx,startTy:ty,startDist:info.dist,startMidX:info.mx,startMidY:info.my,n:info.n};
+  }
+  con.addEventListener('touchstart',function(e){
+    e.preventDefault();
+    Array.from(e.changedTouches).forEach(function(t){touches[t.identifier]=t;});
+    if(Object.keys(touches).length===1){var t0=e.changedTouches[0];tapStart={x:t0.clientX,y:t0.clientY,time:Date.now()};tapMoved=false;}
+    else{tapStart=null;}
+    beginGesture(); // re-baseline whenever finger count changes
+  },{passive:false});
+  con.addEventListener('touchmove',function(e){
+    e.preventDefault();
+    Array.from(e.changedTouches).forEach(function(t){if(touches[t.identifier])touches[t.identifier]=t;});
+    if(!gesture)beginGesture();
+    var info=touchInfo(); if(info.n===0||!gesture)return;
+    // if finger count changed since baseline, re-baseline to avoid a jump
+    if(info.n!==gesture.n){beginGesture();info=touchInfo();}
+    if(tapStart&&info.n===1){var ddx=info.mx-(tapStart.x-con.getBoundingClientRect().left),ddy=info.my-(tapStart.y-con.getBoundingClientRect().top);if(Math.sqrt(ddx*ddx+ddy*ddy)>10)tapMoved=true;}
+    var ns=gesture.startSc;
+    if(info.n===2){ ns=clamp(gesture.startSc*(info.dist/gesture.startDist),1,6); }
+    // Keep the gesture's start-midpoint anchored under the fingers while scaling, then add pan from midpoint travel.
+    var ratio=ns/gesture.startSc;
+    tx = info.mx - (gesture.startMidX - gesture.startTx)*ratio;
+    ty = info.my - (gesture.startMidY - gesture.startTy)*ratio;
+    sc = ns;
+    var cl=clT(sc,tx,ty); tx=cl.x; ty=cl.y; apT();
+  },{passive:false});
+  con.addEventListener('touchend',function(e){
+    var t0=e.changedTouches[0];
+    var wasTap=tapStart&&!tapMoved&&(Date.now()-tapStart.time)<400&&Object.keys(touches).length===1;
+    if(wasTap){var hitId=findPin(t0.clientX,t0.clientY);if(hitId)mapPinClick(hitId);else closePinInfo();}
+    Array.from(e.changedTouches).forEach(function(t){delete touches[t.identifier];});
+    if(Object.keys(touches).length>0){beginGesture();} else {gesture=null;tapStart=null;}
+  },{passive:false});
   var drag=false,ds=null;
   con.addEventListener('mousedown',function(e){drag=true;ds={x:e.clientX-tx,y:e.clientY-ty};con.classList.add('panning');});
   window.addEventListener('mousemove',function(e){if(!drag||!ds)return;tx=e.clientX-ds.x;ty=e.clientY-ds.y;var cl=clT(sc,tx,ty);tx=cl.x;ty=cl.y;apT();});
