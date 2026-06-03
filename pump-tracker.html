@@ -343,7 +343,7 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
 
 // ═══ INIT ════════════════════════════════════════════════════════════
 var urlLvl=new URLSearchParams(window.location.search).get('level');
-var bb=document.getElementById('pump-back-btn'); if(bb&&urlLvl)bb.href='level-reports.html?level='+urlLvl;
+var bb=document.getElementById('pump-back-btn'); if(bb)bb.href=(!urlLvl||urlLvl==='PH')?'Penthouse.html':('level-reports.html?level='+urlLvl);
 
 (function(){
   var done=false;
