@@ -273,6 +273,7 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
     <div id="map-controls-bar" style="display:none;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
       <button class="tb-btn admin-only" id="upload-map-btn" onclick="document.getElementById('map-file-input').click()">&#8593; Replace Map</button>
       <button class="tb-btn admin-only" id="pin-mode-btn" onclick="togglePinMode()" style="display:none">+ Add Pin</button>
+      <button class="tb-btn admin-only" id="sink-mode-btn" onclick="toggleSinkMode()" style="display:none">&#128688; Add Sink</button>
       <button class="tb-btn admin-only" id="clear-pins-btn" onclick="clearAllPins()" style="display:none;border-color:rgba(239,68,68,.3);color:rgba(239,68,68,.6)">&#x2715; Clear Pins</button>
       <span id="pin-hint" style="font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.35);text-transform:uppercase"></span>
     </div>
@@ -280,6 +281,7 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
     <div id="map-wrap" class="map-wrap" style="display:none">
       <img id="map-img" class="map-img" draggable="false" style="display:block;max-width:100%;max-height:70vh;pointer-events:none;user-select:none;border-radius:8px"/>
       <div id="map-pins-overlay" style="position:absolute;inset:0;pointer-events:none"></div>
+      <div id="map-sinks-overlay" style="position:absolute;inset:0;pointer-events:none"></div>
       <div id="pin-spotlight" style="display:none;position:absolute;width:38px;height:38px;border-radius:50%;background:#f59e0b;border:3px solid #fff;transform:translate(-50%,-50%);z-index:50;pointer-events:none;box-shadow:0 0 0 5px rgba(245,158,11,.5),0 0 20px rgba(245,158,11,.9);font-family:Rajdhani,sans-serif;font-size:10px;font-weight:900;color:#000;align-items:center;justify-content:center;text-align:center;line-height:1"></div>
     </div>
   </div>
@@ -309,6 +311,21 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
       <div class="modal-actions">
         <button class="tb-btn" onclick="confirmQuickPin()">&#10003; Place Pin</button>
         <button class="tb-btn" onclick="document.getElementById('quick-pin-modal').classList.remove('active');pendingPinPos=null;document.body.style.overflow='';document.body.style.position='';document.body.style.width='';['qp-toilet','qp-shower','qp-sink','qp-tv'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});" style="border-color:rgba(239,68,68,.3);color:rgba(239,68,68,.6)">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SINK MARKER MODAL -->
+  <div id="sink-modal" class="modal-overlay">
+    <div class="modal" style="max-width:300px">
+      <div class="modal-title">Place Sink</div>
+      <div class="modal-field">
+        <label>Sink Number</label>
+        <input id="sink-num" type="text" inputmode="numeric" placeholder="e.g. 1"/>
+      </div>
+      <div class="modal-actions">
+        <button class="tb-btn" onclick="confirmSink()">&#10003; Place Sink</button>
+        <button class="tb-btn" onclick="cancelSink()" style="border-color:rgba(239,68,68,.3);color:rgba(239,68,68,.6)">Cancel</button>
       </div>
     </div>
   </div>
@@ -520,6 +537,7 @@ var HISTORY_KEY='mhac-ri-history',TEMPS_KEY='mhac-ri-temps';
 var DATES_KEY='mhac-ri-dates';    // {roomNum: 'YYYY-MM'} first inspection month
 var ARCHIVE_KEY='mhac-ri-archive';// [{cycleLabel, rooms:{}, archivedAt}]
 var PINS_KEY='mhac-ri-pins';      // {level: [{roomNum,x,y}]}
+var SINKS_KEY='mhac-ri-sinks';    // {zoneKey: [{num,x,y}]} — separate numbered sink markers
 // Maps stored per-level: 'mhac-ri-map-{level}'
 
 var DEFAULT_ROOMS={'1':{'South East':[
@@ -608,6 +626,8 @@ function loadArchive(){return ls_get(ARCHIVE_KEY)||[];}
 function saveArchive(d){ls_set(ARCHIVE_KEY,d);sbSet(ARCHIVE_KEY,d);}
 function loadPins(){var d=ls_get(PINS_KEY)||{};return d;}
 function savePins(d){ls_set(PINS_KEY,d);sbSet(PINS_KEY,d);}
+function loadSinks(){return ls_get(SINKS_KEY)||{};}
+function saveSinks(d){ls_set(SINKS_KEY,d);sbSet(SINKS_KEY,d);}
 function loadMap(level){return _mapCache[zoneKey()]||null;}
 function saveMap(level,b64){var k=zoneKey();_mapCache[k]=b64;sbSet('mhac-ri-map-'+k,b64);}
 
@@ -625,6 +645,7 @@ var _spotlightKeeper=setInterval(function(){
   _applyPinHighlight(curRoom);
 },100);
 var pinMode=false,pendingPinPos=null,curView='rooms';
+var sinkMode=false,pendingSinkPos=null,_movingSink=null;
 var urlParams=new URLSearchParams(window.location.search);
 var filterLevel=urlParams.get('level')||null;
 var filterZone=urlParams.get('zone')||null;
@@ -874,6 +895,7 @@ function renderMap(highlightRoom){
 
   // Show/hide admin buttons
   var pmb=document.getElementById('pin-mode-btn');if(pmb)pmb.style.display=isAdmin?'flex':'none';
+  var smb=document.getElementById('sink-mode-btn');if(smb)smb.style.display=isAdmin?'flex':'none';
   var cpb=document.getElementById('clear-pins-btn');if(cpb)cpb.style.display=isAdmin?'flex':'none';
 
   // Add click handler for pin placement if needed
@@ -881,6 +903,29 @@ function renderMap(highlightRoom){
     mapWrap._clickSet=true;
     function handleMapTap(clientX,clientY,target){
       if(target.closest('[data-room]'))return;
+      if(target.closest('[data-sink]'))return;
+      // Move sink mode
+      if(_movingSink){
+        var rectS=mapWrap.getBoundingClientRect();
+        var sx=Math.max(0.01,Math.min(0.99,(clientX-rectS.left)/rectS.width));
+        var sy=Math.max(0.01,Math.min(0.99,(clientY-rectS.top)/rectS.height));
+        var allS=loadSinks();var zkS=zoneKey();
+        var sk=(allS[zkS]||[]).find(function(q){return String(q.num)===String(_movingSink.num)&&q.x===_movingSink.x&&q.y===_movingSink.y;});
+        if(sk){sk.x=sx;sk.y=sy;saveSinks(allS);}
+        document.body.style.overflow='';document.body.style.position='';document.body.style.width='';
+        document.getElementById('pin-hint').textContent='';
+        _movingSink=null;
+        buildSinkPins();
+        showToast('Sink moved ✓');
+        return;
+      }
+      // Place sink mode
+      if(isAdmin&&sinkMode){
+        var rectK=mapWrap.getBoundingClientRect();
+        pendingSinkPos={x:(clientX-rectK.left)/rectK.width,y:(clientY-rectK.top)/rectK.height};
+        openSinkModal();
+        return;
+      }
       // Move pin mode
       if(window._movingPin){
         var rect=mapWrap.getBoundingClientRect();
@@ -908,7 +953,7 @@ function renderMap(highlightRoom){
     },{passive:false});
     mapWrap.addEventListener('touchstart',function(e){
       _touchCount=e.touches.length;
-      if(pinMode&&e.touches.length===1)e.preventDefault(); // stop scroll, single touch only
+      if((pinMode||sinkMode||_movingSink)&&e.touches.length===1)e.preventDefault(); // stop scroll, single touch only
     },{passive:false});
     mapWrap.addEventListener('touchend',function(e){
       // Only place pin on single-finger tap, not pinch/zoom
@@ -921,6 +966,7 @@ function renderMap(highlightRoom){
 
   // Rebuild ONLY the pins overlay — image stays intact
   buildRoomPins(highlightRoom);
+  buildSinkPins();
 }
 
 function buildRoomPins(highlightRoom){
@@ -996,6 +1042,92 @@ function renderPin(overlay,pin,data,highlightRoom){
   }
 
   overlay.appendChild(div);
+}
+
+// ═══ SINK MARKERS (separate numbered layer) ═════════════════════════
+function buildSinkPins(){
+  var overlay=document.getElementById('map-sinks-overlay'); if(!overlay)return;
+  overlay.innerHTML='';
+  var all=loadSinks();
+  var list=all[zoneKey()]||[];
+  list.forEach(function(sink){renderSink(overlay,sink);});
+}
+function renderSink(overlay,sink){
+  var div=document.createElement('div');
+  div.setAttribute('data-sink',sink.num);
+  div.style.cssText=
+    'position:absolute;left:'+(sink.x*100).toFixed(2)+'%;top:'+(sink.y*100).toFixed(2)+'%;'+
+    'transform:translate(-50%,-50%);display:flex;align-items:center;gap:3px;'+
+    'pointer-events:all;cursor:pointer;z-index:12;';
+  // sink icon chip + number badge
+  var chip=document.createElement('div');
+  chip.style.cssText='display:flex;align-items:center;gap:3px;background:rgba(13,20,40,.92);border:2px solid #38bdf8;border-radius:13px;padding:2px 7px 2px 5px;box-shadow:0 0 6px rgba(56,189,248,.6);';
+  chip.innerHTML='<span style="font-size:13px;line-height:1">&#128688;</span><span style="font-family:Rajdhani,sans-serif;font-size:12px;font-weight:700;color:#e0f2fe;letter-spacing:.5px">'+String(sink.num).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</span>';
+  div.appendChild(chip);
+  if(isAdmin){
+    var del=document.createElement('button');
+    del.style.cssText='position:absolute;top:-7px;right:-7px;width:15px;height:15px;background:#ef4444;border:none;border-radius:50%;color:#fff;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:30;line-height:1;';
+    del.innerHTML='&#x2715;';
+    del.addEventListener('click',function(e){e.stopPropagation();e.preventDefault();removeSink(sink.num,sink.x,sink.y);});
+    div.appendChild(del);
+    var moveBtn=document.createElement('button');
+    moveBtn.style.cssText='position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);background:#0d1428;border:1px solid rgba(56,189,248,.6);border-radius:3px;color:rgba(186,230,253,.9);font-size:7px;font-family:Rajdhani,sans-serif;font-weight:700;letter-spacing:1px;padding:1px 4px;cursor:pointer;white-space:nowrap;z-index:30;';
+    moveBtn.textContent='MOVE';
+    moveBtn.addEventListener('click',function(e){e.stopPropagation();startMoveSink(sink.num,sink.x,sink.y);});
+    moveBtn.addEventListener('touchend',function(e){e.stopPropagation();e.preventDefault();startMoveSink(sink.num,sink.x,sink.y);});
+    div.appendChild(moveBtn);
+  }
+  overlay.appendChild(div);
+}
+function toggleSinkMode(){
+  sinkMode=!sinkMode;
+  if(sinkMode){pinMode=false;var pb=document.getElementById('pin-mode-btn');if(pb)pb.classList.remove('active');}
+  var btn=document.getElementById('sink-mode-btn');
+  if(btn)btn.classList.toggle('active',sinkMode);
+  document.getElementById('pin-hint').textContent=sinkMode?'Tap map to place a sink':'';
+  var mw=document.getElementById('map-wrap'); if(mw)mw.classList.toggle('no-pin-mode',!sinkMode&&!pinMode);
+  document.body.style.overflow=sinkMode?'hidden':'';
+  document.body.style.position=sinkMode?'fixed':'';
+  document.body.style.width=sinkMode?'100%':'';
+}
+function openSinkModal(){
+  // suggest next number = current count + 1
+  var list=(loadSinks()[zoneKey()])||[];
+  document.getElementById('sink-num').value=String(list.length+1);
+  document.getElementById('sink-modal').classList.add('active');
+  setTimeout(function(){var el=document.getElementById('sink-num');if(el){el.focus();el.select();}},50);
+}
+function confirmSink(){
+  var num=(document.getElementById('sink-num').value||'').trim();
+  if(!num){showToast('Enter a sink number');return;}
+  if(!pendingSinkPos){showToast('No position');return;}
+  var all=loadSinks(); var zk=zoneKey(); if(!all[zk])all[zk]=[];
+  all[zk].push({num:num,x:pendingSinkPos.x,y:pendingSinkPos.y});
+  saveSinks(all);
+  pendingSinkPos=null;
+  document.getElementById('sink-modal').classList.remove('active');
+  sinkMode=false;var b=document.getElementById('sink-mode-btn');if(b)b.classList.remove('active');
+  document.getElementById('pin-hint').textContent='';
+  document.body.style.overflow='';document.body.style.position='';document.body.style.width='';
+  buildSinkPins();
+  showToast('Sink '+num+' placed ✓');
+}
+function cancelSink(){
+  pendingSinkPos=null;
+  document.getElementById('sink-modal').classList.remove('active');
+  document.body.style.overflow='';document.body.style.position='';document.body.style.width='';
+}
+function startMoveSink(num,x,y){
+  _movingSink={num:num,x:x,y:y};
+  showToast('Tap new spot for sink '+num);
+  document.getElementById('pin-hint').textContent='Tap map to move sink '+num;
+}
+function removeSink(num,x,y){
+  if(!confirm('Remove sink '+num+'?'))return;
+  var all=loadSinks(); var zk=zoneKey(); var list=all[zk]||[];
+  all[zk]=list.filter(function(s){return !(String(s.num)===String(num)&&s.x===x&&s.y===y);});
+  saveSinks(all);
+  buildSinkPins();
 }
 
 function togglePinMode(){
@@ -1661,7 +1793,7 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
 // ═══ CLOUD INIT ══════════════════════════════════════════════════════
 (function(){
   // Only fetch the keys needed for this level/zone — not maps
-  var KEYS=[ROOMS_KEY,CHECKS_KEY,DATA_KEY,HISTORY_KEY,TEMPS_KEY,DATES_KEY,ARCHIVE_KEY,PINS_KEY];
+  var KEYS=[ROOMS_KEY,CHECKS_KEY,DATA_KEY,HISTORY_KEY,TEMPS_KEY,DATES_KEY,ARCHIVE_KEY,PINS_KEY,SINKS_KEY];
   // Also fetch map for current level into memory cache
   var _initLevel=filterLevel||curLevel;
   var mapKey='mhac-ri-map-'+(_initLevel+(filterZone?'-'+filterZone.replace(/[^a-zA-Z0-9]/g,'-'):''));
