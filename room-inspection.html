@@ -766,7 +766,18 @@ function initApp(){
   if(filterLevel)curLevel=filterLevel;
   if(filterZone){document.getElementById('lvl-tabs').style.display='none';var bb=document.getElementById('back-map-btn');if(bb){bb.href='reports.html?level='+curLevel+'&zone='+encodeURIComponent(filterZone);bb.textContent='<- Reports';}}
   checkAndResetRooms();
+  cleanupOrphanSinks();
   renderLevelTabs();renderZones();renderMap(curRoom);updateCycleBanner();updateStatus();
+}
+// Remove any sinks saved before room-association existed (they have no roomNum and would never display).
+function cleanupOrphanSinks(){
+  var all=loadSinks(); var changed=false;
+  Object.keys(all).forEach(function(zk){
+    var before=all[zk].length;
+    all[zk]=all[zk].filter(function(s){return s.roomNum;});
+    if(all[zk].length!==before)changed=true;
+  });
+  if(changed)saveSinks(all);
 }
 
 function setView(v){curView=v;renderMap(curRoom);}
@@ -1050,7 +1061,7 @@ function buildSinkPins(){
   if(!curRoom)return; // sinks only show for the room that's currently open
   var all=loadSinks();
   var list=all[zoneKey()]||[];
-  list.filter(function(s){return s.roomNum===curRoom;}).forEach(function(sink){renderSink(overlay,sink);});
+  list.filter(function(s){return s.roomNum&&s.roomNum===curRoom;}).forEach(function(sink){renderSink(overlay,sink);});
 }
 function renderSink(overlay,sink){
   var div=document.createElement('div');
