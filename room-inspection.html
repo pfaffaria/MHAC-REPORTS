@@ -1338,7 +1338,7 @@ function renderChecklist(cat,roomInfo){
     var isSinkChild=/^p1-\d+$/.test(item.id);
     var reorder='';
     if(isAdmin&&!isSinkChild){
-      reorder='<div class="reorder-arrows"><button class="reorder-btn" onclick="moveCheck(\''+cat+'\',\''+item.id+'\',-1)" title="Move up">&#9650;</button><button class="reorder-btn" onclick="moveCheck(\''+cat+'\',\''+item.id+'\',1)" title="Move down">&#9660;</button></div>';
+      reorder='<div class="reorder-arrows"><button type="button" class="reorder-btn" onclick="event.stopPropagation();moveCheck(\''+cat+'\',\''+item.id+'\',-1)" title="Move up">&#9650;</button><button type="button" class="reorder-btn" onclick="event.stopPropagation();moveCheck(\''+cat+'\',\''+item.id+'\',1)" title="Move down">&#9660;</button></div>';
     }
     var hdr='<div class="check-item-hdr">'+reorder+'<div class="check-box-wrap"><input type="checkbox" class="check-cb" id="cb_'+item.id+'" '+(isChecked?'checked':'')+' onchange="onCheck(\''+cat+'\',\''+item.id+'\',this.checked)"/></div><div class="check-info"><div class="check-name">'+item.name+'</div><div class="check-desc">'+item.desc+'</div></div>'+(isAdmin?'<button class="admin-del-btn" onclick="deleteCheck(\''+cat+'\',\''+item.id+'\')">&#x2715;</button>':'')+'</div>';
     var extra='';
@@ -1567,6 +1567,7 @@ function moveCheck(cat,id,dir){
   }
   // re-render the open room's checklist for this category
   if(curRoom){var rooms2=loadRooms(),lr=rooms2[curLevel]||{},roomInfo=null;Object.values(lr).forEach(function(z){var f=z.find(function(r){return r.num===curRoom;});if(f)roomInfo=f;});renderChecklist(cat,roomInfo);}
+  showToast('Moved '+(dir<0?'up':'down'));
 }
 function deleteCheck(cat,id){
   if(!isAdmin)return;
