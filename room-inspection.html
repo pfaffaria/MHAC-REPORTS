@@ -771,13 +771,17 @@ function initApp(){
 }
 // Remove any sinks saved before room-association existed (they have no roomNum and would never display).
 function cleanupOrphanSinks(){
-  var all=loadSinks(); var changed=false;
-  Object.keys(all).forEach(function(zk){
-    var before=all[zk].length;
-    all[zk]=all[zk].filter(function(s){return s.roomNum;});
-    if(all[zk].length!==before)changed=true;
-  });
-  if(changed)saveSinks(all);
+  try{
+    var all=loadSinks(); if(!all||typeof all!=='object')return;
+    var changed=false;
+    Object.keys(all).forEach(function(zk){
+      if(!Array.isArray(all[zk])){all[zk]=[];changed=true;return;}
+      var before=all[zk].length;
+      all[zk]=all[zk].filter(function(s){return s&&s.roomNum;});
+      if(all[zk].length!==before)changed=true;
+    });
+    if(changed)saveSinks(all);
+  }catch(e){/* never let cleanup break startup */}
 }
 
 function setView(v){curView=v;renderMap(curRoom);}
@@ -1060,8 +1064,8 @@ function buildSinkPins(){
   overlay.innerHTML='';
   if(!curRoom)return; // sinks only show for the room that's currently open
   var all=loadSinks();
-  var list=all[zoneKey()]||[];
-  list.filter(function(s){return s.roomNum&&s.roomNum===curRoom;}).forEach(function(sink){renderSink(overlay,sink);});
+  var list=(all&&Array.isArray(all[zoneKey()]))?all[zoneKey()]:[];
+  list.filter(function(s){return s&&s.roomNum&&s.roomNum===curRoom;}).forEach(function(sink){renderSink(overlay,sink);});
 }
 function renderSink(overlay,sink){
   var div=document.createElement('div');
@@ -1116,7 +1120,7 @@ function confirmSink(){
   if(!pendingSinkPos){showToast('No position');return;}
   var room=window._sinkRoom||curRoom;
   if(!room){showToast('No room linked');return;}
-  var all=loadSinks(); var zk=zoneKey(); if(!all[zk])all[zk]=[];
+  var all=loadSinks(); var zk=zoneKey(); if(!Array.isArray(all[zk]))all[zk]=[];
   all[zk].push({num:num,x:pendingSinkPos.x,y:pendingSinkPos.y,roomNum:room});
   saveSinks(all);
   pendingSinkPos=null; window._sinkRoom=null;
@@ -1142,7 +1146,7 @@ function startMoveSink(num,x,y){
 }
 function removeSink(num,x,y){
   if(!confirm('Remove sink '+num+'?'))return;
-  var all=loadSinks(); var zk=zoneKey(); var list=all[zk]||[];
+  var all=loadSinks(); var zk=zoneKey(); var list=Array.isArray(all[zk])?all[zk]:[];
   all[zk]=list.filter(function(s){return !(String(s.num)===String(num)&&s.x===x&&s.y===y);});
   saveSinks(all);
   buildSinkPins();
