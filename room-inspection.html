@@ -129,6 +129,10 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 .check-note::placeholder{color:rgba(245,158,11,.2)}
 .check-note.issue{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.04)}
 .admin-del-btn{background:none;border:none;color:rgba(245,158,11,.2);font-size:14px;cursor:pointer;padding:2px 4px;border-radius:3px;transition:all .2s;line-height:1;flex-shrink:0}
+.reorder-arrows{display:flex;flex-direction:column;gap:1px;margin-right:6px;flex-shrink:0}
+.reorder-btn{background:none;border:1px solid rgba(245,158,11,.18);color:rgba(245,158,11,.5);font-size:8px;cursor:pointer;padding:1px 4px;border-radius:3px;line-height:1.1;transition:all .15s}
+.reorder-btn:hover{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.5);color:var(--amber-light)}
+.reorder-btn:active{background:rgba(245,158,11,.3)}
 .admin-del-btn:hover{color:#f87171;background:rgba(239,68,68,.1)}
 .add-check-btn{width:100%;padding:8px;border:1px dashed rgba(245,158,11,.18);border-radius:6px;background:transparent;color:rgba(245,158,11,.3);font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;margin-top:4px}
 .field-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
@@ -590,15 +594,19 @@ function getChecksForRoom(cat,roomInfo){
         if(item.id==='p3')return roomInfo.shower;
         return true;
       });
-      // Multiple sinks
-      if(roomInfo.sinkCount&&roomInfo.sinkCount>1){
+      // Multiple sinks: replace the single sink check (p1) with one entry per sink.
+      var count=parseInt(roomInfo.sinkCount)||1;
+      if(roomInfo.sink && count>1){
         var sinkIdx=filtered.findIndex(function(i){return i.id==='p1';});
+        var sinks=[];
+        for(var s=1;s<=count;s++){
+          sinks.push({id:'p1-'+s,name:'Sink '+s+' Check',desc:'Check sink '+s+' for leaks. Record temperature.',hasTemp:true,tempKey:'sink'+s});
+        }
         if(sinkIdx>=0){
-          var sinks=[];
-          for(var s=1;s<=roomInfo.sinkCount;s++){
-            sinks.push({id:'p1-'+s,name:'Sink '+s+' Check',desc:'Check sink '+s+' for leaks. Record temperature.',hasTemp:true,tempKey:'sink'+s});
-          }
           filtered=filtered.slice(0,sinkIdx).concat(sinks).concat(filtered.slice(sinkIdx+1));
+        } else {
+          // no p1 present (custom check set) — put the sink checks at the top
+          filtered=sinks.concat(filtered);
         }
       }
     }
@@ -1323,10 +1331,16 @@ function renderChecklist(cat,roomInfo){
   var roomData=(data[curRoom]&&data[curRoom][cat])||{};
   var checked=roomData.checked||{},notes=roomData.notes||{},extras=roomData.extras||{};
   var container=document.getElementById(cat+'-checks');container.innerHTML='';
-  checks.forEach(function(item){
+  checks.forEach(function(item,itemIdx){
     var isChecked=!!checked[item.id],note=notes[item.id]||'',hasNote=note.trim().length>0;
     var section=document.createElement('div');section.className='check-section';
-    var hdr='<div class="check-item-hdr"><div class="check-box-wrap"><input type="checkbox" class="check-cb" id="cb_'+item.id+'" '+(isChecked?'checked':'')+' onchange="onCheck(\''+cat+'\',\''+item.id+'\',this.checked)"/></div><div class="check-info"><div class="check-name">'+item.name+'</div><div class="check-desc">'+item.desc+'</div></div>'+(isAdmin?'<button class="admin-del-btn" onclick="deleteCheck(\''+cat+'\',\''+item.id+'\')">&#x2715;</button>':'')+'</div>';
+    // Reorder arrows (admin) — only for base global checks, not generated sink children (p1-1, p1-2…)
+    var isSinkChild=/^p1-\d+$/.test(item.id);
+    var reorder='';
+    if(isAdmin&&!isSinkChild){
+      reorder='<div class="reorder-arrows"><button class="reorder-btn" onclick="moveCheck(\''+cat+'\',\''+item.id+'\',-1)" title="Move up">&#9650;</button><button class="reorder-btn" onclick="moveCheck(\''+cat+'\',\''+item.id+'\',1)" title="Move down">&#9660;</button></div>';
+    }
+    var hdr='<div class="check-item-hdr">'+reorder+'<div class="check-box-wrap"><input type="checkbox" class="check-cb" id="cb_'+item.id+'" '+(isChecked?'checked':'')+' onchange="onCheck(\''+cat+'\',\''+item.id+'\',this.checked)"/></div><div class="check-info"><div class="check-name">'+item.name+'</div><div class="check-desc">'+item.desc+'</div></div>'+(isAdmin?'<button class="admin-del-btn" onclick="deleteCheck(\''+cat+'\',\''+item.id+'\')">&#x2715;</button>':'')+'</div>';
     var extra='';
     if(item.hasTemp){var tv=extras[item.id+'_temp']||'',tc='';if(tv){var n=parseFloat(tv);tc=n>38?'hot':n>=16?'ok':'';}extra+='<div class="field-row"><span class="field-label">Temp (&deg;C)</span><input class="field-in '+tc+'" id="temp_'+item.id+'" type="number" step="0.1" placeholder="&mdash;" value="'+tv+'" oninput="onTempField(this,\''+cat+'\',\''+item.id+'\')"/>'+renderTempSparkline(item.tempKey)+'</div>';}
     if(item.hasLeak){var lv=extras[item.id+'_leak']||'';extra+='<div class="radio-row"><span class="field-label" style="margin-right:4px">Leaking</span><label class="radio-opt"><input type="radio" name="leak_'+item.id+'" value="No" '+(lv==='No'?'checked':'')+' onchange="onExtra(\''+cat+'\',\''+item.id+'_leak\',this.value)"/> No</label><label class="radio-opt"><input type="radio" name="leak_'+item.id+'" value="Yes" '+(lv==='Yes'?'checked':'')+' onchange="onExtra(\''+cat+'\',\''+item.id+'_leak\',this.value)"/> Yes</label></div>';if(lv==='Yes'){var ld=extras[item.id+'_leakdesc']||'';extra+='<textarea class="check-note issue" placeholder="Describe leak..." onchange="onExtra(\''+cat+'\',\''+item.id+'_leakdesc\',this.value)">'+ld+'</textarea>';}}
@@ -1532,6 +1546,27 @@ function saveNewCheck(){
   var rooms=loadRooms(),levelRooms=rooms[curLevel]||{},roomInfo=null;
   Object.values(levelRooms).forEach(function(z){var f=z.find(function(r){return r.num===curRoom;});if(f)roomInfo=f;});
   renderChecklist(addCheckCategory,roomInfo);
+}
+function moveCheck(cat,id,dir){
+  if(!isAdmin)return;
+  // Is it a room-specific custom check? Reorder within that list; otherwise reorder the global list.
+  var data=loadData();
+  var roomCustom=(data[curRoom]&&data[curRoom][cat]&&data[curRoom][cat].customChecks)||[];
+  var inCustom=roomCustom.some(function(c){return c.id===id;});
+  if(inCustom){
+    var i=roomCustom.findIndex(function(c){return c.id===id;});
+    var j=i+dir; if(j<0||j>=roomCustom.length)return;
+    var tmp=roomCustom[i];roomCustom[i]=roomCustom[j];roomCustom[j]=tmp;
+    data[curRoom][cat].customChecks=roomCustom;saveData(data);
+  } else {
+    var checks=loadChecks();var arr=checks[cat]||[];
+    var i2=arr.findIndex(function(c){return c.id===id;});
+    var j2=i2+dir; if(i2<0||j2<0||j2>=arr.length)return;
+    var t=arr[i2];arr[i2]=arr[j2];arr[j2]=t;
+    checks[cat]=arr;saveChecks(checks);
+  }
+  // re-render the open room's checklist for this category
+  if(curRoom){var rooms2=loadRooms(),lr=rooms2[curLevel]||{},roomInfo=null;Object.values(lr).forEach(function(z){var f=z.find(function(r){return r.num===curRoom;});if(f)roomInfo=f;});renderChecklist(cat,roomInfo);}
 }
 function deleteCheck(cat,id){
   if(!isAdmin)return;
@@ -1749,6 +1784,8 @@ function saveEditRoom(){
   saveRooms(rooms);
   document.getElementById('edit-room-modal').classList.remove('active');
   renderZones();updateCycleBanner();
+  // If the edited room is the one currently open, re-open it so the checklist rebuilds with the new sink count.
+  if(curRoom===editingRoom||curRoom===newNum){openRoom(newNum,editingZone);}
   showToast('Room updated ✓');
 }
 
