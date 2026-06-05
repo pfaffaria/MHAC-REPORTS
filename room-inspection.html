@@ -1453,8 +1453,9 @@ function renderPhotos(){
     }
   });
   var addBtn=document.createElement('button');addBtn.className='photo-add-btn';addBtn.innerHTML='+';
-  addBtn.onclick=function(){document.getElementById('photo-file').click();};
-  grid.appendChild(addBtn);grid.appendChild(document.getElementById('photo-file'));
+  addBtn.onclick=function(){var pf=document.getElementById('photo-file');if(pf)pf.click();};
+  grid.appendChild(addBtn);
+  var pf=document.getElementById('photo-file');if(pf)grid.appendChild(pf);
 }
 
 function deletePhoto(idx){
@@ -1705,16 +1706,19 @@ function openEditRoom(roomNum, zone){
   (levelRooms[zone]||[]).forEach(function(r){if(r.num===roomNum)roomInfo=r;});
   if(!roomInfo)return;
   editingRoom=roomNum; editingZone=zone;
-  document.getElementById('edit-room-num').value=roomInfo.num;
-  document.getElementById('edit-room-label').value=roomInfo.label||'';
-  document.getElementById('edit-room-toilet').value=roomInfo.toilet||0;
-  document.getElementById('edit-room-shower').value=roomInfo.shower||0;
-  document.getElementById('edit-room-sink').value=roomInfo.sink!==undefined?roomInfo.sink:1;
-  document.getElementById('edit-room-sink-count').value=roomInfo.sinkCount||1;
-  document.getElementById('sink-count-field').style.display=roomInfo.sink?'block':'none';
-  document.getElementById('edit-room-sink').onchange=function(){document.getElementById('sink-count-field').style.display=this.value==='1'?'block':'none';};
+  var _set=function(id,v){var el=document.getElementById(id);if(el)el.value=v;};
+  _set('edit-room-num',roomInfo.num);
+  _set('edit-room-label',roomInfo.label||'');
+  _set('edit-room-toilet',roomInfo.toilet||0);
+  _set('edit-room-shower',roomInfo.shower||0);
+  _set('edit-room-sink',roomInfo.sink!==undefined?roomInfo.sink:1);
+  _set('edit-room-sink-count',roomInfo.sinkCount||1);
+  var scf=document.getElementById('sink-count-field');
+  if(scf)scf.style.display=roomInfo.sink?'block':'none';
+  var sinkSel=document.getElementById('edit-room-sink');
+  if(sinkSel)sinkSel.onchange=function(){var f=document.getElementById('sink-count-field');if(f)f.style.display=this.value==='1'?'block':'none';};
   document.getElementById('edit-room-modal').classList.add('active');
-  setTimeout(function(){document.getElementById('edit-room-num').focus();},50);
+  setTimeout(function(){var n=document.getElementById('edit-room-num');if(n)n.focus();},50);
 }
 
 function saveEditRoom(){
@@ -1737,7 +1741,8 @@ function saveEditRoom(){
     if(dates[editingRoom]){dates[newNum]=dates[editingRoom];delete dates[editingRoom];saveDates(dates);}
     if(hist[editingRoom]){hist[newNum]=hist[editingRoom];delete hist[editingRoom];saveHistory(hist);}
   }
-  var sinkCount=parseInt(document.getElementById('edit-room-sink-count').value)||1;
+  var scEl=document.getElementById('edit-room-sink-count');
+  var sinkCount=scEl?(parseInt(scEl.value)||1):1;
   zoneRooms[idx]={num:newNum,label:newLabel,toilet:toilet,shower:shower,sink:sink,tv:tv,sinkCount:sink?sinkCount:1};
   rooms[curLevel][editingZone]=zoneRooms;
   saveRooms(rooms);
