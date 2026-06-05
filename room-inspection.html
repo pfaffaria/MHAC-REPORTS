@@ -273,7 +273,6 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
     <div id="map-controls-bar" style="display:none;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
       <button class="tb-btn admin-only" id="upload-map-btn" onclick="document.getElementById('map-file-input').click()">&#8593; Replace Map</button>
       <button class="tb-btn admin-only" id="pin-mode-btn" onclick="togglePinMode()" style="display:none">+ Add Pin</button>
-      <button class="tb-btn admin-only" id="sink-mode-btn" onclick="toggleSinkMode()" style="display:none">&#128688; Add Sink</button>
       <button class="tb-btn admin-only" id="clear-pins-btn" onclick="clearAllPins()" style="display:none;border-color:rgba(239,68,68,.3);color:rgba(239,68,68,.6)">&#x2715; Clear Pins</button>
       <span id="pin-hint" style="font-size:9px;letter-spacing:2px;color:rgba(245,158,11,.35);text-transform:uppercase"></span>
     </div>
@@ -342,6 +341,7 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
         <button class="tb-btn" onclick="toggleHistory()">&#128336; History</button>
         <button class="tb-btn" onclick="saveRoomData()">&#10003; Save</button>
         <button class="tb-btn admin-only" id="place-pin-btn" onclick="startPinPlacement()" style="border-color:rgba(245,158,11,.4)">&#128205; Pin</button>
+        <button class="tb-btn admin-only" id="place-sink-btn" onclick="startSinkPlacement()" style="border-color:rgba(56,189,248,.5);color:#bae6fd">&#128688; Sink</button>
       </div>
     </div>
     <div id="history-panel" style="display:none">
@@ -895,7 +895,6 @@ function renderMap(highlightRoom){
 
   // Show/hide admin buttons
   var pmb=document.getElementById('pin-mode-btn');if(pmb)pmb.style.display=isAdmin?'flex':'none';
-  var smb=document.getElementById('sink-mode-btn');if(smb)smb.style.display=isAdmin?'flex':'none';
   var cpb=document.getElementById('clear-pins-btn');if(cpb)cpb.style.display=isAdmin?'flex':'none';
 
   // Add click handler for pin placement if needed
@@ -1048,9 +1047,10 @@ function renderPin(overlay,pin,data,highlightRoom){
 function buildSinkPins(){
   var overlay=document.getElementById('map-sinks-overlay'); if(!overlay)return;
   overlay.innerHTML='';
+  if(!curRoom)return; // sinks only show for the room that's currently open
   var all=loadSinks();
   var list=all[zoneKey()]||[];
-  list.forEach(function(sink){renderSink(overlay,sink);});
+  list.filter(function(s){return s.roomNum===curRoom;}).forEach(function(sink){renderSink(overlay,sink);});
 }
 function renderSink(overlay,sink){
   var div=document.createElement('div');
@@ -1059,10 +1059,9 @@ function renderSink(overlay,sink){
     'position:absolute;left:'+(sink.x*100).toFixed(2)+'%;top:'+(sink.y*100).toFixed(2)+'%;'+
     'transform:translate(-50%,-50%);display:flex;align-items:center;gap:3px;'+
     'pointer-events:all;cursor:pointer;z-index:12;';
-  // sink icon chip + number badge
   var chip=document.createElement('div');
-  chip.style.cssText='display:flex;align-items:center;gap:3px;background:rgba(13,20,40,.92);border:2px solid #38bdf8;border-radius:13px;padding:2px 7px 2px 5px;box-shadow:0 0 6px rgba(56,189,248,.6);';
-  chip.innerHTML='<span style="font-size:13px;line-height:1">&#128688;</span><span style="font-family:Rajdhani,sans-serif;font-size:12px;font-weight:700;color:#e0f2fe;letter-spacing:.5px">'+String(sink.num).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</span>';
+  chip.style.cssText='display:flex;align-items:center;gap:2px;';
+  chip.innerHTML='<span style="font-size:26px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))">&#128688;</span><span style="font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:#fff;background:rgba(0,0,0,.7);border-radius:8px;padding:1px 6px;line-height:1.3;box-shadow:0 0 3px rgba(0,0,0,.6)">'+String(sink.num).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</span>';
   div.appendChild(chip);
   if(isAdmin){
     var del=document.createElement('button');
@@ -1079,20 +1078,23 @@ function renderSink(overlay,sink){
   }
   overlay.appendChild(div);
 }
-function toggleSinkMode(){
-  sinkMode=!sinkMode;
-  if(sinkMode){pinMode=false;var pb=document.getElementById('pin-mode-btn');if(pb)pb.classList.remove('active');}
-  var btn=document.getElementById('sink-mode-btn');
-  if(btn)btn.classList.toggle('active',sinkMode);
-  document.getElementById('pin-hint').textContent=sinkMode?'Tap map to place a sink':'';
-  var mw=document.getElementById('map-wrap'); if(mw)mw.classList.toggle('no-pin-mode',!sinkMode&&!pinMode);
-  document.body.style.overflow=sinkMode?'hidden':'';
-  document.body.style.position=sinkMode?'fixed':'';
-  document.body.style.width=sinkMode?'100%':'';
+// Started from the room panel — links the next sink to the currently-open room.
+function startSinkPlacement(){
+  if(!curRoom){showToast('Open a room first');return;}
+  window._sinkRoom=curRoom;
+  document.getElementById('map-view').scrollIntoView({behavior:'smooth',block:'start'});
+  setTimeout(function(){
+    sinkMode=true; pinMode=false;
+    var pb=document.getElementById('pin-mode-btn');if(pb)pb.classList.remove('active');
+    document.getElementById('pin-hint').textContent='Tap map to place a sink for '+curRoom;
+    document.body.style.overflow='hidden';document.body.style.position='fixed';document.body.style.width='100%';
+    showToast('Tap map to place sink for '+curRoom.replace(/^.*-/,''));
+  },600);
 }
 function openSinkModal(){
-  // suggest next number = current count + 1
-  var list=(loadSinks()[zoneKey()])||[];
+  // suggest next number for THIS room = (count of this room's sinks)+1
+  var room=window._sinkRoom||curRoom;
+  var list=(loadSinks()[zoneKey()]||[]).filter(function(s){return s.roomNum===room;});
   document.getElementById('sink-num').value=String(list.length+1);
   document.getElementById('sink-modal').classList.add('active');
   setTimeout(function(){var el=document.getElementById('sink-num');if(el){el.focus();el.select();}},50);
@@ -1101,10 +1103,12 @@ function confirmSink(){
   var num=(document.getElementById('sink-num').value||'').trim();
   if(!num){showToast('Enter a sink number');return;}
   if(!pendingSinkPos){showToast('No position');return;}
+  var room=window._sinkRoom||curRoom;
+  if(!room){showToast('No room linked');return;}
   var all=loadSinks(); var zk=zoneKey(); if(!all[zk])all[zk]=[];
-  all[zk].push({num:num,x:pendingSinkPos.x,y:pendingSinkPos.y});
+  all[zk].push({num:num,x:pendingSinkPos.x,y:pendingSinkPos.y,roomNum:room});
   saveSinks(all);
-  pendingSinkPos=null;
+  pendingSinkPos=null; window._sinkRoom=null;
   document.getElementById('sink-modal').classList.remove('active');
   sinkMode=false;var b=document.getElementById('sink-mode-btn');if(b)b.classList.remove('active');
   document.getElementById('pin-hint').textContent='';
@@ -1113,12 +1117,15 @@ function confirmSink(){
   showToast('Sink '+num+' placed ✓');
 }
 function cancelSink(){
-  pendingSinkPos=null;
+  pendingSinkPos=null; window._sinkRoom=null;
   document.getElementById('sink-modal').classList.remove('active');
+  sinkMode=false;var b=document.getElementById('sink-mode-btn');if(b)b.classList.remove('active');
+  document.getElementById('pin-hint').textContent='';
   document.body.style.overflow='';document.body.style.position='';document.body.style.width='';
 }
 function startMoveSink(num,x,y){
   _movingSink={num:num,x:x,y:y};
+  document.body.style.overflow='hidden';document.body.style.position='fixed';document.body.style.width='100%';
   showToast('Tap new spot for sink '+num);
   document.getElementById('pin-hint').textContent='Tap map to move sink '+num;
 }
@@ -1281,6 +1288,7 @@ function closeRoom(){
   document.getElementById('room-panel').style.display='none';
   document.querySelectorAll('.room-chip').forEach(function(c){c.classList.remove('active');});
   _applyPinHighlight(null);
+  buildSinkPins();
 }
 
 
