@@ -1,6 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+/* MHAC site-wide auth guard — redirect to login hub if no active session.
+   Session is set by index.html (sessionStorage 'mhac-session'); shared across all pages this session. */
+(function(){
+  try{
+    var s=JSON.parse(sessionStorage.getItem('mhac-session')||'null');
+    if(!s||!s.role){
+      var here=encodeURIComponent(location.pathname.split('/').pop()+location.search);
+      location.replace('index.html?next='+here);
+    } else {
+      window.MHAC_ROLE=s.role;
+      window.MHAC_IS_ADMIN=(s.role==='admin');
+    }
+  }catch(e){ location.replace('index.html'); }
+})();
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MHAC Reports — Yearly Report</title>

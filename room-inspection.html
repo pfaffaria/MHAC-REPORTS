@@ -588,7 +588,7 @@ function saveCreds(){
   document.getElementById('cred-modal').classList.remove('active');
   showToast('Logins updated ✓');
 }
-function doLogout(){currentRole=null;isAdmin=false;document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none';document.getElementById('login-user').value='';document.getElementById('login-pass').value='';closeRoom();}
+function doLogout(){try{sessionStorage.removeItem('mhac-session');}catch(e){}currentRole=null;isAdmin=false;location.replace('index.html');}
 document.getElementById('login-pass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
 
@@ -1972,9 +1972,11 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
         initApp();
 
       } else {
-        document.getElementById('login-screen').style.display='flex';
+        // No site session — send to the central login hub like every other page.
+        var here=encodeURIComponent(location.pathname.split('/').pop()+location.search);
+        location.replace('index.html?next='+here);
       }
-    }catch(e){document.getElementById('login-screen').style.display='flex';}
+    }catch(e){location.replace('index.html');}
   }
   // Hard fallback — show UI after 4s no matter what
   setTimeout(finish, 4000);

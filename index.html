@@ -125,6 +125,20 @@ var MHAC_CREDS = {
   admin: { user: 'admin', pass: 'mhac2024', role: 'admin' },
   staff: { user: 'staff', pass: 'mhac1234', role: 'user' }
 };
+// Apply credential overrides set via the Manage Logins panel (synced through Supabase).
+(function(){
+  function apply(o){ if(!o||typeof o!=='object')return;
+    if(o.admin){ if(o.admin.user)MHAC_CREDS.admin.user=String(o.admin.user).trim().toLowerCase(); if(o.admin.pass)MHAC_CREDS.admin.pass=String(o.admin.pass); }
+    if(o.user){ if(o.user.user)MHAC_CREDS.staff.user=String(o.user.user).trim().toLowerCase(); if(o.user.pass)MHAC_CREDS.staff.pass=String(o.user.pass); }
+  }
+  try{ apply(JSON.parse(localStorage.getItem('mhac-ri-creds')||'null')); }catch(e){}
+  try{
+    fetch(SUPABASE_URL+'/rest/v1/app_data?key=eq.mhac-ri-creds&select=value',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}})
+      .then(function(r){return r.json();})
+      .then(function(d){ if(d&&d.length){ apply(d[0].value); try{localStorage.setItem('mhac-ri-creds',JSON.stringify(d[0].value));}catch(e){} } })
+      .catch(function(){});
+  }catch(e){}
+})();
 function getSession(){ try{ return JSON.parse(sessionStorage.getItem('mhac-session'))||null; }catch(e){return null;} }
 function setSession(role){ sessionStorage.setItem('mhac-session',JSON.stringify({role:role,time:Date.now()})); }
 function clearSession(){ sessionStorage.removeItem('mhac-session'); }
@@ -290,6 +304,7 @@ function doLogin(){
   setSession(found.role);
   document.getElementById('login-overlay').style.display='none';
   document.getElementById('login-err').textContent='';
+  try{ var q=new URLSearchParams(location.search), nxt=q.get('next'); if(nxt){ location.replace(decodeURIComponent(nxt)); } }catch(e){}
 }
 document.addEventListener('keydown',function(e){
   if(e.key==='Enter'&&document.getElementById('login-overlay').style.display!=='none') doLogin();
