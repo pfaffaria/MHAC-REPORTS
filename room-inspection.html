@@ -249,6 +249,7 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
   </div>
   <div class="tb-r">
     <button class="tb-btn" onclick="printYearSummary()">&#128438; Print Year</button>
+    <button class="tb-btn admin-only" onclick="openCredModal()" style="display:none">&#128273; Logins</button>
     <a class="tb-btn" id="back-map-btn" href="index.html">&#8592; Home</a>
     <button class="tb-btn danger" onclick="doLogout()">Sign Out</button>
   </div>
@@ -314,6 +315,23 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
       <div class="modal-actions">
         <button class="tb-btn" onclick="confirmQuickPin()">&#10003; Place Pin</button>
         <button class="tb-btn" onclick="document.getElementById('quick-pin-modal').classList.remove('active');pendingPinPos=null;document.body.style.overflow='';document.body.style.position='';document.body.style.width='';['qp-toilet','qp-shower','qp-sink','qp-tv'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});" style="border-color:rgba(239,68,68,.3);color:rgba(239,68,68,.6)">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANAGE LOGINS MODAL -->
+  <div id="cred-modal" class="modal-overlay">
+    <div class="modal" style="max-width:340px">
+      <div class="modal-title">&#128273; Manage Logins</div>
+      <div style="font-size:10px;letter-spacing:1px;color:rgba(245,158,11,.4);margin-bottom:12px;line-height:1.5">Changes sync to all devices. Note: this login is basic access control, not strong security.</div>
+      <div class="modal-field"><label>Staff Username</label><input id="cred-staff-user" type="text" autocomplete="off"/></div>
+      <div class="modal-field"><label>Staff Password</label><input id="cred-staff-pass" type="text" autocomplete="off"/></div>
+      <div style="height:1px;background:rgba(245,158,11,.15);margin:14px 0"></div>
+      <div class="modal-field"><label>Admin Username</label><input id="cred-admin-user" type="text" autocomplete="off"/></div>
+      <div class="modal-field"><label>Admin Password</label><input id="cred-admin-pass" type="text" autocomplete="off"/></div>
+      <div class="modal-actions">
+        <button class="tb-btn" onclick="saveCreds()">&#10003; Save Logins</button>
+        <button class="tb-btn" onclick="document.getElementById('cred-modal').classList.remove('active')" style="border-color:rgba(239,68,68,.3);color:rgba(239,68,68,.6)">Cancel</button>
       </div>
     </div>
   </div>
@@ -519,7 +537,22 @@ function sbGet(k){
 function sbSet(k,v){fetch(SB_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign({},SB_H,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({key:k,value:v,updated_at:new Date().toISOString()})}).then(function(r){if(!r.ok)r.text().then(function(t){showToast('Save error: '+r.status);console.error('sbSet error',k,r.status,t);});}).catch(function(e){showToast('Save failed - check connection');console.error('sbSet catch',e);});}
 
 // ═══ AUTH ════════════════════════════════════════════════════════════
+var CREDS_KEY='mhac-ri-creds';
 var CREDS={admin:{user:'admin',pass:'mhac2024',role:'admin'},user:{user:'staff',pass:'mhac1234',role:'user'}};
+// Apply saved credential overrides (so passwords can be changed from inside the app, synced to all devices).
+function applyCredOverrides(o){
+  if(!o||typeof o!=='object')return;
+  ['admin','user'].forEach(function(k){
+    if(o[k]&&typeof o[k]==='object'){
+      if(o[k].user)CREDS[k].user=String(o[k].user).trim().toLowerCase();
+      if(o[k].pass)CREDS[k].pass=String(o[k].pass);
+    }
+  });
+}
+function loadCredsLocal(){try{applyCredOverrides(ls_get(CREDS_KEY));}catch(e){}}
+loadCredsLocal(); // sync, available immediately at the login screen
+// Refresh from cloud in the background (login is manual, so there's time before submit).
+sbGet(CREDS_KEY).then(function(v){if(v){applyCredOverrides(v);try{ls_set(CREDS_KEY,v);}catch(e){}}});
 var currentRole=null,isAdmin=false;
 function doLogin(){
   var u=document.getElementById('login-user').value.trim().toLowerCase(),p=document.getElementById('login-pass').value,err=document.getElementById('login-err'),found=null;
@@ -533,8 +566,31 @@ function doLogin(){
   if(filterZone){var zb=document.getElementById('zone-filter-badge');zb.textContent=filterZone;zb.style.display='inline';}
   initApp();
 }
+// ── Manage Logins (admin) ───────────────────────────────────────────
+function openCredModal(){
+  if(!isAdmin)return;
+  document.getElementById('cred-admin-user').value=CREDS.admin.user;
+  document.getElementById('cred-admin-pass').value=CREDS.admin.pass;
+  document.getElementById('cred-staff-user').value=CREDS.user.user;
+  document.getElementById('cred-staff-pass').value=CREDS.user.pass;
+  document.getElementById('cred-modal').classList.add('active');
+}
+function saveCreds(){
+  var au=document.getElementById('cred-admin-user').value.trim().toLowerCase();
+  var ap=document.getElementById('cred-admin-pass').value;
+  var su=document.getElementById('cred-staff-user').value.trim().toLowerCase();
+  var sp=document.getElementById('cred-staff-pass').value;
+  if(!au||!ap||!su||!sp){showToast('All fields required');return;}
+  if(au===su){showToast('Admin and staff usernames must differ');return;}
+  var creds={admin:{user:au,pass:ap},user:{user:su,pass:sp}};
+  applyCredOverrides(creds);
+  ls_set(CREDS_KEY,creds); sbSet(CREDS_KEY,creds);
+  document.getElementById('cred-modal').classList.remove('active');
+  showToast('Logins updated ✓');
+}
 function doLogout(){currentRole=null;isAdmin=false;document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none';document.getElementById('login-user').value='';document.getElementById('login-pass').value='';closeRoom();}
 document.getElementById('login-pass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+
 
 // ═══ STORAGE KEYS ════════════════════════════════════════════════════
 var ROOMS_KEY='mhac-ri-rooms',CHECKS_KEY='mhac-ri-checks',DATA_KEY='mhac-ri-data';
@@ -1560,24 +1616,50 @@ function saveNewCheck(){
   Object.values(levelRooms).forEach(function(z){var f=z.find(function(r){return r.num===curRoom;});if(f)roomInfo=f;});
   renderChecklist(addCheckCategory,roomInfo);
 }
-function moveCheck(cat,id,dir){
-  if(!isAdmin)return;
-  if(!curRoom)return;
-  // Build the current full display order (base + custom, already merged & sorted)
-  var rooms=loadRooms(),lr=rooms[curLevel]||{},roomInfo=null;
-  Object.values(lr).forEach(function(z){var f=z.find(function(r){return r.num===curRoom;});if(f)roomInfo=f;});
+function _roomInfoFor(num){
+  var rooms=loadRooms(),lr=rooms[curLevel]||{},ri=null;
+  Object.values(lr).forEach(function(z){var f=z.find(function(r){return r.num===num;});if(f)ri=f;});
+  return ri;
+}
+function _perRoomMove(cat,id,dir,roomInfo){
   var ids=getChecksForRoom(cat,roomInfo).map(function(c){return c.id;});
-  var i=ids.indexOf(id); var j=i+dir;
-  if(i<0||j<0||j>=ids.length)return;       // already at an edge
-  var t=ids[i]; ids[i]=ids[j]; ids[j]=t;     // swap
-  // Persist this explicit order on the room so it survives reloads and covers base+custom together
+  var i=ids.indexOf(id), j=i+dir;
+  if(i<0||j<0||j>=ids.length)return false;
+  var t=ids[i]; ids[i]=ids[j]; ids[j]=t;
   var data=loadData();
   if(!data[curRoom])data[curRoom]={};
   if(!data[curRoom][cat])data[curRoom][cat]={};
   data[curRoom][cat].order=ids;
   saveData(data);
-  renderChecklist(cat,roomInfo);
-  showToast('Moved '+(dir<0?'up':'down'));
+  return true;
+}
+function moveCheck(cat,id,dir){
+  if(!isAdmin||!curRoom)return;
+  var roomInfo=_roomInfoFor(curRoom);
+  // Is this a room-specific custom check, or a global one shared by all rooms?
+  var data=loadData();
+  var roomCustom=(data[curRoom]&&data[curRoom][cat]&&data[curRoom][cat].customChecks)||[];
+  var isCustom=roomCustom.some(function(c){return c.id===id;});
+  if(isCustom){
+    // Room-only check — reorder within this room only.
+    if(_perRoomMove(cat,id,dir,roomInfo)){renderChecklist(cat,roomInfo);showToast('Moved '+(dir<0?'up':'down'));}
+    return;
+  }
+  // Global check — ask scope.
+  var allRooms=confirm('Reorder this check for ALL rooms?\n\nOK = all rooms\nCancel = just this room');
+  if(allRooms){
+    var checks=loadChecks(); var arr=checks[cat]||[];
+    var i=arr.findIndex(function(c){return c.id===id;}); var j=i+dir;
+    if(i<0||j<0||j>=arr.length)return;
+    var t=arr[i]; arr[i]=arr[j]; arr[j]=t;
+    checks[cat]=arr; saveChecks(checks);
+    // Clear this room's per-room override for this category so the new global order shows here.
+    if(data[curRoom]&&data[curRoom][cat]&&data[curRoom][cat].order){delete data[curRoom][cat].order;saveData(data);}
+    renderChecklist(cat,roomInfo);
+    showToast('Moved in all rooms');
+  } else {
+    if(_perRoomMove(cat,id,dir,roomInfo)){renderChecklist(cat,roomInfo);showToast('Moved (this room)');}
+  }
 }
 function deleteCheck(cat,id){
   if(!isAdmin)return;
