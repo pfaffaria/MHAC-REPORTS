@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+/* MHAC site-wide auth guard — runs first, before anything renders. */
+(function(){
+  try{
+    var s=JSON.parse(sessionStorage.getItem('mhac-session')||'null');
+    if(!s||!s.role){
+      var here=encodeURIComponent(location.pathname.split('/').pop()+location.search);
+      location.replace('index.html?next='+here);
+    } else {
+      window.MHAC_ROLE=s.role;
+      window.MHAC_IS_ADMIN=(s.role==='admin');
+    }
+  }catch(e){ location.replace('index.html'); }
+})();
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <title>MHAC — Room Inspection</title>
@@ -129,6 +145,8 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
 .check-note::placeholder{color:rgba(245,158,11,.2)}
 .check-note.issue{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.04)}
 .admin-del-btn{background:none;border:none;color:rgba(245,158,11,.2);font-size:14px;cursor:pointer;padding:2px 4px;border-radius:3px;transition:all .2s;line-height:1;flex-shrink:0}
+.admin-edit-btn{background:none;border:none;color:rgba(245,158,11,.3);font-size:13px;cursor:pointer;padding:2px 4px;border-radius:3px;transition:all .2s;line-height:1;flex-shrink:0}
+.admin-edit-btn:hover{color:var(--amber-light);background:rgba(245,158,11,.12)}
 .reorder-arrows{display:flex;flex-direction:column;gap:1px;margin-right:6px;flex-shrink:0}
 .reorder-btn{background:none;border:1px solid rgba(245,158,11,.18);color:rgba(245,158,11,.5);font-size:8px;cursor:pointer;padding:1px 4px;border-radius:3px;line-height:1.1;transition:all .15s}
 .reorder-btn:hover{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.5);color:var(--amber-light)}
@@ -496,6 +514,17 @@ html,body{width:100%;min-height:100%;background:var(--bg);font-family:'Rajdhani'
     </div>
   </div>
 </div>
+<div class="modal-bg" id="edit-check-modal">
+  <div class="modal">
+    <div class="modal-title">Edit Check Wording</div>
+    <div class="modal-field"><label>Task Name</label><input id="edit-check-name" autocomplete="off"/></div>
+    <div class="modal-field"><label>Description</label><textarea id="edit-check-desc" rows="3"></textarea></div>
+    <div class="modal-btns">
+      <button class="modal-btn primary" onclick="saveCheckEdit()">Save</button>
+      <button class="modal-btn secondary" onclick="document.getElementById('edit-check-modal').classList.remove('active')">Cancel</button>
+    </div>
+  </div>
+</div>
 <div class="modal-bg" id="pin-room-modal">
   <div class="modal">
     <div class="modal-title">Assign Room to Pin</div>
@@ -682,6 +711,15 @@ function getChecksForRoom(cat,roomInfo){
         var ia=order.indexOf(a.id), ib=order.indexOf(b.id);
         if(ia===-1)ia=999; if(ib===-1)ib=999; // unknown ids fall to the end in original order
         return ia-ib;
+      });
+    }
+    // Apply per-room wording overrides (edits made "this room only")
+    var labelOv=(data[curRoom]&&data[curRoom][cat]&&data[curRoom][cat].labels)||null;
+    if(labelOv){
+      filtered=filtered.map(function(c){
+        var o=labelOv[c.id];
+        if(o)return {id:c.id,name:(o.name!=null?o.name:c.name),desc:(o.desc!=null?o.desc:c.desc),hasTemp:c.hasTemp,hasLeak:c.hasLeak,tempKey:c.tempKey};
+        return c;
       });
     }
   }
@@ -1409,7 +1447,7 @@ function renderChecklist(cat,roomInfo){
     if(isAdmin&&!isSinkChild){
       reorder='<div class="reorder-arrows"><button type="button" class="reorder-btn" onclick="event.stopPropagation();moveCheck(\''+cat+'\',\''+item.id+'\',-1)" title="Move up">&#9650;</button><button type="button" class="reorder-btn" onclick="event.stopPropagation();moveCheck(\''+cat+'\',\''+item.id+'\',1)" title="Move down">&#9660;</button></div>';
     }
-    var hdr='<div class="check-item-hdr">'+reorder+'<div class="check-box-wrap"><input type="checkbox" class="check-cb" id="cb_'+item.id+'" '+(isChecked?'checked':'')+' onchange="onCheck(\''+cat+'\',\''+item.id+'\',this.checked)"/></div><div class="check-info"><div class="check-name">'+item.name+'</div><div class="check-desc">'+item.desc+'</div></div>'+(isAdmin?'<button class="admin-del-btn" onclick="deleteCheck(\''+cat+'\',\''+item.id+'\')">&#x2715;</button>':'')+'</div>';
+    var hdr='<div class="check-item-hdr">'+reorder+'<div class="check-box-wrap"><input type="checkbox" class="check-cb" id="cb_'+item.id+'" '+(isChecked?'checked':'')+' onchange="onCheck(\''+cat+'\',\''+item.id+'\',this.checked)"/></div><div class="check-info"><div class="check-name">'+item.name+'</div><div class="check-desc">'+item.desc+'</div></div>'+(isAdmin?'<button class="admin-edit-btn" title="Edit wording" onclick="editCheck(\''+cat+'\',\''+item.id+'\')">&#9998;</button><button class="admin-del-btn" onclick="deleteCheck(\''+cat+'\',\''+item.id+'\')">&#x2715;</button>':'')+'</div>';
     var extra='';
     if(item.hasTemp){var tv=extras[item.id+'_temp']||'',tc='';if(tv){var n=parseFloat(tv);tc=n>38?'hot':n>=16?'ok':'';}extra+='<div class="field-row"><span class="field-label">Temp (&deg;C)</span><input class="field-in '+tc+'" id="temp_'+item.id+'" type="number" step="0.1" placeholder="&mdash;" value="'+tv+'" oninput="onTempField(this,\''+cat+'\',\''+item.id+'\')"/>'+renderTempSparkline(item.tempKey)+'</div>';}
     if(item.hasLeak){var lv=extras[item.id+'_leak']||'';extra+='<div class="radio-row"><span class="field-label" style="margin-right:4px">Leaking</span><label class="radio-opt"><input type="radio" name="leak_'+item.id+'" value="No" '+(lv==='No'?'checked':'')+' onchange="onExtra(\''+cat+'\',\''+item.id+'_leak\',this.value)"/> No</label><label class="radio-opt"><input type="radio" name="leak_'+item.id+'" value="Yes" '+(lv==='Yes'?'checked':'')+' onchange="onExtra(\''+cat+'\',\''+item.id+'_leak\',this.value)"/> Yes</label></div>';if(lv==='Yes'){var ld=extras[item.id+'_leakdesc']||'';extra+='<textarea class="check-note issue" placeholder="Describe leak..." onchange="onExtra(\''+cat+'\',\''+item.id+'_leakdesc\',this.value)">'+ld+'</textarea>';}}
@@ -1660,6 +1698,54 @@ function moveCheck(cat,id,dir){
   } else {
     if(_perRoomMove(cat,id,dir,roomInfo)){renderChecklist(cat,roomInfo);showToast('Moved (this room)');}
   }
+}
+var _editingCheck=null;
+function editCheck(cat,id){
+  if(!isAdmin)return;
+  var roomInfo=_roomInfoFor(curRoom);
+  // get the currently displayed name/desc (after any overrides) to pre-fill
+  var disp=getChecksForRoom(cat,roomInfo).find(function(c){return c.id===id;});
+  if(!disp)return;
+  _editingCheck={cat:cat,id:id};
+  document.getElementById('edit-check-name').value=disp.name||'';
+  document.getElementById('edit-check-desc').value=disp.desc||'';
+  document.getElementById('edit-check-modal').classList.add('active');
+  setTimeout(function(){document.getElementById('edit-check-name').focus();},50);
+}
+function saveCheckEdit(){
+  if(!_editingCheck)return;
+  var cat=_editingCheck.cat,id=_editingCheck.id;
+  var name=document.getElementById('edit-check-name').value.trim();
+  var desc=document.getElementById('edit-check-desc').value.trim();
+  if(!name){showToast('Name cannot be empty');return;}
+  var data=loadData();
+  var roomCustom=(data[curRoom]&&data[curRoom][cat]&&data[curRoom][cat].customChecks)||[];
+  var isRoomOnly=roomCustom.some(function(c){return c.id===id;});
+  document.getElementById('edit-check-modal').classList.remove('active');
+  if(isRoomOnly){
+    // Room-specific check — just update it in place.
+    roomCustom.forEach(function(c){if(c.id===id){c.name=name;c.desc=desc;}});
+    data[curRoom][cat].customChecks=roomCustom;saveData(data);
+  } else {
+    var allRooms=confirm('Apply this wording to ALL rooms?\n\nOK = all rooms\nCancel = just this room');
+    if(allRooms){
+      var checks=loadChecks();
+      (checks[cat]||[]).forEach(function(c){if(c.id===id){c.name=name;c.desc=desc;}});
+      saveChecks(checks);
+      // clear any per-room override for this id so the global text shows here
+      if(data[curRoom]&&data[curRoom][cat]&&data[curRoom][cat].labels){delete data[curRoom][cat].labels[id];saveData(data);}
+    } else {
+      if(!data[curRoom])data[curRoom]={};
+      if(!data[curRoom][cat])data[curRoom][cat]={};
+      if(!data[curRoom][cat].labels)data[curRoom][cat].labels={};
+      data[curRoom][cat].labels[id]={name:name,desc:desc};
+      saveData(data);
+    }
+  }
+  _editingCheck=null;
+  var roomInfo=_roomInfoFor(curRoom);
+  renderChecklist(cat,roomInfo);
+  showToast('Wording updated ✓');
 }
 function deleteCheck(cat,id){
   if(!isAdmin)return;
