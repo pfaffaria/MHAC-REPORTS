@@ -619,8 +619,21 @@ function getChecksForRoom(cat,roomInfo){
     // Add room-specific custom checks
     var roomCustom=(data[curRoom]&&data[curRoom][cat]&&data[curRoom][cat].customChecks)||[];
     filtered=filtered.concat(roomCustom);
+    // Apply a saved display order (lets arrows reorder base + custom together)
+    var order=(data[curRoom]&&data[curRoom][cat]&&data[curRoom][cat].order)||null;
+    if(order&&order.length){
+      filtered.sort(function(a,b){
+        var ia=order.indexOf(a.id), ib=order.indexOf(b.id);
+        if(ia===-1)ia=999; if(ib===-1)ib=999; // unknown ids fall to the end in original order
+        return ia-ib;
+      });
+    }
   }
   return filtered;
+}
+// The list of check ids in their current display order for the open room+category.
+function currentCheckOrder(cat,roomInfo){
+  return getChecksForRoom(cat,roomInfo).map(function(c){return c.id;});
 }
 function saveChecks(d){ls_set(CHECKS_KEY,d);sbSet(CHECKS_KEY,d);}
 function loadData(){return ls_get(DATA_KEY)||{};}
@@ -1549,24 +1562,21 @@ function saveNewCheck(){
 }
 function moveCheck(cat,id,dir){
   if(!isAdmin)return;
-  // Is it a room-specific custom check? Reorder within that list; otherwise reorder the global list.
+  if(!curRoom)return;
+  // Build the current full display order (base + custom, already merged & sorted)
+  var rooms=loadRooms(),lr=rooms[curLevel]||{},roomInfo=null;
+  Object.values(lr).forEach(function(z){var f=z.find(function(r){return r.num===curRoom;});if(f)roomInfo=f;});
+  var ids=getChecksForRoom(cat,roomInfo).map(function(c){return c.id;});
+  var i=ids.indexOf(id); var j=i+dir;
+  if(i<0||j<0||j>=ids.length)return;       // already at an edge
+  var t=ids[i]; ids[i]=ids[j]; ids[j]=t;     // swap
+  // Persist this explicit order on the room so it survives reloads and covers base+custom together
   var data=loadData();
-  var roomCustom=(data[curRoom]&&data[curRoom][cat]&&data[curRoom][cat].customChecks)||[];
-  var inCustom=roomCustom.some(function(c){return c.id===id;});
-  if(inCustom){
-    var i=roomCustom.findIndex(function(c){return c.id===id;});
-    var j=i+dir; if(j<0||j>=roomCustom.length)return;
-    var tmp=roomCustom[i];roomCustom[i]=roomCustom[j];roomCustom[j]=tmp;
-    data[curRoom][cat].customChecks=roomCustom;saveData(data);
-  } else {
-    var checks=loadChecks();var arr=checks[cat]||[];
-    var i2=arr.findIndex(function(c){return c.id===id;});
-    var j2=i2+dir; if(i2<0||j2<0||j2>=arr.length)return;
-    var t=arr[i2];arr[i2]=arr[j2];arr[j2]=t;
-    checks[cat]=arr;saveChecks(checks);
-  }
-  // re-render the open room's checklist for this category
-  if(curRoom){var rooms2=loadRooms(),lr=rooms2[curLevel]||{},roomInfo=null;Object.values(lr).forEach(function(z){var f=z.find(function(r){return r.num===curRoom;});if(f)roomInfo=f;});renderChecklist(cat,roomInfo);}
+  if(!data[curRoom])data[curRoom]={};
+  if(!data[curRoom][cat])data[curRoom][cat]={};
+  data[curRoom][cat].order=ids;
+  saveData(data);
+  renderChecklist(cat,roomInfo);
   showToast('Moved '+(dir<0?'up':'down'));
 }
 function deleteCheck(cat,id){
